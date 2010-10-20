@@ -1,0 +1,9 @@
+{% extends "h1ds_mdsplus/mdsplus_base.html" %}
+
+{% block mdscontent %}
+<ul>
+  {% for name, link in child_nodes %}
+  <li><a href="{{link}}">{{name}}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}
