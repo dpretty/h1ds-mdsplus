@@ -16,13 +16,6 @@ def tree_list(request, format="html"):
 
 
 def shot_overview(request, tree="", shot=-1, format="html", path=""):
-    import os, MDSplus
-    MDSplus = reload(MDSplus)
-    os = reload(os)
-    for t in MDSPlusTree.objects.all():
-        os.environ['%s_path' %t.name] = t.path
-
-    qq = os.environ
     t = MDSplus.Tree(tree, int(shot), 'READONLY')
     mdspath="\\%s::top" %(tree)
     if path:
