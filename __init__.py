@@ -7,3 +7,4 @@ from models import MDSPlusTree
 for tree in MDSPlusTree.objects.all():
     os.environ['%s_path' %tree.name] = tree.path
 
+

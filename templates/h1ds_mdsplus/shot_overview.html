@@ -1,9 +1,121 @@
 {% extends "h1ds_mdsplus/mdsplus_base.html" %}
 
+{% load templatetable %}
+{% block leftpanel %}
+<div id="mdsplus-breadcrumb">
+<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}<a href="{% url mds-path-detail input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < {{shot}} > <a href="{% url mds-path-detail input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}</p>
+</div>
+<div id="request-shot">
+<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+    <P>
+    <LABEL for="requested-shot">Shot: </LABEL>
+              <INPUT type="text" id="requested-shot" name="requested-shot">
+    <INPUT type="hidden" name="input-path" value="{{input_path}}">
+    <INPUT type="hidden" name="input-tree" value="{{input_tree}}">
+    <INPUT type="submit" value="go to shot">
+    </P>
+ </FORM>
+</div>
+
+<div>
+{% for b in breadcrumbs %} > {% if not forloop.last %}<a href="{{b.1}}">{{b.0}}</a> {% else %} {{b.0}} {% endif %}<br/>{% endfor %}
+</div>
+
+<h3>Children:</h3>
+<table width="100%" class="side-table">
+  {% table item children 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+
+<h3>Members:</h3>
+<table width="100%" class="side-table">
+  {% table item members 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+
+
+{% endblock %}
+
+
 {% block mdscontent %}
-<ul>
-  {% for name, link in child_nodes %}
-  <li><a href="{{link}}">{{name}}</a></li>
-  {% endfor %}
-</ul>
+
+{% ifnotequal datatype 'unknown' %}
+<h3>Data:</h3>
+<hr/>
+{% ifequal datatype 'number' %}
+<p>{{data}}</p>
+{% endifequal %}
+
+{% ifequal datatype 'string' %}
+<p>{{data}}</p>
+{% endifequal %}
+
+{% if datatype == 'signal' or datatype == 'signal2d' %}
+<div id="placeholder" style="width:100%;height:300px"></div>
+
+<script>
+$(function () {
+var d = {{data}};
+
+var options = {
+        zoom: {
+            interactive: true
+        },
+        pan: {
+            interactive: true
+        }
+    };
+
+var placeholder = $("#placeholder");
+
+{% ifequal datatype 'signal2d' %}
+$.plot(placeholder, d, options);
+{% else %}
+$.plot(placeholder, [d], options);
+{% endifequal %}
+});
+</script>
+{% endif %}
+{% endifnotequal %}
+{% if tdi%}
+<h3>TDI expression:</h3>
+<hr/>
+{{tdi}}
+{% endif %}
 {% endblock %}
