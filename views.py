@@ -1,5 +1,5 @@
 import os, MDSplus
-from numpy import int32, int64, string_, shape
+from numpy import int32, int64, string_, shape, array, int16
 
 from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
@@ -8,7 +8,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 
 from models import MDSPlusTree
 
@@ -65,7 +65,9 @@ def shot_overview(request, tree="", shot=-1, format="html", path=""):
     t = MDSplus.Tree(tree, int(shot), 'READONLY')
     top_node = t.getNode(mdspath)
 
-    
+    if view == 'raw':
+        d = top_node.raw_of().data().tostring()
+        return HttpResponse(d, mimetype='application/octet-stream')
     url_mapper = tree_shot_mapper(tree, shot)
 
         
