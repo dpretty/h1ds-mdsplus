@@ -1,22 +1,21 @@
-import os, MDSplus
-from numpy import int32, int64, string_, shape, array, int16
-
-from MDSplus._treeshr import TreeException
-from MDSplus._tdishr import TdiException
+import os
+from numpy import int32, int64, string_, shape, array, int16, fft
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 
+import MDSplus
+from MDSplus._treeshr import TreeException
+from MDSplus._tdishr import TdiException
+
 from models import MDSPlusTree
 
-
-def tree_list(request, format="html"):
-    """List all MDSplus trees."""
-    trees = MDSPlusTree.objects.all()
-    return render_to_response('h1ds_mdsplus/tree_list.html', {'trees':trees}, context_instance=RequestContext(request))
+#################################
+#        Helper functions       #
+# (don't return HTTP responses) #
+#################################
 
 def tree_shot_mapper(tree, shot):
     def map_url(data):
@@ -48,10 +47,22 @@ def get_breadcrumbs(node, tree, shot):
             cont = False
     return breadcrumbs[::-1]
 
+###########################
+#         Views           #
+# (return HTTP responses) #
+###########################
 
-def shot_overview(request, tree="", shot=-1, format="html", path=""):
+def tree_list(request, format="html"):
+    """List all MDSplus trees stored in database."""
+    trees = MDSPlusTree.objects.all()
+    return render_to_response('h1ds_mdsplus/tree_list.html', 
+                              {'trees':trees}, 
+                              context_instance=RequestContext(request))
 
-    view = request.GET.get('view','')
+def node(request, tree="", shot=-1, format="html", path=""):
+    """Display MDS tree node (member or child)."""
+    
+    view = request.GET.get('view','html')
 
     input_path = path
     input_tree = tree
@@ -104,7 +115,7 @@ def shot_overview(request, tree="", shot=-1, format="html", path=""):
         data_shape = shape(data)
     except TdiException:
         data_exists = False
-
+    fft_lit = []
     if data_exists:
         try:
             dim = top_node.dim_of().data()
@@ -115,6 +126,10 @@ def shot_overview(request, tree="", shot=-1, format="html", path=""):
                 data = tmp_data
                 datatype = 'signal2d'
             else:
+                # assume signal
+                # do fft:
+                #max_t = 
+                
                 n_samples = 1000
                 n_jump = int(float(len(data))/n_samples)
                 if n_jump > 2:
@@ -129,7 +144,7 @@ def shot_overview(request, tree="", shot=-1, format="html", path=""):
                 datatype = 'string'
 
 
-    return render_to_response('h1ds_mdsplus/shot_overview.html', 
+    return render_to_response('h1ds_mdsplus/node.html', 
                               {'children':children, 
                                'members':members, 
                                'data':data,
@@ -144,9 +159,10 @@ def shot_overview(request, tree="", shot=-1, format="html", path=""):
 
 
 def tree_overview(request, tree, format="html"):
-    return HttpResponseRedirect(reverse('mds-shot-overview', kwargs={'tree':tree, 'shot':-1}))#, 'format':format}))
+    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':-1}))#, 'format':format}))
 
 def request_shot(request):
+    """Redirect to shot, as requested by HTTP post."""
     shot = request.POST['requested-shot']
     input_path = request.POST['input-path']
     input_tree = request.POST['input-tree']

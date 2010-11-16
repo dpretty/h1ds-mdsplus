@@ -3,7 +3,7 @@
 {% load templatetable %}
 {% block leftpanel %}
 <div id="mdsplus-breadcrumb">
-<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}<a href="{% url mds-path-detail input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < {{shot}} > <a href="{% url mds-path-detail input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}</p>
+<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < {{shot}} > <a href="{% url mds-node input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}</p>
 </div>
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
