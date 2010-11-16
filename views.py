@@ -47,6 +47,22 @@ def get_breadcrumbs(node, tree, shot):
             cont = False
     return breadcrumbs[::-1]
 
+def get_subnodes(tree, shot, node):
+    url_mapper = tree_shot_mapper(tree, shot)
+
+    try:
+        children = map(url_mapper, node.getChildren())
+    except:
+        children = None
+
+    try:
+        members = map(url_mapper, node.getMembers())
+    except:
+        members = None
+        
+    return members, children
+
+
 ###########################
 #         Views           #
 # (return HTTP responses) #
@@ -59,47 +75,31 @@ def tree_list(request, format="html"):
                               {'trees':trees}, 
                               context_instance=RequestContext(request))
 
+def node_raw(node):
+    raw_data = node.raw_of().data().tostring()
+    return HttpResponse(raw_data, mimetype='application/octet-stream')
+
+
 def node(request, tree="", shot=-1, format="html", path=""):
     """Display MDS tree node (member or child)."""
     
+    # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html')
 
-    input_path = path
-    input_tree = tree
-    
+    # Get top node
     mdspath="\\%s::top" %(tree)
     if path:
-        path = path.strip(':')
-        mdspath = mdspath + '.' + path.replace('/','.')
-    ## ugly hack - looks like sometimes the proper tree isn't returned??
-    #try:
+        mdspath = mdspath + '.' + path.strip(':').replace('/','.')
+
     t = MDSplus.Tree(tree, int(shot), 'READONLY')
     top_node = t.getNode(mdspath)
 
+    # We don't need any further info for raw data
     if view == 'raw':
-        d = top_node.raw_of().data().tostring()
-        return HttpResponse(d, mimetype='application/octet-stream')
-    url_mapper = tree_shot_mapper(tree, shot)
+        return node_raw(top_node)
 
-        
-    child_nodes = top_node.getChildren()
-
-    #if child_nodes.__class__ == None.__class__:
-    #    children = None
-    #else:
-    try:
-        children = map(url_mapper, child_nodes)
-    except:
-        children = None
-    member_nodes = top_node.getMembers()
-
-    #if member_nodes.__class__ == None.__class__:
-    #    members = None
-    #else:
-    try:
-        members = map(url_mapper, member_nodes)
-    except:
-        members = None
+    # Get tree navigation info
+    members, children = get_subnodes(tree, shot, top_node)
     
     # get tdi expression
     try:
@@ -149,11 +149,11 @@ def node(request, tree="", shot=-1, format="html", path=""):
                                'members':members, 
                                'data':data,
                                'datatype':datatype,
-                               'input_tree':input_tree,
+                               'input_tree':tree,
                                'tdi':tdi,
-                               'input_path':input_path,
+                               'input_path':path,
                                'shot':shot,
-                               'breadcrumbs':get_breadcrumbs(top_node, input_tree, shot)}, 
+                               'breadcrumbs':get_breadcrumbs(top_node, tree, shot)}, 
                               context_instance=RequestContext(request))
     
 
