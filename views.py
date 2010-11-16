@@ -34,33 +34,40 @@ def tree_shot_mapper(tree, shot):
         return (data.getNodeName(), url, dd)
     return map_url
 
-def get_breadcrumbs(node, tree, shot):
+def get_breadcrumbs(mds_node, tree, shot):
     breadcrumbs = []
     cont = True
     url_mapper = tree_shot_mapper(tree, shot)
     while cont:
         try:
-            if node.__class__ != None.__class__:
-                breadcrumbs.append(url_mapper(node))
-            node = node.getParent()
+            if mds_node.__class__ != None.__class__:
+                breadcrumbs.append(url_mapper(mds_node))
+            mds_node = mds_node.getParent()
         except:
             cont = False
     return breadcrumbs[::-1]
 
-def get_subnodes(tree, shot, node):
+def get_subnodes(tree, shot, mds_node):
     url_mapper = tree_shot_mapper(tree, shot)
 
     try:
-        children = map(url_mapper, node.getChildren())
+        children = map(url_mapper, mds_node.getChildren())
     except:
         children = None
 
     try:
-        members = map(url_mapper, node.getMembers())
+        members = map(url_mapper, mds_node.getMembers())
     except:
         members = None
         
     return members, children
+
+def get_tdi(mds_node):
+    try:
+        tdi = unicode(mds_node.getData())
+    except:
+        tdi = u''
+    return tdi
 
 
 ###########################
@@ -75,8 +82,8 @@ def tree_list(request, format="html"):
                               {'trees':trees}, 
                               context_instance=RequestContext(request))
 
-def node_raw(node):
-    raw_data = node.raw_of().data().tostring()
+def node_raw(mds_node):
+    raw_data = mds_node.raw_of().data().tostring()
     return HttpResponse(raw_data, mimetype='application/octet-stream')
 
 
@@ -86,39 +93,35 @@ def node(request, tree="", shot=-1, format="html", path=""):
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html')
 
-    # Get top node
-    mdspath="\\%s::top" %(tree)
+    # Get node
+    mds_path="\\%s::top" %(tree)
     if path:
-        mdspath = mdspath + '.' + path.strip(':').replace('/','.')
-
+        mds_path = mds_path + '.' + path.strip(':').replace('/','.')
     t = MDSplus.Tree(tree, int(shot), 'READONLY')
-    top_node = t.getNode(mdspath)
+    mds_node = t.getNode(mds_path)
 
     # We don't need any further info for raw data
     if view == 'raw':
-        return node_raw(top_node)
+        return node_raw(mds_node)
 
     # Get tree navigation info
-    members, children = get_subnodes(tree, shot, top_node)
+    members, children = get_subnodes(tree, shot, mds_node)
     
-    # get tdi expression
-    try:
-        tdi = unicode(top_node.getData())
-    except:
-        tdi = u''
+    # Get tdi expression
+    tdi = get_tdi(mds_node)
 
     datatype = 'unknown'    
     data = []
     data_exists = True
     try:
-        data = top_node.data()
+        data = mds_node.data()
         data_shape = shape(data)
     except TdiException:
         data_exists = False
     fft_lit = []
     if data_exists:
         try:
-            dim = top_node.dim_of().data()
+            dim = mds_node.dim_of().data()
             if len(data_shape)>1:
                 tmp_data = []
                 for ddi, dd in enumerate(data):
@@ -153,7 +156,7 @@ def node(request, tree="", shot=-1, format="html", path=""):
                                'tdi':tdi,
                                'input_path':path,
                                'shot':shot,
-                               'breadcrumbs':get_breadcrumbs(top_node, tree, shot)}, 
+                               'breadcrumbs':get_breadcrumbs(mds_node, tree, shot)}, 
                               context_instance=RequestContext(request))
     
 
