@@ -97,26 +97,43 @@ def node_raw(mds_node):
 
 
 def node_signal(request, view, node_info, data, mds_node):
-        dim = mds_node.dim_of().data()
-        if len(shape(data))>1:
-            tmp_data = []
-            for ddi, dd in enumerate(data):
-                tmp_data.append([[dim[i], j] for i,j in enumerate(data[ddi])])
-            data = tmp_data
-            template_name = 'h1ds_mdsplus/node_signal2d.html'
-        else:
-            # assume signal
-            n_samples = 1000
-            n_jump = int(float(len(data))/n_samples)
-            if n_jump > 2:
+    
+    if view == 'html':    
+        n_samples_str = request.GET.get('n_samples','1000')
+    else:
+        n_samples_str = request.GET.get('n_samples','all')
+    
+    if not n_samples_str.lower() == 'all':
+        try:
+            n_samples_int = int(n_samples_str)
+        except:
+            n_samples_str = 'all'
+
+    dim = mds_node.dim_of().data()
+    
+    if len(shape(data))>1:
+        tmp_data = []
+        if n_samples_str.lower() != 'all':
+            n_jump = int(float(len(data))/n_samples_int)
+            if n_jump > 1:
+                dim = dim[::n_jump]
+                data = [d[::n_jump] for d in data]
+        for ddi, dd in enumerate(data):
+            tmp_data.append([[dim[i], j] for i,j in enumerate(dd)])
+        data = tmp_data
+    else:
+        if n_samples_str.lower() != 'all':
+            n_jump = int(float(len(data))/n_samples_int)
+            if n_jump > 1:
                 data = data[::n_jump]
                 dim = dim[::n_jump]
-            data = [[dim[i], j] for i,j in enumerate(data)]
-            template_name = 'h1ds_mdsplus/node_signal.html'
-        node_info.update({'data':data})
-        return render_to_response(template_name, 
-                                  node_info,
-                                  context_instance=RequestContext(request))
+        data = [[[dim[i], j] for i,j in enumerate(data)],]
+
+    template_name = 'h1ds_mdsplus/node_signal.html'
+    node_info.update({'data':data})
+    return render_to_response(template_name, 
+                              node_info,
+                              context_instance=RequestContext(request))
 
 def node_scalar(request, view, node_info, data, mds_node):
     template_name = 'h1ds_mdsplus/node_scalar.html'
@@ -138,7 +155,7 @@ def node(request, tree="", shot=-1, format="html", path=""):
     """Display MDS tree node (member or child)."""
     
     # Default to HTML if view type is not specified by user.
-    view = request.GET.get('view','html')
+    view = request.GET.get('view','html').lower()
 
     # Get node
     mds_path="\\%s::top" %(tree)
