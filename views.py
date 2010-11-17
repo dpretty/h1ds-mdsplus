@@ -1,5 +1,5 @@
 import os
-from numpy import int32, int64, string_, shape, array, int16, fft
+from numpy import int32, int64, string_, shape, array, int16
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
@@ -11,6 +11,15 @@ from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
 
 from models import MDSPlusTree
+
+####################################
+# Abbreviated set of mds datatypes #
+####################################
+
+signal_dtypes = [195]
+text_dtypes = [14]
+scalar_dtypes = [8, # 32bit int 
+                 ]
 
 #################################
 #        Helper functions       #
@@ -87,6 +96,44 @@ def node_raw(mds_node):
     return HttpResponse(raw_data, mimetype='application/octet-stream')
 
 
+def node_signal(request, node_info, data, mds_node):
+        dim = mds_node.dim_of().data()
+        if len(shape(data))>1:
+            tmp_data = []
+            for ddi, dd in enumerate(data):
+                tmp_data.append([[dim[i], j] for i,j in enumerate(data[ddi])])
+            data = tmp_data
+            template_name = 'h1ds_mdsplus/node_signal2d.html'
+        else:
+            # assume signal
+            n_samples = 1000
+            n_jump = int(float(len(data))/n_samples)
+            if n_jump > 2:
+                data = data[::n_jump]
+                dim = dim[::n_jump]
+            data = [[dim[i], j] for i,j in enumerate(data)]
+            template_name = 'h1ds_mdsplus/node_signal.html'
+        node_info.update({'data':data})
+        return render_to_response(template_name, 
+                                  node_info,
+                                  context_instance=RequestContext(request))
+
+def node_scalar(request, node_info, data, mds_node):
+    template_name = 'h1ds_mdsplus/node_scalar.html'
+    node_info.update({'data':data})
+    return render_to_response(template_name, 
+                              node_info,
+                              context_instance=RequestContext(request))
+
+def node_text(request, node_info, data, mds_node):
+    template_name = 'h1ds_mdsplus/node_text.html'
+    node_info.update({'data':data})
+    return render_to_response(template_name, 
+                              node_info,
+                              context_instance=RequestContext(request))
+
+
+
 def node(request, tree="", shot=-1, format="html", path=""):
     """Display MDS tree node (member or child)."""
     
@@ -110,54 +157,43 @@ def node(request, tree="", shot=-1, format="html", path=""):
     # Get tdi expression
     tdi = get_tdi(mds_node)
 
-    datatype = 'unknown'    
-    data = []
-    data_exists = True
+    # Get MDS data type for node
+    node_dtype = mds_node.dtype
+    
+    # Metadata common to all (non-binary) view types.
+    # Any variables required in base_node.html should be here.
+    node_info = {'shot':shot,
+                 'dtype':node_dtype,
+                 'tdi':tdi, 
+                 'children':children, 
+                 'members':members, 
+                 'input_tree':tree, 
+                 'input_path':path,
+                 'breadcrumbs':get_breadcrumbs(mds_node, tree, shot),
+                 }
+    
+    # Get data if the node has any.
     try:
         data = mds_node.data()
-        data_shape = shape(data)
     except TdiException:
-        data_exists = False
-    fft_lit = []
-    if data_exists:
-        try:
-            dim = mds_node.dim_of().data()
-            if len(data_shape)>1:
-                tmp_data = []
-                for ddi, dd in enumerate(data):
-                    tmp_data.append([[dim[i], j] for i,j in enumerate(data[ddi])])
-                data = tmp_data
-                datatype = 'signal2d'
-            else:
-                # assume signal
-                # do fft:
-                #max_t = 
-                
-                n_samples = 1000
-                n_jump = int(float(len(data))/n_samples)
-                if n_jump > 2:
-                    data = data[::n_jump]
-                    dim = dim[::n_jump]
-                data = [[dim[i], j] for i,j in enumerate(data)]
-                datatype = 'signal'
-        except TdiException:
-            if type(data) in [int, float, int32, int64]:
-                datatype = 'number'
-            elif type(data) in [str, string_]:
-                datatype = 'string'
+        # If we can't get data for the node, return the 'no data' page.
+        return render_to_response('h1ds_mdsplus/node_no_data.html', 
+                                  node_info,
+                                  context_instance=RequestContext(request))
 
+    if node_dtype in signal_dtypes:
+        return node_signal(request, node_info, data, mds_node)
+  
+    elif node_dtype in scalar_dtypes:
+        return node_scalar(request, node_info, data, mds_node)
+        
+    elif node_dtype in text_dtypes:
+        return node_text(request, node_info, data, mds_node)
 
-    return render_to_response('h1ds_mdsplus/node.html', 
-                              {'children':children, 
-                               'members':members, 
-                               'data':data,
-                               'datatype':datatype,
-                               'input_tree':tree,
-                               'tdi':tdi,
-                               'input_path':path,
-                               'shot':shot,
-                               'breadcrumbs':get_breadcrumbs(mds_node, tree, shot)}, 
-                              context_instance=RequestContext(request))
+    else:
+        return render_to_response('h1ds_mdsplus/node_unconfigured.html', 
+                                  node_info,
+                                  context_instance=RequestContext(request))
     
 
 

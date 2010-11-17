@@ -1,0 +1,26 @@
+{% extends "h1ds_mdsplus/base_node.html" %}
+
+{% block node_data %}
+<div id="placeholder" style="width:100%;height:300px"></div>
+
+<script>
+$(function () {
+var d = {{data}};
+
+var options = {
+        zoom: {
+            interactive: true
+        },
+        pan: {
+            interactive: true
+        }
+    };
+
+var placeholder = $("#placeholder");
+$.plot(placeholder, [d], options);
+});
+</script>
+
+
+
+{% endblock %}

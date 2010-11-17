@@ -75,47 +75,15 @@
 
 {% block mdscontent %}
 
-{% ifnotequal datatype 'unknown' %}
-<h3>Data:</h3>
+{% block node_data %}
+{% endblock %}
+
+<h3>Data type:</h3>
 <hr/>
-{% ifequal datatype 'number' %}
-<p>{{data}}</p>
-{% endifequal %}
-
-{% ifequal datatype 'string' %}
-<p>{{data}}</p>
-{% endifequal %}
-
-{% if datatype == 'signal' or datatype == 'signal2d' %}
-<div id="placeholder" style="width:100%;height:300px"></div>
-
-<script>
-$(function () {
-var d = {{data}};
-
-var options = {
-        zoom: {
-            interactive: true
-        },
-        pan: {
-            interactive: true
-        }
-    };
-
-var placeholder = $("#placeholder");
-
-{% ifequal datatype 'signal2d' %}
-$.plot(placeholder, d, options);
-{% else %}
-$.plot(placeholder, [d], options);
-{% endifequal %}
-});
-</script>
-{% endif %}
-{% endifnotequal %}
-{% if tdi%}
+{{dtype}}
+<hr/>
 <h3>TDI expression:</h3>
 <hr/>
 {{tdi}}
-{% endif %}
+
 {% endblock %}
