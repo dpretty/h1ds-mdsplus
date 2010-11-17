@@ -1,4 +1,5 @@
 import os
+import xml.etree.ElementTree as etree
 from numpy import int32, int64, string_, shape, array, int16
 
 from django.template import RequestContext
@@ -96,8 +97,11 @@ def node_raw(mds_node):
     return HttpResponse(raw_data, mimetype='application/octet-stream')
 
 
-def node_signal(request, view, node_info, data, mds_node):
-    
+def node_signal(request, shot, view, node_info, data, mds_node):
+    """Supported views: html, xml."""
+
+    original_data_shape = shape(data)
+
     if view == 'html':    
         n_samples_str = request.GET.get('n_samples','1000')
     else:
@@ -111,38 +115,80 @@ def node_signal(request, view, node_info, data, mds_node):
 
     dim = mds_node.dim_of().data()
     
-    if len(shape(data))>1:
-        tmp_data = []
+    if len(original_data_shape)>1:
+        #tmp_data = []
         if n_samples_str.lower() != 'all':
             n_jump = int(float(len(data))/n_samples_int)
             if n_jump > 1:
                 dim = dim[::n_jump]
                 data = [d[::n_jump] for d in data]
-        for ddi, dd in enumerate(data):
-            tmp_data.append([[dim[i], j] for i,j in enumerate(dd)])
-        data = tmp_data
+        #for ddi, dd in enumerate(data):
+        #    tmp_data.append([[dim[i], j] for i,j in enumerate(dd)])
+        #data = tmp_data
     else:
         if n_samples_str.lower() != 'all':
             n_jump = int(float(len(data))/n_samples_int)
             if n_jump > 1:
                 data = data[::n_jump]
                 dim = dim[::n_jump]
-        data = [[[dim[i], j] for i,j in enumerate(data)],]
+        data = [data]
+        #data = [[[dim[i], j] for i,j in enumerate(data)],]
 
+
+    if view.lower() == 'xml':
+        # root element
+        data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}data',
+                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+        # add timebase element
+        timebase = etree.SubElement(data_xml, 'timebase', attrib={})
+        t_start = etree.SubElement(timebase, 't_start', attrib={})
+        t_start.text = str(dim[0])
+        delta_t = etree.SubElement(timebase, 'delta_t', attrib={})
+        delta_t.text = str(dim[1]-dim[0])
+        n_samples = etree.SubElement(timebase, 'n_samples', attrib={})
+        n_samples.text = str(len(dim))
+
+        # add shot element
+        shot = etree.SubElement(data_xml, 'shot', attrib={})
+        shot_number = etree.SubElement(shot, 'shot_number', attrib={})
+        shot_number.text = '12345' #str(shot)
+        shot_time = etree.SubElement(shot, 'shot_time', attrib={})
+        shot_time.text = 'sometime'
+
+        # add signal
+
+        signal = etree.SubElement(data_xml, 'signal', attrib={})
+
+        ## make xlink to signal binary 
+        signal.text = 'xlink signal here'
+
+
+        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+
+
+    tmp_data = []
+    for ddi, dd in enumerate(data):
+        tmp_data.append([[dim[i], j] for i,j in enumerate(dd)])
+    data = tmp_data
+
+    displayed_data_shape = shape(array(data))[:-1] # last element of shape() is just the timebase we've added in for jflot
+    
     template_name = 'h1ds_mdsplus/node_signal.html'
-    node_info.update({'data':data})
+    node_info.update({'data':data, 
+                      'original_shape':original_data_shape,
+                      'displayed_shape':displayed_data_shape})
     return render_to_response(template_name, 
                               node_info,
                               context_instance=RequestContext(request))
 
-def node_scalar(request, view, node_info, data, mds_node):
+def node_scalar(request, shot, view, node_info, data, mds_node):
     template_name = 'h1ds_mdsplus/node_scalar.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
                               node_info,
                               context_instance=RequestContext(request))
 
-def node_text(request, view, node_info, data, mds_node):
+def node_text(request, shot, view, node_info, data, mds_node):
     template_name = 'h1ds_mdsplus/node_text.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
@@ -200,13 +246,13 @@ def node(request, tree="", shot=-1, format="html", path=""):
                                   context_instance=RequestContext(request))
 
     if node_dtype in signal_dtypes:
-        return node_signal(request, view, node_info, data, mds_node)
+        return node_signal(request, shot, view, node_info, data, mds_node)
   
     elif node_dtype in scalar_dtypes:
-        return node_scalar(request, view, node_info, data, mds_node)
+        return node_scalar(request, shot, view, node_info, data, mds_node)
         
     elif node_dtype in text_dtypes:
-        return node_text(request, view, node_info, data, mds_node)
+        return node_text(request, shot, view, node_info, data, mds_node)
 
     else:
         # TODO: alternative response for non-HTML views
