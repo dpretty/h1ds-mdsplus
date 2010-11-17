@@ -96,7 +96,7 @@ def node_raw(mds_node):
     return HttpResponse(raw_data, mimetype='application/octet-stream')
 
 
-def node_signal(request, node_info, data, mds_node):
+def node_signal(request, view, node_info, data, mds_node):
         dim = mds_node.dim_of().data()
         if len(shape(data))>1:
             tmp_data = []
@@ -118,14 +118,14 @@ def node_signal(request, node_info, data, mds_node):
                                   node_info,
                                   context_instance=RequestContext(request))
 
-def node_scalar(request, node_info, data, mds_node):
+def node_scalar(request, view, node_info, data, mds_node):
     template_name = 'h1ds_mdsplus/node_scalar.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
                               node_info,
                               context_instance=RequestContext(request))
 
-def node_text(request, node_info, data, mds_node):
+def node_text(request, view, node_info, data, mds_node):
     template_name = 'h1ds_mdsplus/node_text.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
@@ -176,21 +176,23 @@ def node(request, tree="", shot=-1, format="html", path=""):
     try:
         data = mds_node.data()
     except TdiException:
+        # TODO: alternative response for non-html views
         # If we can't get data for the node, return the 'no data' page.
         return render_to_response('h1ds_mdsplus/node_no_data.html', 
                                   node_info,
                                   context_instance=RequestContext(request))
 
     if node_dtype in signal_dtypes:
-        return node_signal(request, node_info, data, mds_node)
+        return node_signal(request, view, node_info, data, mds_node)
   
     elif node_dtype in scalar_dtypes:
-        return node_scalar(request, node_info, data, mds_node)
+        return node_scalar(request, view, node_info, data, mds_node)
         
     elif node_dtype in text_dtypes:
-        return node_text(request, node_info, data, mds_node)
+        return node_text(request, view, node_info, data, mds_node)
 
     else:
+        # TODO: alternative response for non-HTML views
         return render_to_response('h1ds_mdsplus/node_unconfigured.html', 
                                   node_info,
                                   context_instance=RequestContext(request))
