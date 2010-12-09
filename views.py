@@ -6,21 +6,39 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
+#from django.contrib.csrf.middleware import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 
 import MDSplus
 from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
 
 from models import MDSPlusTree
+from utils import discretise_array
 
 ####################################
 # Abbreviated set of mds datatypes #
 ####################################
 
-signal_dtypes = [195]
+signal_dtypes = [195, # signal
+                 211, # 'data with units' - seems to be used for link to signal??
+                 ]
 text_dtypes = [14]
 scalar_dtypes = [8, # 32bit int 
+                 52, # single precision real
                  ]
+
+# if node, then we get the dtype of the node
+node_dtypes = [192,
+               ]
+
+# these give segfaults through mdsobjects - need to investigate
+disabled_nodes = [50331887, # John's spectrscopy.survey:spectrum - gives segfault
+                  14, # .ech:i_beam (function call)
+                  8, # log.heating:pulse_width
+                  449, # .operations:i_sec
+                  50332106, # .SPECTROSCOPY.SURVEY:SPECT_NOBSLN
+                  ]
 
 #################################
 #        Helper functions       #
@@ -93,9 +111,46 @@ def tree_list(request, format="html"):
                               context_instance=RequestContext(request))
 
 def node_raw(mds_node):
+    """Return raw mds binary."""
     raw_data = mds_node.raw_of().data().tostring()
     return HttpResponse(raw_data, mimetype='application/octet-stream')
 
+def node_signal_bin(mds_node, data):
+    """Use Boyd's quantised compression to return binary data."""
+    discretised_data = discretise_array(data)
+    dim = mds_node.dim_of().data()
+
+    signal = discretised_data['iarr'].tostring()
+    response = HttpResponse(signal, mimetype='application/octet-stream')
+    response['X-H1DS-signal-min'] = discretised_data['minarr']
+    response['X-H1DS-signal-delta'] = discretised_data['deltar']
+    response['X-H1DS-dim-t0'] = dim[0]
+    response['X-H1DS-dim-delta'] = dim[1]-dim[0]
+    response['X-H1DS-dim-length'] = len(dim)
+    response['X-H1DS-signal-units'] = mds_node.units
+    response['X-H1DS-dim-units'] = mds_node.dim_of().units
+
+    return response
+
+
+def generic_xml(shot, mds_node, node_info):
+    data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    # add shot info
+    shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
+    shot_time.text = str(mds_node.getTimeInserted().date)
+    
+
+    # add mds info
+    mds_tree = etree.SubElement(data_xml, 'mds_tree', attrib={})
+    mds_tree.text = node_info['input_tree']
+    mds_path = etree.SubElement(data_xml, 'mds_path', attrib={})
+    mds_path.text = repr(mds_node)
+
+    return data_xml
 
 def node_signal(request, shot, view, node_info, data, mds_node):
     """Supported views: html, xml."""
@@ -137,31 +192,20 @@ def node_signal(request, shot, view, node_info, data, mds_node):
 
     if view.lower() == 'xml':
         # root element
-        data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}data',
-                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
-        # add timebase element
-        timebase = etree.SubElement(data_xml, 'timebase', attrib={})
-        t_start = etree.SubElement(timebase, 't_start', attrib={})
-        t_start.text = str(dim[0])
-        delta_t = etree.SubElement(timebase, 'delta_t', attrib={})
-        delta_t.text = str(dim[1]-dim[0])
-        n_samples = etree.SubElement(timebase, 'n_samples', attrib={})
-        n_samples.text = str(len(dim))
-
-        # add shot element
-        shot = etree.SubElement(data_xml, 'shot', attrib={})
-        shot_number = etree.SubElement(shot, 'shot_number', attrib={})
-        shot_number.text = '12345' #str(shot)
-        shot_time = etree.SubElement(shot, 'shot_time', attrib={})
-        shot_time.text = 'sometime'
+        data_xml = generic_xml(shot, mds_node, node_info)
 
         # add signal
+        signal = etree.SubElement(data_xml, 'data', attrib={'type':'signal'})
 
-        signal = etree.SubElement(data_xml, 'signal', attrib={})
-
-        ## make xlink to signal binary 
-        signal.text = 'xlink signal here'
-
+        ## make xlink ? to signal binary 
+        ## for now, just text link
+        #### should use proper url joining rather than string hacking...
+        signal.text = request.build_absolute_uri()
+        if '?' in signal.text:
+            # it doesn't matter if we have multiple 'view' get queries - only the last one is used
+            signal.text += '&view=bin' 
+        else:
+            signal.text += '?view=bin'
 
         return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
 
@@ -182,6 +226,16 @@ def node_signal(request, shot, view, node_info, data, mds_node):
                               context_instance=RequestContext(request))
 
 def node_scalar(request, shot, view, node_info, data, mds_node):
+
+    if view.lower() == 'xml':
+        # root element
+        data_xml = generic_xml(shot, mds_node, node_info)
+
+        # add signal
+        signal = etree.SubElement(data_xml, 'data', attrib={'type':'scalar'})
+        signal.text = str(data)
+        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+
     template_name = 'h1ds_mdsplus/node_scalar.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
@@ -189,6 +243,15 @@ def node_scalar(request, shot, view, node_info, data, mds_node):
                               context_instance=RequestContext(request))
 
 def node_text(request, shot, view, node_info, data, mds_node):
+    if view.lower() == 'xml':
+        # root element
+        data_xml = generic_xml(shot, mds_node, node_info)
+
+        # add signal
+        signal = etree.SubElement(data_xml, 'data', attrib={'type':'text'})
+        signal.text = data
+        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+
     template_name = 'h1ds_mdsplus/node_text.html'
     node_info.update({'data':data})
     return render_to_response(template_name, 
@@ -223,6 +286,9 @@ def node(request, tree="", shot=-1, format="html", path=""):
     # Get MDS data type for node
     node_dtype = mds_node.dtype
     
+    if node_dtype in node_dtypes:
+        node_dtype = mds_node.getData().dtype
+
     # Metadata common to all (non-binary) view types.
     # Any variables required in base_node.html should be here.
     node_info = {'shot':shot,
@@ -235,6 +301,12 @@ def node(request, tree="", shot=-1, format="html", path=""):
                  'breadcrumbs':get_breadcrumbs(mds_node, tree, shot),
                  }
     
+    if mds_node.getNid() in disabled_nodes:
+        return render_to_response('h1ds_mdsplus/node_disabled.html', 
+                                  node_info,
+                                  context_instance=RequestContext(request))
+
+
     # Get data if the node has any.
     try:
         data = mds_node.data()
@@ -246,7 +318,10 @@ def node(request, tree="", shot=-1, format="html", path=""):
                                   context_instance=RequestContext(request))
 
     if node_dtype in signal_dtypes:
-        return node_signal(request, shot, view, node_info, data, mds_node)
+        if view == 'bin':
+            return node_signal_bin(mds_node, data)
+        else:
+            return node_signal(request, shot, view, node_info, data, mds_node)
   
     elif node_dtype in scalar_dtypes:
         return node_scalar(request, shot, view, node_info, data, mds_node)
@@ -271,3 +346,31 @@ def request_shot(request):
     input_path = request.POST['input-path']
     input_tree = request.POST['input-tree']
     return HttpResponseRedirect('/'.join([input_tree, shot, input_path]))
+
+def request_url(request):
+    """Return the URL for the requested MDS parameters."""
+
+    shot = request.GET['shot']
+    path = request.GET['mds-path']
+    tree = request.GET['mds-tree']
+
+    
+    url_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    # add mds info
+    shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    mds_path = etree.SubElement(url_xml, 'mds_path', attrib={})
+    mds_path.text = path
+    mds_tree = etree.SubElement(url_xml, 'mds_tree', attrib={})
+    mds_tree.text = tree
+
+    
+    url_pre_path = '/mdsplus/%s/%d/' %(tree, int(shot)) 
+    url = url_pre_path + path.strip('.').strip(':').replace('.','/').replace(':','/')
+    
+    url_el = etree.SubElement(url_xml, 'mds_url', attrib={})
+    url_el.text = url
+
+    return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')

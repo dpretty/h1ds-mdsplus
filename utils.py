@@ -18,7 +18,8 @@ from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
 try: 
     from pyfusion.hacked_numpy_io import savez
 except:
-    print("Couldn't load pyfusion.hacked_numpy_io.py, compression much less effective")
+    pass
+    #print("Couldn't load pyfusion.hacked_numpy_io.py, compression much less effective")
 
 # this connection with pyfusion.settings ONLY captures the value at startup - 
 # i.e. doesn't respond to changes from within python
@@ -26,7 +27,8 @@ try:
     from pyfusion.pyfusion_settings import VERBOSE as verbose
 except: 
     verbose=1
-    print("assuming verbose output")
+    
+    #print("assuming verbose output")
 
     from numpy import savez
 
