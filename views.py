@@ -1,20 +1,26 @@
 import os
 import xml.etree.ElementTree as etree
 from numpy import int32, int64, string_, shape, array, int16
+from xml.dom import minidom
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
-#from django.contrib.csrf.middleware import csrf_exempt
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.csrf.middleware import csrf_exempt
+import django.dispatch
+from django.core import serializers
 
 import MDSplus
 from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
 
-from models import MDSPlusTree
+from models import MDSPlusTree, MDSEventInstance
 from utils import discretise_array
+from datetime import datetime
+
+mdsevent_signal = django.dispatch.Signal(providing_args=["name", "time", "data"])
+
 
 ####################################
 # Abbreviated set of mds datatypes #
@@ -97,6 +103,8 @@ def get_tdi(mds_node):
         tdi = u''
     return tdi
 
+
+simple_xml_value = lambda doc, tag: doc.getElementsByTagName(tag)[0].firstChild.nodeValue
 
 ###########################
 #         Views           #
@@ -260,7 +268,7 @@ def node_text(request, shot, view, node_info, data, mds_node):
 
 
 
-def node(request, tree="", shot=-1, format="html", path=""):
+def node(request, tree="", shot=0, format="html", path=""):
     """Display MDS tree node (member or child)."""
     
     # Default to HTML if view type is not specified by user.
@@ -270,7 +278,14 @@ def node(request, tree="", shot=-1, format="html", path=""):
     mds_path="\\%s::top" %(tree)
     if path:
         mds_path = mds_path + '.' + path.strip(':').replace('/','.')
-    t = MDSplus.Tree(tree, int(shot), 'READONLY')
+    if shot == 0:
+        try:
+            t = MDSplus.Tree(tree, int(shot), 'READONLY')
+        except:
+            t = MDSplus.Tree(tree, -1, 'READONLY')
+    else:
+        t = MDSplus.Tree(tree, int(shot), 'READONLY')
+            
     mds_node = t.getNode(mds_path)
 
     # We don't need any further info for raw data
@@ -338,7 +353,7 @@ def node(request, tree="", shot=-1, format="html", path=""):
 
 
 def tree_overview(request, tree, format="html"):
-    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':-1}))#, 'format':format}))
+    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))#, 'format':format}))
 
 def request_shot(request):
     """Redirect to shot, as requested by HTTP post."""
@@ -374,3 +389,37 @@ def request_url(request):
     url_el.text = url
 
     return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
+
+@csrf_exempt
+def mds_event(request, event_name):
+    """Accept HTTP POST  MDS event and trigger a corresponding Django signal"""
+
+    if request.method == 'POST':
+        data = request.POST['data']
+        new_event = MDSEventInstance(name=event_name, data=data)
+        new_event.save()
+
+    return HttpResponseRedirect('/')
+
+
+def list_events(request, event_name = '', max_events=10):
+    events = MDSEventInstance.objects.all()[:max_events]
+    if request.is_ajax():
+        events_json = serializers.serialize('json', reversed(events))
+        return HttpResponse(events_json, 'application/javascript')
+    else:
+        return render_to_response('h1ds_mdsplus/event_list.html', 
+                                  {'events':events},
+                                  context_instance=RequestContext(request))
+
+def latest_shot(request, tree_name):
+    try:
+        t = MDSplus.Tree(tree_name, 0, 'READONLY')
+        latest_shot = t.shot
+    except:
+        latest_shot=-1
+    if request.is_ajax():
+        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+    else:
+        return HttpResponseRedirect('/')
+        

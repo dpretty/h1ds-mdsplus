@@ -2,6 +2,11 @@
 
 {% load templatetable %}
 {% block leftpanel %}
+
+{% if input_tree %}
+<h3>latest {{input_tree}} shot: <span id="latest_shot"></span></h3>
+{% endif %}
+
 <div id="mdsplus-breadcrumb">
 <p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < {{shot}} > <a href="{% url mds-node input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}</p>
 </div>
@@ -86,4 +91,26 @@
 <hr/>
 {{tdi}}
 
+{% endblock %}
+
+{% block extrascript %}
+{% if input_tree %}
+<script>
+function updateLatestShot() {
+ $.getJSON('/mdsplus/latest_shot/{{input_tree}}/', function(d){
+ $("#latest_shot").text(d.latest_shot);
+ }); // end getJSON
+} // end function
+
+function autoUpdate() {
+setInterval(updateLatestShot, 2000);
+}
+
+$(document).ready(function() {
+updateLatestShot();
+autoUpdate();
+});
+
+</script>
+{% endif %}
 {% endblock %}
