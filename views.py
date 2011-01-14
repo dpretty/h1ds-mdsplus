@@ -53,19 +53,21 @@ disabled_nodes = [50331887, # John's spectrscopy.survey:spectrum - gives segfaul
 
 def tree_shot_mapper(tree, shot):
     def map_url(data):
-        pre_path = '/mdsplus/%s/%d/' %(tree, int(shot)) ## shouldn't hardcode this here...
+        data_tree=data.__str__().strip('\\').split('::')[0]
+        pre_path = '/mdsplus/%s/%d/' %(data_tree, int(shot)) ## shouldn't hardcode this here...
         try:
             ## this causes segfault for children of http://h1svr/mdsplus/h1data/67896/OPERATIONS/ !!??!
             #dd = data.data()
-            dd = 0
+            #dd = 0
+            ## let's return node ID rather than data - use it for javascript navigation
+            dd = data.getNid()
         except:
             dd = None
-        ## hack..
-        if not '::' in repr(data):
-            url = pre_path +repr(data).strip('.').strip(':').replace('.','/').replace(':','/')
-        else:
-            url = pre_path
-        return (data.getNodeName(), url, dd)
+        
+        #url = pre_path + data.__str__()[len(tree)+3:].strip('.').strip(':').replace('.','/').replace(':','/')
+        url = pre_path + data.__str__().split('::')[1].strip('.').strip(':').replace('.','/').replace(':','/')
+
+        return (data.getNodeName(), url, dd, data_tree)
     return map_url
 
 def get_breadcrumbs(mds_node, tree, shot):
@@ -268,16 +270,17 @@ def node_text(request, shot, view, node_info, data, mds_node):
 
 
 
-def node(request, tree="", shot=0, format="html", path=""):
+def node(request, tree="", shot=0, format="html", path="top"):
     """Display MDS tree node (member or child)."""
     
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
 
     # Get node
-    mds_path="\\%s::top" %(tree)
-    if path:
-        mds_path = mds_path + '.' + path.strip(':').replace('/','.')
+    #mds_path="\\%s::top" %(tree)
+    #if path:
+    #    #mds_path = mds_path + '.' + path.strip(':').replace('/','.')
+    mds_path = '\\' + tree + '::' + path.strip(':').replace('/','.')
     if shot == 0:
         try:
             t = MDSplus.Tree(tree, int(shot), 'READONLY')
@@ -287,14 +290,14 @@ def node(request, tree="", shot=0, format="html", path=""):
         t = MDSplus.Tree(tree, int(shot), 'READONLY')
             
     mds_node = t.getNode(mds_path)
-
     # We don't need any further info for raw data
     if view == 'raw':
         return node_raw(mds_node)
 
     # Get tree navigation info
     members, children = get_subnodes(tree, shot, mds_node)
-    
+
+    debug_data = mds_node.getNid()
     # Get tdi expression
     tdi = get_tdi(mds_node)
 
@@ -314,6 +317,7 @@ def node(request, tree="", shot=0, format="html", path=""):
                  'input_tree':tree, 
                  'input_path':path,
                  'breadcrumbs':get_breadcrumbs(mds_node, tree, shot),
+                 'debug_data':debug_data,
                  }
     
     if mds_node.getNid() in disabled_nodes:
@@ -423,3 +427,22 @@ def latest_shot(request, tree_name):
     else:
         return HttpResponseRedirect('/')
         
+
+def mds_navigation_subtree(request, tree_name, shot, node_id):
+    if request.is_ajax():
+        shot = int(shot)
+        tsm = tree_shot_mapper(tree_name, shot)
+        t = MDSplus.Tree(tree_name, shot, 'READONLY')
+        node = MDSplus.TreeNode(int(node_id), t)
+        descendants = node.getDescendants()
+        try:
+            desc_data = [[tsm(i),str(i.getNid())] for i in descendants]
+            js_desc_data = ['{"url":"%s", "nid":"%s", "name":"%s", "tree":"%s"}' %(j[0][1], j[1], j[0][0], j[0][3]) for j in desc_data]
+            output_js = '{"nodes":[%s]}' %(','.join(js_desc_data))
+        except TypeError:
+            output_js = '{"nodes":[]}'
+        return HttpResponse(output_js, 'application/javascript')
+
+    else:
+        return HttpResponseRedirect('/')
+    

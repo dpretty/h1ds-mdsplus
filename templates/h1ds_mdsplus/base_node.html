@@ -4,11 +4,11 @@
 {% block leftpanel %}
 
 {% if input_tree %}
-<h3>latest {{input_tree}} shot: <span id="latest_shot"></span></h3>
+<h3>latest <span id="mds-nav-treename">{{input_tree}}</span> shot: <span class="latest_shot"></span></h3>
 {% endif %}
 
 <div id="mdsplus-breadcrumb">
-<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < {{shot}} > <a href="{% url mds-node input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}</p>
+<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p>
 </div>
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
@@ -22,9 +22,10 @@
  </FORM>
 </div>
 
-<div>
-{% for b in breadcrumbs %} > {% if not forloop.last %}<a href="{{b.1}}">{{b.0}}</a> {% else %} {{b.0}} {% endif %}<br/>{% endfor %}
-</div>
+
+<ul class="mds-tree">
+{% for b in breadcrumbs %}{% if not forloop.last %}<li class="mds-node-item unpopulated"><span class="mds-node-name"><a href="{{b.1}}">{{b.0}}</a></span>{% else %}<li>{{b.0}}{% endif %}<span class="mds-node-id">{{b.2}}</span><span class="mds-node-tree">{{b.3}}</span></li>{% endfor %}
+</ul>
 
 <h3>Children:</h3>
 <table width="100%" class="side-table">
@@ -90,7 +91,8 @@
 <h3>TDI expression:</h3>
 <hr/>
 {{tdi}}
-
+<hr/>
+{{debug_data}}
 {% endblock %}
 
 {% block extrascript %}
@@ -98,7 +100,7 @@
 <script>
 function updateLatestShot() {
  $.getJSON('/mdsplus/latest_shot/{{input_tree}}/', function(d){
- $("#latest_shot").text(d.latest_shot);
+ $(".latest_shot").text(d.latest_shot);
  }); // end getJSON
 } // end function
 
