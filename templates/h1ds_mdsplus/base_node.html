@@ -8,7 +8,7 @@
 {% endif %}
 
 <div id="mdsplus-breadcrumb">
-<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p>
+<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p>
 </div>
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
@@ -17,6 +17,7 @@
               <INPUT type="text" id="requested-shot" name="requested-shot">
     <INPUT type="hidden" name="input-path" value="{{input_path}}">
     <INPUT type="hidden" name="input-tree" value="{{input_tree}}">
+    <INPUT type="hidden" name="input-query" value="{{input_query}}">
     <INPUT type="submit" value="go to shot">
     </P>
  </FORM>

@@ -142,6 +142,22 @@ def node_signal_bin(mds_node, data):
 
     return response
 
+def node_signal_csv(mds_node, data, node_info):
+
+    dim = mds_node.dim_of().data()
+
+    output = ["# shot: %s, tree: %s, path: %s" %(str(node_info['shot']), str(node_info['input_tree']), str(node_info['input_path']))]
+    output.append("# time, signal")
+    for di,d in enumerate(data):
+        output.append("%e, %e" %(dim[di], d))
+
+    output = '\n'.join(output)
+
+    response = HttpResponse(output, mimetype='text/csv')
+
+    return response
+
+
 
 def generic_xml(shot, mds_node, node_info):
     data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
@@ -316,6 +332,7 @@ def node(request, tree="", shot=0, format="html", path="top"):
                  'members':members, 
                  'input_tree':tree, 
                  'input_path':path,
+                 'input_query':request.GET.urlencode(),
                  'breadcrumbs':get_breadcrumbs(mds_node, tree, shot),
                  'debug_data':debug_data,
                  }
@@ -339,6 +356,8 @@ def node(request, tree="", shot=0, format="html", path="top"):
     if node_dtype in signal_dtypes:
         if view == 'bin':
             return node_signal_bin(mds_node, data)
+        elif view == 'csv':
+            return node_signal_csv(mds_node, data, node_info)
         else:
             return node_signal(request, shot, view, node_info, data, mds_node)
   
@@ -364,7 +383,12 @@ def request_shot(request):
     shot = request.POST['requested-shot']
     input_path = request.POST['input-path']
     input_tree = request.POST['input-tree']
-    return HttpResponseRedirect('/'.join([input_tree, shot, input_path]))
+    input_query = request.POST['input-query']
+    return_url = '/'.join([input_tree, shot, input_path])
+    if input_query == '':
+        return HttpResponseRedirect(return_url)
+    else:        
+        return HttpResponseRedirect(return_url+'?'+input_query)
 
 def request_url(request):
     """Return the URL for the requested MDS parameters."""
