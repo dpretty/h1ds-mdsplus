@@ -17,16 +17,35 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('h1ds_mdsplus', ['MDSPlusTree'])
 
+        # Adding model 'MDSEventInstance'
+        db.create_table('h1ds_mdsplus_mdseventinstance', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('time', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('data', self.gf('django.db.models.fields.CharField')(max_length=100)),
+        ))
+        db.send_create_signal('h1ds_mdsplus', ['MDSEventInstance'])
+
 
     def backwards(self, orm):
         
         # Deleting model 'MDSPlusTree'
         db.delete_table('h1ds_mdsplus_mdsplustree')
 
+        # Deleting model 'MDSEventInstance'
+        db.delete_table('h1ds_mdsplus_mdseventinstance')
+
 
     models = {
+        'h1ds_mdsplus.mdseventinstance': {
+            'Meta': {'ordering': "('-time',)", 'object_name': 'MDSEventInstance'},
+            'data': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'})
+        },
         'h1ds_mdsplus.mdsplustree': {
-            'Meta': {'object_name': 'MDSPlusTree'},
+            'Meta': {'ordering': "('name',)", 'object_name': 'MDSPlusTree'},
             'description': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
