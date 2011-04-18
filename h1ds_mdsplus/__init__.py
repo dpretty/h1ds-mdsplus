@@ -1,10 +1,13 @@
-### load all mdsplus trees into os environment
+"""A web interface to the MDSPlus data acquisition system."""
 
 import os
 from django.db.utils import DatabaseError
 
 from h1ds_mdsplus.models import MDSPlusTree
 
+MODULE_DOC_NAME = "MDSPlus"
+
+# load all mdsplus trees into os environment
 try:
     for tree in MDSPlusTree.objects.all():
         os.environ['%s_path' %tree.name] = tree.path
