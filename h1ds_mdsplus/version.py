@@ -16,7 +16,7 @@ from os.path import abspath, dirname
 def git_sha():
     loc = abspath(dirname(__file__))
     p = Popen(
-        "cd \"%s\" && git log -1 --format=format:%%h" % loc,
+        "cd \"%s\" && git log -1 --format=format:%%h\ /\ %%cD" % loc,
         shell=True,
         stdout=PIPE,
         stderr=PIPE
