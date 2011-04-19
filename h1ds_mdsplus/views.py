@@ -380,6 +380,7 @@ def node(request, tree="", shot=0, format="html", path="top"):
 
 
 def tree_overview(request, tree, format="html"):
+    """Display tree at latest shot."""
     return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))#, 'format':format}))
 
 def request_shot(request):
@@ -435,6 +436,7 @@ def mds_event(request, event_name):
 
 
 def list_events(request, event_name = '', max_events=10):
+    """List recent MDSPlus events."""
     events = MDSEventInstance.objects.all()[:max_events]
     if request.is_ajax():
         events_json = serializers.serialize('json', reversed(events))
@@ -445,6 +447,7 @@ def list_events(request, event_name = '', max_events=10):
                                   context_instance=RequestContext(request))
 
 def latest_shot(request, tree_name):
+    """Return latest shot (AJAX only)."""
     try:
         t = MDSplus.Tree(tree_name, 0, 'READONLY')
         latest_shot = t.shot
@@ -457,6 +460,7 @@ def latest_shot(request, tree_name):
         
 
 def mds_navigation_subtree(request, tree_name, shot, node_id):
+    """Return MDSPlus subtree, used fro AJAX building of tree navigation."""
     if request.is_ajax():
         shot = int(shot)
         tsm = tree_shot_mapper(tree_name, shot)
