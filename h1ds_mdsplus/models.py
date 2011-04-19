@@ -1,9 +1,9 @@
 from django.db import models
 
 class MDSPlusTree(models.Model):
-    name = models.CharField(max_length=100)
-    path = models.CharField(max_length=100)
-    description = models.CharField(max_length=500)
+    name = models.CharField(max_length=100, help_text="Tree name to be used with name_path (without _path). e.g. mydata")
+    path = models.CharField(max_length=100, help_text="A local path with the MDSplus data files. e.g. /data/mydata")
+    description = models.CharField(max_length=500, help_text="You are free to write what you like here (max length is 500 characters).")
 
     def __unicode__(self):
         return unicode(self.name)
