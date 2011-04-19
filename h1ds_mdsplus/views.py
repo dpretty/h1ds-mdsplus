@@ -297,11 +297,15 @@ def node(request, tree="", shot=0, format="html", path="top"):
     #if path:
     #    #mds_path = mds_path + '.' + path.strip(':').replace('/','.')
     mds_path = '\\' + tree + '::' + path.strip(':').replace('/','.')
-    if shot == 0:
+    if int(shot) == 0:
         try:
             t = MDSplus.Tree(tree, int(shot), 'READONLY')
-        except:
-            t = MDSplus.Tree(tree, -1, 'READONLY')
+        except TreeException:
+            return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
+                                      {'shot':shot,
+                                       'input_tree':tree,
+                                       'input_path':path},
+                                      context_instance=RequestContext(request))
     else:
         t = MDSplus.Tree(tree, int(shot), 'READONLY')
             
