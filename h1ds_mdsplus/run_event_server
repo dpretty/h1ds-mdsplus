@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-events=(UPDATEALL NE_READY PROCESSED_DATA_READY)
-
-for event in "${events[@]}"; do
-    ./event_server.py "${event}" &
-done
