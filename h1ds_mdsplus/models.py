@@ -1,4 +1,6 @@
 from django.db import models
+from celery.task.control import inspect
+
 import MDSplus
 
 from h1ds_mdsplus.tasks import mds_event_listener
@@ -47,35 +49,19 @@ class MDSEventListener(models.Model):
     def __unicode__(self):
         return unicode("%s@%s" %(self.event_name, self.server))
     
+    def start_listener(self):
+        task_name = u'h1ds_mdsplus.tasks.mds_event_listener'
+        args_string = u"(u'%s', u'%s')" %(self.server, self.event_name)
+        active_workers = inspect().active()
+        listener_is_active = False
+        if active_workers != None:
+            for worker in active_workers.keys():
+                for active_task in active_workers[worker]:
+                    if active_task['name'] == task_name and active_task['args'] == args_string:
+                        listener_is_active = True
+        if not listener_is_active:
+            self.listener = mds_event_listener.delay(self.server, self.event_name)
 
     def save(self, *args, **kwargs):
         super(MDSEventListener, self).save(*args, **kwargs)
-        self.tmp = mds_event_listener.delay(self.server, self.event_name)
-        #import os
-        #os.environ['mds_event_server'] = self.server
-        #self.event_instalce = MDSEvent(self.event_name)
- 
-       
-
-"""    
-os.environ['mds_event_server'] = 'prl60.anu.edu.au:8000'
-
-event_name = sys.argv[1]
-
-def send_to_url(mdsevent):
-    url = 'http://h1svr.anu.edu.au/mdsplus/event/%s/' %mdsevent.getName()
-    data = unicode(mdsevent.getData())
-    params = urllib.urlencode({'data':data})
-    f = urllib2.urlopen(url,params)
-
-class MDSEvent(MDSplus.Event):
-    def run(self):
-        print self.getName()
-        #send_to_url(self)
-
-event_instance = MDSEvent(event_name)
-
-while True:
-    time.sleep(10)
-
-"""
+        self.start_listener()
