@@ -15,7 +15,7 @@ import MDSplus
 from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
 
-from models import MDSPlusTree, MDSEventInstance
+from models import MDSPlusTree
 from utils import discretise_array
 from datetime import datetime
 
@@ -423,28 +423,6 @@ def request_url(request):
 
     return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
 
-@csrf_exempt
-def mds_event(request, event_name):
-    """Accept HTTP POST  MDS event and trigger a corresponding Django signal"""
-
-    if request.method == 'POST':
-        data = request.POST['data']
-        new_event = MDSEventInstance(name=event_name, data=data)
-        new_event.save()
-
-    return HttpResponseRedirect('/')
-
-
-def list_events(request, event_name = '', max_events=10):
-    """List recent MDSPlus events."""
-    events = MDSEventInstance.objects.all()[:max_events]
-    if request.is_ajax():
-        events_json = serializers.serialize('json', reversed(events))
-        return HttpResponse(events_json, 'application/javascript')
-    else:
-        return render_to_response('h1ds_mdsplus/event_list.html', 
-                                  {'events':events},
-                                  context_instance=RequestContext(request))
 
 def latest_shot(request, tree_name):
     """Return latest shot (AJAX only)."""

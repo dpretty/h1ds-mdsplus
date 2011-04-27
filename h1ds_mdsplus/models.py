@@ -6,8 +6,6 @@ import MDSplus
 from h1ds_core.models import H1DSSignal
 from h1ds_mdsplus.tasks import mds_event_listener
 
-
-
 class MDSPlusTree(models.Model):
     """Stores path information for an MDSPlus tree."""
     name = models.CharField(max_length=100, help_text="Tree name to be used with name_path (without _path). e.g. mydata")
@@ -25,24 +23,6 @@ class MDSPlusTree(models.Model):
         import os
         os.environ['%s_path' %self.name] = self.path
 
-
-class MDSEventInstance(models.Model):
-    """Records an instance of an MDSPlus event."""
-    name = models.CharField(max_length=100)
-    time = models.DateTimeField(auto_now_add=True)
-    data = models.CharField(max_length=100)
-
-
-    def __unicode__(self):
-        return unicode("%s > %s" %(self.time, self.name))
-
-    
-    class Meta:
-        ordering = ('-time',)
-        get_latest_by = 'time'
-
-
-
 class MDSEventListener(models.Model):
     """Listens for an MDSplus event from a specified server."""
     event_name = models.CharField(max_length=50)
@@ -57,7 +37,7 @@ class MDSEventListener(models.Model):
         task_name = u'h1ds_mdsplus.tasks.mds_event_listener'
         signals = {}
         for s in self.h1ds_signal.all():
-            signals[s.name] = {'active':False, 'args':u"(u'%s', u'%s', u'%s')" %(self.server, self.event_name, s.name)}
+            signals[s.name] = {'active':False, 'class':s, 'args':u"(u'%s', u'%s', u'%s')" %(self.server, self.event_name, s.name)}
         active_workers = inspect().active()
         if active_workers != None:
             for worker in active_workers.keys():
@@ -68,7 +48,7 @@ class MDSEventListener(models.Model):
 
         for sig in signals.keys():
             if not signals[sig]['active']:
-                self.listener = mds_event_listener.delay(self.server, self.event_name, sig)
+                self.listener = mds_event_listener.delay(self.server, self.event_name, signals[sig]['class'])
 
     def save(self, *args, **kwargs):
         super(MDSEventListener, self).save(*args, **kwargs)
