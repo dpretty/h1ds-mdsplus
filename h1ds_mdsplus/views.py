@@ -19,6 +19,8 @@ from models import MDSPlusTree
 from utils import discretise_array
 from datetime import datetime
 
+from h1ds_mdsplus.dtype_nodes import MDSPlusDataWrapper
+
 mdsevent_signal = django.dispatch.Signal(providing_args=["name", "time", "data"])
 
 
@@ -45,6 +47,7 @@ disabled_nodes = [50331887, # John's spectrscopy.survey:spectrum - gives segfaul
                   449, # .operations:i_sec
                   50332106, # .SPECTROSCOPY.SURVEY:SPECT_NOBSLN
                   ]
+
 
 #################################
 #        Helper functions       #
@@ -287,6 +290,31 @@ def node_text(request, shot, view, node_info, data, mds_node):
 
 
 def node(request, tree="", shot=0, format="html", path="top"):
+    """Display MDS tree node (member or child)."""
+    
+    # Default to HTML if view type is not specified by user.
+    view = request.GET.get('view','html').lower()
+
+    # Get node
+    mds_path = '\\' + tree + '::' + path.strip(':').replace('/','.')
+    if int(shot) == 0:
+        try:
+            t = MDSplus.Tree(tree, int(shot), 'READONLY')
+        except TreeException:
+            return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
+                                      {'shot':shot,
+                                       'input_tree':tree,
+                                       'input_path':path},
+                                      context_instance=RequestContext(request))
+    else:
+        t = MDSplus.Tree(tree, int(shot), 'READONLY')
+            
+    mds_node = MDSPlusDataWrapper(t.getNode(mds_path))
+
+    return mds_node.get_view(request, view)
+
+### OLD VERSION
+def _node(request, tree="", shot=0, format="html", path="top"):
     """Display MDS tree node (member or child)."""
     
     # Default to HTML if view type is not specified by user.

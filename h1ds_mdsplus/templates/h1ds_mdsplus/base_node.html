@@ -7,9 +7,11 @@
 <h3>latest <span id="mds-nav-treename">{{input_tree}}</span> shot: <span class="latest_shot"></span></h3>
 {% endif %}
 
+{% comment %}
 <div id="mdsplus-breadcrumb">
-<p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p>
+ <p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p> 
 </div>
+{% endcomment %}
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <P>
