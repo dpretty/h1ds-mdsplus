@@ -21,7 +21,6 @@ from datetime import datetime
 
 from h1ds_mdsplus.dtype_nodes import MDSPlusDataWrapper
 
-mdsevent_signal = django.dispatch.Signal(providing_args=["name", "time", "data"])
 
 
 ####################################
@@ -290,7 +289,7 @@ def node_text(request, shot, view, node_info, data, mds_node):
 
 
 def node(request, tree="", shot=0, format="html", path="top"):
-    """Display MDS tree node (member or child)."""
+    """Display MDS tree node."""
     
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
@@ -483,4 +482,11 @@ def mds_navigation_subtree(request, tree_name, shot, node_id):
 
     else:
         return HttpResponseRedirect('/')
-    
+
+def homepage(request):
+    """Show latest shot from default tree."""
+    # Tree objects are ordered by the display_order field, so if we grab 
+    # a single object it should be the one with the lowest display_order
+    # value, which is what we use as the default tree.
+    default_tree = MDSPlusTree.objects.all()[0]
+    return node(request, default_tree.name, shot=0)

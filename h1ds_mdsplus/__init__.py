@@ -8,6 +8,7 @@ from h1ds_mdsplus.models import MDSPlusTree, MDSEventListener
 MODULE_DOC_NAME = "MDSPlus"
 
 # load all mdsplus trees into os environment
+
 try:
     for tree in MDSPlusTree.objects.all():
         os.environ['%s_path' %tree.name] = tree.path
@@ -35,3 +36,4 @@ except DatabaseError:
     #
     # TODO: Find a better solution.
     pass
+

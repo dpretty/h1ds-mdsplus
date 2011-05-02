@@ -6,17 +6,18 @@ import MDSplus
 from h1ds_core.models import H1DSSignal
 from h1ds_mdsplus.tasks import mds_event_listener
 
+
 class MDSPlusTree(models.Model):
     """Stores path information for an MDSPlus tree."""
     name = models.CharField(max_length=100, help_text="Tree name to be used with name_path (without _path). e.g. mydata")
     path = models.CharField(max_length=100, help_text="A local path with the MDSplus data files. e.g. /data/mydata")
     description = models.CharField(max_length=500, help_text="You are free to write what you like here (max length is 500 characters).")
-
+    display_order = models.IntegerField(default=10, help_text="When listed, tress will be ordered by this value. The tree with the lowest value is the default tree.")
     def __unicode__(self):
         return unicode(self.name)
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('display_order',)
 
     def save(self, *args, **kwargs):
         super(MDSPlusTree, self).save(*args, **kwargs)
