@@ -287,28 +287,40 @@ def node_text(request, shot, view, node_info, data, mds_node):
                               context_instance=RequestContext(request))
 
 
+def url_to_mds(tree, tagname, nodepath):
+    formatted_nodepath = nodepath.strip(':').replace('/','.')
+    return r'\%(tree)s::%(tagname)s%(nodepath)s' %{'tree':tree,
+                                                   'tagname':tagname,
+                                                   'nodepath':formatted_nodepath}
 
-def node(request, tree="", shot=0, format="html", path="top"):
-    """Display MDS tree node."""
-    
-    # Default to HTML if view type is not specified by user.
-    view = request.GET.get('view','html').lower()
-
-    # Get node
-    mds_path = '\\' + tree + '::' + path.strip(':').replace('/','.')
+def get_tree(tree, shot, request):
+    # Note, request doesn't have  to be the first  argument here because
+    # this is not really a view function  (i.e. we don't expect to return 
+    # a HttpResponse)
     if int(shot) == 0:
         try:
             t = MDSplus.Tree(tree, int(shot), 'READONLY')
         except TreeException:
             return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
                                       {'shot':shot,
-                                       'input_tree':tree,
-                                       'input_path':path},
+                                       'input_tree':tree},
                                       context_instance=RequestContext(request))
     else:
         t = MDSplus.Tree(tree, int(shot), 'READONLY')
-            
-    mds_node = MDSPlusDataWrapper(t.getNode(mds_path))
+    return t
+
+
+def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
+    """Display MDS tree node."""
+    
+    # Default to HTML if view type is not specified by user.
+    view = request.GET.get('view','html').lower()
+
+    mds_tree = get_tree(tree, shot, request)
+
+    mds_path = url_to_mds(tree, tagname, nodepath)
+
+    mds_node = MDSPlusDataWrapper(mds_tree.getNode(mds_path))
 
     return mds_node.get_view(request, view)
 
@@ -489,4 +501,5 @@ def homepage(request):
     # a single object it should be the one with the lowest display_order
     # value, which is what we use as the default tree.
     default_tree = MDSPlusTree.objects.all()[0]
-    return node(request, default_tree.name, shot=0)
+    return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
+
