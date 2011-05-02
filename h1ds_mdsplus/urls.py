@@ -11,6 +11,7 @@ urlpatterns = patterns('',
                        url(r'^request_url$', request_url, name="mds-request-url"),
                        url(r'^(?P<tree>[^/]+)/$', tree_overview, name="mds-tree-overview"),
                        url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/$', node, name="mds-root-node"),
-                       url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/(?P<path>.*)/$', node, name="mds-node"),
+                       url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/(?P<tagname>[^/]+)/$', node, name="mds-tag"),
+                       url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/(?P<tagname>[^/]+)/(?P<nodepath>.*)/$', node, name="mds-node"),
                        )
 

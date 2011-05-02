@@ -1,4 +1,4 @@
-import os
+import os, re
 import xml.etree.ElementTree as etree
 from numpy import int32, int64, string_, shape, array, int16
 from xml.dom import minidom
@@ -288,10 +288,16 @@ def node_text(request, shot, view, node_info, data, mds_node):
 
 
 def url_to_mds(tree, tagname, nodepath):
-    formatted_nodepath = nodepath.strip(':').replace('/','.')
-    return r'\%(tree)s::%(tagname)s%(nodepath)s' %{'tree':tree,
-                                                   'tagname':tagname,
-                                                   'nodepath':formatted_nodepath}
+    if nodepath == '':
+        return r'\%(tree)s::%(tagname)s'%{'tree':tree,
+                                          'tagname':tagname}
+    else:
+        formatted_nodepath = nodepath.strip(':').replace('/','.')
+        return r'\%(tree)s::%(tagname)s.%(nodepath)s'%{'tree':tree,
+                                                      'tagname':tagname,
+                                                      'nodepath':formatted_nodepath}
+
+
 
 def get_tree(tree, shot, request):
     # Note, request doesn't have  to be the first  argument here because
@@ -315,13 +321,9 @@ def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
     
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
-
     mds_tree = get_tree(tree, shot, request)
-
     mds_path = url_to_mds(tree, tagname, nodepath)
-
     mds_node = MDSPlusDataWrapper(mds_tree.getNode(mds_path))
-
     return mds_node.get_view(request, view)
 
 ### OLD VERSION

@@ -1,5 +1,9 @@
+import re
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.core.urlresolvers import reverse
+
 
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
@@ -86,25 +90,33 @@ def unsupported_view(request, data):
                               data.get_view_data(),
                               context_instance=RequestContext(request))
 
+mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[\.|:](?P<nodepath>[\w\.:]+)')
 
-def tree_shot_mapper(tree, shot):
-    def map_url(data):
-        data_tree=data.__str__().strip('\\').split('::')[0]
-        pre_path = '/mdsplus/%s/%d/' %(data_tree, int(shot)) ## shouldn't hardcode this here...
-        try:
-            ## this causes segfault for children of http://h1svr/mdsplus/h1data/67896/OPERATIONS/ !!??!
-            #dd = data.data()
-            #dd = 0
-            ## let's return node ID rather than data - use it for javascript navigation
-            dd = data.getNid()
-        except:
-            dd = None
+def mds_to_url(mds_data_object):
+    components = mds_path_regex.search(mds_data_object.__str__())
+    slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
+    return reverse('mds-node', kwargs={'tree':components.group('tree'), 
+                                       'shot':mds_data_object.tree.shot,
+                                       'tagname':components.group('tagname'),
+                                       'nodepath':slashed_nodepath})
+
+
+def map_url(data):
+    #data_tree=data.__str__().strip('\\').split('::')[0]
+    #pre_path = '/mdsplus/%s/%d/' %(data_tree, int(shot)) ## shouldn't hardcode this here...
+    try:
+        #  this causes segfault for children of http://h1svr/mdsplus/h1data/67896/OPERATIONS/ !!??!
+        # dd = data.data()
+        # dd = 0
+        #  let's return node ID rather than data - use it for javascript navigation
+        dd = data.getNid()
+    except:
+        dd = None
         
-        #url = pre_path + data.__str__()[len(tree)+3:].strip('.').strip(':').replace('.','/').replace(':','/')
-        url = pre_path + data.__str__().split('::')[1].strip('.').strip(':').replace('.','/').replace(':','/')
+    url = mds_to_url(data)
 
-        return (data.getNodeName(), url, dd, data_tree)
-    return map_url
+    return (data.getNodeName(), url, dd)#, data_tree)
+
 
 
 
@@ -124,17 +136,19 @@ class MDSPlusDataWrapper(object):
         return view_function(request, self)
 
     def get_subnode_data(self):
-        url_mapper = tree_shot_mapper(self.mds_object.tree.name, self.mds_object.tree.shot)
+        #url_mapper = tree_shot_mapper(self.mds_object.tree.name, self.mds_object.tree.shot)
         
-        try:
-            children = map(url_mapper, self.mds_object.getChildren())
-        except:
-            children = None
+        #try:
+        children = map(map_url, self.mds_object.getChildren())
+        #except:
+        #    children = None
             
         try:
-            members = map(url_mapper, self.mds_object.getMembers())
+            members = map(map_url, self.mds_object.getMembers())
         except:
             members = None
+
+        # TODO: get tagnames too
         
         return members, children
 
