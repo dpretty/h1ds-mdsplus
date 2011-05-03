@@ -24,6 +24,19 @@ class MDSPlusTree(models.Model):
         import os
         os.environ['%s_path' %self.name] = self.path
 
+    def get_tree(self, shot, mode='READONLY'):
+        """Get MDSPlus tree for shot. 
+        
+        For now, we only allow read-only mode.
+        """
+        mode = 'READONLY'
+        try:
+            tree =  MDSplus.Tree(self.name, int(shot), mode)
+            return tree
+        except TreeException:
+            return None
+        
+
 class MDSEventListener(models.Model):
     """Listens for an MDSplus event from a specified server."""
     event_name = models.CharField(max_length=50)

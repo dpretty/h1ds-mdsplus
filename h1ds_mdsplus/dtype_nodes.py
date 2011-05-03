@@ -3,7 +3,9 @@ import re
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
+from django.core.cache import cache
 
+from h1ds_mdsplus.models import MDSPlusTree
 
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
@@ -83,8 +85,37 @@ dtype_mappings = {
 }
 
 
+tagname_regex = re.compile('(?<=::).+')
+
+def get_tree_tagnames(shot, cache_timeout = 10):
+    ## TODO: increase default timeout after debugging.
+    cache_name = 'tree_tagnames_%s' %shot
+    cached_data = cache.get(cache_name) 
+    if cached_data != None:
+        return cached_data
+    else:
+        # get data
+        mds_trees = MDSPlusTree.objects.all()
+        output_data = {}
+        for tree in mds_trees:
+            output_data[tree.name]=[]
+            mds_tree_object = tree.get_tree(shot)
+            # TODO: there appears to be some sort of binary? tag name \x01 in H1data tree.
+            # this will probably break things - so will need to change regex and allow
+            # for None returned by regex.search()
+            tagnames = (tagname_regex.search(t).group() for t in mds_tree_object.findTags('*'))
+            for tn in tagnames:
+                url = reverse('mds-tag', kwargs={'tree':tree.name, 
+                                                 'shot':shot,
+                                                 'tagname':tn})
+                output_data[tree.name].append((tn,url))            
+        # put in cache
+        cache.set(cache_name, output_data, cache_timeout)
+        # return data
+        return output_data
+
 def unsupported_view(request, data):
-    dtype_desc = dtype_mappings[data.dtype]['description']
+    #dtype_desc = dtype_mappings[data.dtype]['description']
     return render_to_response('h1ds_mdsplus/unsupported_view.html', 
                               #{'dtype':data.dtype, 'dtype_desc':dtype_desc},
                               data.get_view_data(),
@@ -115,7 +146,7 @@ def map_url(data):
         
     url = mds_to_url(data)
 
-    return (data.getNodeName(), url, dd)#, data_tree)
+    return (data.getNodeName(), url, dd, data.tree.name)
 
 
 
@@ -130,35 +161,34 @@ class MDSPlusDataWrapper(object):
     def __init__(self,mds_object):
         self.mds_object = mds_object
         self.dtype = str(self.mds_object.getDtype())
+        self.shot = self.mds_object.tree.shot
 
     def get_view(self, request, view_name):
         view_function = dtype_mappings[self.dtype]['views'].get(view_name, unsupported_view)
         return view_function(request, self)
 
     def get_subnode_data(self):
-        #url_mapper = tree_shot_mapper(self.mds_object.tree.name, self.mds_object.tree.shot)
         
-        #try:
-        children = map(map_url, self.mds_object.getChildren())
-        #except:
-        #    children = None
+        try:
+            children = map(map_url, self.mds_object.getChildren())
+        except TypeError:
+            children = None
             
         try:
             members = map(map_url, self.mds_object.getMembers())
-        except:
+        except TypeError:
             members = None
 
-        # TODO: get tagnames too
-        
         return members, children
 
     def get_view_data(self):
         members, children = self.get_subnode_data()
-        view_data = {'shot':self.mds_object.tree.shot,
+        view_data = {'shot':self.shot,
                      'dtype':self.dtype,
                      #'tdi':tdi, 
                      'children':children, 
                      'members':members, 
+                     'tagnames':get_tree_tagnames(self.shot)
                      #'input_tree':tree, 
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),

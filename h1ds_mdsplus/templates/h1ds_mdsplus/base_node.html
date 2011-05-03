@@ -78,7 +78,33 @@
   {% endtable %}
 </table>
 
+<h3>Tags:</h3>
+{% for treename, tagdata in tagnames.items %}
+<h4>{{treename}}</h4>
+<table width="100%" class="side-table">
+  {% table item tagdata 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
 
+{% endfor %}
 {% endblock %}
 
 
