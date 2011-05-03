@@ -87,31 +87,41 @@ dtype_mappings = {
 
 tagname_regex = re.compile('(?<=::).+')
 
-def get_tree_tagnames(shot, cache_timeout = 10):
+def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.
-    cache_name = 'tree_tagnames_%s' %shot
+    tree_name = mds_data_object.tree.name
+    shot = mds_data_object.tree.shot
+    cache_name = 'tagnames_%s_%d' %(tree_name, shot)
     cached_data = cache.get(cache_name) 
     if cached_data != None:
         return cached_data
     else:
         # get data
-        mds_trees = MDSPlusTree.objects.all()
-        output_data = {}
-        for tree in mds_trees:
-            output_data[tree.name]=[]
-            mds_tree_object = tree.get_tree(shot)
-            # TODO: there appears to be some sort of binary? tag name \x01 in H1data tree.
-            # this will probably break things - so will need to change regex and allow
-            # for None returned by regex.search()
-            tagnames = (tagname_regex.search(t).group() for t in mds_tree_object.findTags('*'))
-            for tn in tagnames:
-                url = reverse('mds-tag', kwargs={'tree':tree.name, 
-                                                 'shot':shot,
-                                                 'tagname':tn})
-                output_data[tree.name].append((tn,url))            
+        output_data = []
+        # TODO: there appears to be some sort of binary? tag name \x01 in H1data tree.
+        # this will probably break things - so will need to change regex and allow
+        # for None returned by regex.search()
+        tagnames = (tagname_regex.search(t).group() for t in mds_data_object.tree.findTags('*'))
+        for tn in tagnames:
+            url = reverse('mds-tag', kwargs={'tree':tree_name, 
+                                             'shot':shot,
+                                             'tagname':tn})
+            output_data.append((tn,url))            
         # put in cache
         cache.set(cache_name, output_data, cache_timeout)
         # return data
+        return output_data
+
+def get_trees():
+    cache_name = 'trees'
+    cached_data = cache.get(cache_name) 
+    if cached_data != None:
+        return cached_data
+    else:
+        output_data = []
+        for t in MDSPlusTree.objects.all():
+            output_data.append((t.name, t.get_url()))
+        cache.set(cache_name, output_data)
         return output_data
 
 def unsupported_view(request, data):
@@ -188,7 +198,8 @@ class MDSPlusDataWrapper(object):
                      #'tdi':tdi, 
                      'children':children, 
                      'members':members, 
-                     'tagnames':get_tree_tagnames(self.shot)
+                     'tagnames':get_tree_tagnames(self.mds_object),
+                     'treelinks':get_trees(),
                      #'input_tree':tree, 
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),

@@ -1,5 +1,6 @@
 from django.db import models
 from celery.task.control import inspect
+from django.core.urlresolvers import reverse
 
 import MDSplus
 
@@ -36,6 +37,8 @@ class MDSPlusTree(models.Model):
         except TreeException:
             return None
         
+    def get_url(self):
+        return reverse("mds-tree-overview", kwargs={'tree':self.name})
 
 class MDSEventListener(models.Model):
     """Listens for an MDSplus event from a specified server."""
