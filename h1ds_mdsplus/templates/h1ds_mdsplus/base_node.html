@@ -130,20 +130,9 @@
 
 
 {% block mdscontent %}
-<strong>{{path_breadcrumbs|safe}}</strong>
-
+<div id="mds-path-breadcrumb">{{path_breadcrumbs|safe}}</div>
 {% block node_data %}
 {% endblock %}
-
-<h3>Data type:</h3>
-<hr/>
-{{dtype}}
-<hr/>
-<h3>TDI expression:</h3>
-<hr/>
-{{tdi}}
-<hr/>
-{{debug_data}}
 {% endblock %}
 
 {% block extrascript %}

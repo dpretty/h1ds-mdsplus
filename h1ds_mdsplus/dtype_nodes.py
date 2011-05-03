@@ -184,7 +184,8 @@ def get_mds_path_breadcrumbs(mds_data):
         return cached_data
     else:
         if mds_data.getDepth() == 1:
-            breadcrumb_string = ""
+            tree_url = reverse("mds-tree-overview", kwargs={'tree':mds_data.tree.name})
+            breadcrumb_string = '\\<a href="%(url)s">%(tree)s</a>::' %{'url':tree_url, 'tree':mds_data.tree.name}
         else:
             breadcrumb_string = get_mds_path_breadcrumbs(mds_data.getParent())
             if mds_data.isMember():
