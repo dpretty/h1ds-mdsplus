@@ -74,6 +74,18 @@ def nodeid_view_html(request, data):
     return render_to_response('h1ds_mdsplus/nodeid_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
+
+def range_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/range_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+
+# Filters for all dtypes
+filters_all = {
+    # TDI
+    }
     
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 
@@ -145,7 +157,7 @@ dtype_mappings = {
     "DTYPE_DC":{'id':13, 'views':{}, 'filters':(), 'description':"Double Precision Real Complex (VAX format)"},
     "DTYPE_T":{'id':14, 
                'views':{'html':text_view_html}, 
-               'filters':(), 
+               'filters':(), #TODO: length filter
                'description':"Text (8-bit characters)"
                },
     "DTYPE_NU":{'id':15, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
@@ -185,7 +197,7 @@ dtype_mappings = {
     "DTYPE_IDENT":{'id':191, 'views':{}, 'filters':(), 'description':"Variable Name"},
     "DTYPE_NID":{'id':192, 
                  'views':{'html':nodeid_view_html}, 
-                 'filters':(), 
+                 'filters':(), # TODO: follow link filter
                  'description':"Node (ID)"
                  },
     "DTYPE_PATH":{'id':193, 'views':{}, 'filters':(), 'description':"Node (Path)"},
@@ -196,7 +208,11 @@ dtype_mappings = {
     "DTYPE_SLOPE":{'id':198, 'views':{}, 'filters':(), 'description':"Slope (depreciated?)"},
     "DTYPE_FUNCTION":{'id':199, 'views':{}, 'filters':(), 'description':"Built-in Function Call"},
     "DTYPE_CONGLOM":{'id':200, 'views':{}, 'filters':(), 'description':"Conglomerate/Device"},
-    "DTYPE_RANGE":{'id':201, 'views':{}, 'filters':(), 'description':"Range"},
+    "DTYPE_RANGE":{'id':201, 
+                   'views':{'html':range_view_html}, 
+                   'filters':(), 
+                   'description':"Range"
+                   },
     "DTYPE_ACTION":{'id':202, 'views':{}, 'filters':(), 'description':"Action"},
     "DTYPE_DISPATCH":{'id':203, 'views':{}, 'filters':(), 'description':"Dispatch"},
     "DTYPE_PROGRAM":{'id':204, 'views':{}, 'filters':(), 'description':"Program (deprecited?"},
