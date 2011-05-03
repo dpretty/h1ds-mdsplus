@@ -16,10 +16,19 @@ def no_data_view_html(request, data):
 
 def int_view_html(request, data):
     # we don't care about whether a integer is unsigned, 8bit etc for 
-    # html view, we we'll take all here.
+    # HTML view, we we'll take all here.
     view_data = data.get_view_data()
-    view_data['node_data'] = int(data.mds_object.data())
+    view_data['node_data'] = data.mds_object.data()
     return render_to_response('h1ds_mdsplus/int_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+
+def float_view_html(request, data):
+    # take all floats and assume python can convert all to string format
+    # well enough for HTML.
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.data()
+    return render_to_response('h1ds_mdsplus/float_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
     
@@ -79,8 +88,16 @@ dtype_mappings = {
                'filters':(), 
                'description':"Signed Quadword (64-bit signed integer)"
                },
-    "DTYPE_F":{'id':10, 'views':{}, 'filters':(), 'description':"Single Precision Real (VAX format)"},
-    "DTYPE_D":{'id':11, 'views':{}, 'filters':(), 'description':"Double Precision Real (VAX format)"},
+    "DTYPE_F":{'id':10, 
+               'views':{'html':float_view_html}, 
+               'filters':(), 
+               'description':"Single Precision Real (VAX format)"
+               },
+    "DTYPE_D":{'id':11, 
+               'views':{'html':float_view_html}, 
+               'filters':(), 
+               'description':"Double Precision Real (VAX format)"
+               },
     "DTYPE_FC":{'id':12, 'views':{}, 'filters':(), 'description':"Single Precision Real Complex (VAX format)"},
     "DTYPE_DC":{'id':13, 'views':{}, 'filters':(), 'description':"Double Precision Real Complex (VAX format)"},
     "DTYPE_T":{'id':14, 'views':{}, 'filters':(), 'description':"Text (8-bit characters"},
@@ -106,8 +123,16 @@ dtype_mappings = {
     "DTYPE_VU":{'id':34, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_ADT":{'id':35, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_VT":{'id':37, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_FS":{'id':52, 'views':{}, 'filters':(), 'description':"Single Precision Real (IEEE format)"},
-    "DTYPE_FT":{'id':53, 'views':{}, 'filters':(), 'description':"Double Precision Real (IEEE format)"},
+    "DTYPE_FS":{'id':52, 
+                'views':{'html':float_view_html}, 
+                'filters':(), 
+                'description':"Single Precision Real (IEEE format)"
+                },
+    "DTYPE_FT":{'id':53, 
+                'views':{'html':float_view_html}, 
+                'filters':(), 
+                'description':"Double Precision Real (IEEE format)"
+                },
     "DTYPE_FSC":{'id':54, 'views':{}, 'filters':(), 'description':"Single Precision Real Complex (IEEE frmat)"},
     "DTYPE_FTC":{'id':55, 'views':{}, 'filters':(), 'description':"Double Precision Real (IEEE format)"},
     "DTYPE_IDENT":{'id':191, 'views':{}, 'filters':(), 'description':"Variable Name"},
