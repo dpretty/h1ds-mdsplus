@@ -91,6 +91,12 @@ def function_call_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+def action_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/action_view.html',
+                              view_data,
+                              context_instance=RequestContext(request))
 
 
 # Filters for all dtypes
@@ -228,7 +234,11 @@ dtype_mappings = {
                    'filters':(), 
                    'description':"Range"
                    },
-    "DTYPE_ACTION":{'id':202, 'views':{}, 'filters':(), 'description':"Action"},
+    "DTYPE_ACTION":{'id':202, 
+                    'views':{'html':action_view_html}, 
+                    'filters':(), 
+                    'description':"Action"
+                    },
     "DTYPE_DISPATCH":{'id':203, 'views':{}, 'filters':(), 'description':"Dispatch"},
     "DTYPE_PROGRAM":{'id':204, 'views':{}, 'filters':(), 'description':"Program (deprecited?"},
     "DTYPE_ROUTINE":{'id':205, 'views':{}, 'filters':(), 'description':"Routine"},
