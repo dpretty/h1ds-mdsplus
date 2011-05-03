@@ -16,7 +16,7 @@
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <P>
     <LABEL for="requested-shot">Shot: </LABEL>
-              <INPUT type="text" id="requested-shot" name="requested-shot">
+    <INPUT type="text" id="requested-shot" name="requested-shot">
     <INPUT type="hidden" name="input-path" value="{{input_path}}">
     <INPUT type="hidden" name="input-tree" value="{{input_tree}}">
     <INPUT type="hidden" name="input-query" value="{{input_query}}">
@@ -131,8 +131,10 @@
 
 {% block mdscontent %}
 <div id="mds-path-breadcrumb">{{path_breadcrumbs|safe}}</div>
+<div class="node-data">
 {% block node_data %}
 {% endblock %}
+</div>
 {% endblock %}
 
 {% block extrascript %}

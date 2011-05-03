@@ -126,13 +126,15 @@ def get_trees():
         cache.set(cache_name, output_data)
         return output_data
 
-def unsupported_view(request, data):
-    #dtype_desc = dtype_mappings[data.dtype]['description']
-    return render_to_response('h1ds_mdsplus/unsupported_view.html', 
-                              #{'dtype':data.dtype, 'dtype_desc':dtype_desc},
-                              data.get_view_data(),
-                              context_instance=RequestContext(request))
-
+def unsupported_view(requested_view_type):
+    def get_view(request, data):
+        view_data = data.get_view_data()
+        view_data['requested_view'] = requested_view_type
+        return render_to_response('h1ds_mdsplus/unsupported_view.html', 
+                                  #{'dtype':data.dtype, 'dtype_desc':dtype_desc},
+                                  view_data,
+                                  context_instance=RequestContext(request))
+    return get_view
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
 
 def mds_to_url(mds_data_object):
@@ -211,7 +213,7 @@ class MDSPlusDataWrapper(object):
         self.shot = self.mds_object.tree.shot
 
     def get_view(self, request, view_name):
-        view_function = dtype_mappings[self.dtype]['views'].get(view_name, unsupported_view)
+        view_function = dtype_mappings[self.dtype]['views'].get(view_name, unsupported_view(view_name))
         return view_function(request, self)
 
     def get_subnode_data(self):
