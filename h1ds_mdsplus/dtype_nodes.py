@@ -82,6 +82,17 @@ def range_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+def function_call_view_html(request, data):
+    # TODO: show data returned by function (don't require filter, should
+    # show returned data by default - along with function)
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/function_call_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+
+
+
 # Filters for all dtypes
 filters_all = {
     # TDI
@@ -206,7 +217,11 @@ dtype_mappings = {
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
     "DTYPE_WINDOW":{'id':197, 'views':{}, 'filters':(), 'description':"Window"},
     "DTYPE_SLOPE":{'id':198, 'views':{}, 'filters':(), 'description':"Slope (depreciated?)"},
-    "DTYPE_FUNCTION":{'id':199, 'views':{}, 'filters':(), 'description':"Built-in Function Call"},
+    "DTYPE_FUNCTION":{'id':199, 
+                      'views':{'html':function_call_view_html}, 
+                      'filters':(), 
+                      'description':"Built-in Function Call"
+                      },
     "DTYPE_CONGLOM":{'id':200, 'views':{}, 'filters':(), 'description':"Conglomerate/Device"},
     "DTYPE_RANGE":{'id':201, 
                    'views':{'html':range_view_html}, 
