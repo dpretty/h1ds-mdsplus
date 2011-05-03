@@ -9,6 +9,34 @@ from MDSplus._tdishr import TdiException
 
 from h1ds_mdsplus.models import MDSPlusTree
 
+
+
+tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
+mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
+
+
+
+def mds_to_url(mds_data_object):
+    # I haven't figured out how to do a single regex which would get the
+    # correct  tagname when a node path exists,  and not fail when there
+    # is no node path. So we do a simple check to see if there is a node
+    # path
+    path_string = mds_data_object.__str__()
+    tag_node_string = path_string.split('::')[1]
+    if ('.' in tag_node_string) or (':' in tag_node_string):
+        # we have a node path.
+        components = mds_path_regex.search(path_string)
+        slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
+        return reverse('mds-node', kwargs={'tree':components.group('tree'),
+                                           'shot':mds_data_object.tree.shot,
+                                           'tagname':components.group('tagname'),
+                                           'nodepath':slashed_nodepath})
+    else:
+        components = tagname_regex.search(path_string)
+        return reverse('mds-tag', kwargs={'tree':components.group('tree'), 
+                                           'shot':mds_data_object.tree.shot,
+                                           'tagname':components.group('tagname')})
+
 def no_data_view_html(request, data):
     return render_to_response('h1ds_mdsplus/no_data_view.html', 
                               data.get_view_data(),
@@ -39,7 +67,13 @@ def text_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-
+def nodeid_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    view_data['node_data_url'] = mds_to_url(view_data['node_data'])
+    return render_to_response('h1ds_mdsplus/nodeid_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
     
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 
@@ -149,7 +183,11 @@ dtype_mappings = {
     "DTYPE_FSC":{'id':54, 'views':{}, 'filters':(), 'description':"Single Precision Real Complex (IEEE frmat)"},
     "DTYPE_FTC":{'id':55, 'views':{}, 'filters':(), 'description':"Double Precision Real (IEEE format)"},
     "DTYPE_IDENT":{'id':191, 'views':{}, 'filters':(), 'description':"Variable Name"},
-    "DTYPE_NID":{'id':192, 'views':{}, 'filters':(), 'description':"Node (ID)"},
+    "DTYPE_NID":{'id':192, 
+                 'views':{'html':nodeid_view_html}, 
+                 'filters':(), 
+                 'description':"Node (ID)"
+                 },
     "DTYPE_PATH":{'id':193, 'views':{}, 'filters':(), 'description':"Node (Path)"},
     "DTYPE_PARAM":{'id':194, 'views':{}, 'filters':(), 'description':"Parameter"},
     "DTYPE_SIGNAL":{'id':195, 'views':{}, 'filters':(), 'description':"Signal"},
@@ -183,7 +221,6 @@ dtype_mappings = {
 }
 
 
-tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.
@@ -240,30 +277,6 @@ def member_or_child(mds_data):
     else:
         return 'Unknown'
 
-mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
-
-
-
-def mds_to_url(mds_data_object):
-    # I haven't figured out how to do a single regex which would get the
-    # correct  tagname when a node path exists,  and not fail when there
-    # is no node path. So we do a simple check to see if there is a node
-    # path
-    path_string = mds_data_object.__str__()
-    tag_node_string = path_string.split('::')[1]
-    if ('.' in tag_node_string) or (':' in tag_node_string):
-        # we have a node path.
-        components = mds_path_regex.search(path_string)
-        slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
-        return reverse('mds-node', kwargs={'tree':components.group('tree'),
-                                           'shot':mds_data_object.tree.shot,
-                                           'tagname':components.group('tagname'),
-                                           'nodepath':slashed_nodepath})
-    else:
-        components = tagname_regex.search(path_string)
-        return reverse('mds-tag', kwargs={'tree':components.group('tree'), 
-                                           'shot':mds_data_object.tree.shot,
-                                           'tagname':components.group('tagname')})
 
 
 
