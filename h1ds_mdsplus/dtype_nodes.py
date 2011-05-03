@@ -14,18 +14,71 @@ def no_data_view_html(request, data):
                               data.get_view_data(),
                               context_instance=RequestContext(request))
 
+def int_view_html(request, data):
+    # we don't care about whether a integer is unsigned, 8bit etc for 
+    # html view, we we'll take all here.
+    view_data = data.get_view_data()
+    view_data['node_data'] = int(data.mds_object.data())
+    return render_to_response('h1ds_mdsplus/int_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+    
 dtype_mappings = {
-    "DTYPE_Z":{'id':0, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_MISSING":{'id':0, 'views':{'html':no_data_view_html}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_V":{'id':1, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_BU":{'id':2, 'views':{}, 'filters':(), 'description':"Unsigned Byte (8-bit unsigned integer)"},
-    "DTYPE_WU":{'id':3, 'views':{}, 'filters':(), 'description':"Unsigned Word (16-bit unsigned integer)"},
-    "DTYPE_LU":{'id':4, 'views':{}, 'filters':(), 'description':"Unsigned Long (32-bit unsigned integer)"},
-    "DTYPE_QU":{'id':5, 'views':{}, 'filters':(), 'description':"Unsigned Quadword (64-bit unsigned integer)"},
-    "DTYPE_B":{'id':6, 'views':{}, 'filters':(), 'description':"Signed Byte (8-bit signed integer)"},
-    "DTYPE_W":{'id':7, 'views':{}, 'filters':(), 'description':"Signed Word (16-bit signed integer)"},
-    "DTYPE_L":{'id':8, 'views':{}, 'filters':(), 'description':"Signed Long (32-bit signed integer)"},
-    "DTYPE_Q":{'id':9, 'views':{}, 'filters':(), 'description':"Signed Quadword (64-bit signed integer)"},
+    "DTYPE_Z":{'id':0, 
+               'views':{}, 
+               'filters':(), 
+               'description':"Unknown to Dave..."
+               },
+    "DTYPE_MISSING":{'id':0, 
+                     'views':{'html':no_data_view_html}, 
+                     'filters':(), 
+                     'description':"Unknown to Dave..."
+                     },
+    "DTYPE_V":{'id':1, 
+               'views':{}, 
+               'filters':(), 
+               'description':"Unknown to Dave..."
+               },
+    "DTYPE_BU":{'id':2, 
+                'views':{'html':int_view_html}, 
+                'filters':(), 
+                'description':"Unsigned Byte (8-bit unsigned integer)"
+                },
+    "DTYPE_WU":{'id':3, 
+                'views':{'html':int_view_html}, 
+                'filters':(), 
+                'description':"Unsigned Word (16-bit unsigned integer)"
+                },
+    "DTYPE_LU":{'id':4, 
+                'views':{'html':int_view_html}, 
+                'filters':(), 
+                'description':"Unsigned Long (32-bit unsigned integer)"
+                },
+    "DTYPE_QU":{'id':5, 
+                'views':{'html':int_view_html}, 
+                'filters':(), 
+                'description':"Unsigned Quadword (64-bit unsigned integer)"
+                },
+    "DTYPE_B":{'id':6, 
+               'views':{'html':int_view_html}, 
+               'filters':(), 
+               'description':"Signed Byte (8-bit signed integer)"
+               },
+    "DTYPE_W":{'id':7, 
+               'views':{'html':int_view_html}, 
+               'filters':(), 
+               'description':"Signed Word (16-bit signed integer)"
+               },
+    "DTYPE_L":{'id':8, 
+               'views':{'html':int_view_html}, 
+               'filters':(), 
+               'description':"Signed Long (32-bit signed integer)"
+               },
+    "DTYPE_Q":{'id':9, 
+               'views':{'html':int_view_html}, 
+               'filters':(), 
+               'description':"Signed Quadword (64-bit signed integer)"
+               },
     "DTYPE_F":{'id':10, 'views':{}, 'filters':(), 'description':"Single Precision Real (VAX format)"},
     "DTYPE_D":{'id':11, 'views':{}, 'filters':(), 'description':"Double Precision Real (VAX format)"},
     "DTYPE_FC":{'id':12, 'views':{}, 'filters':(), 'description':"Single Precision Real Complex (VAX format)"},
