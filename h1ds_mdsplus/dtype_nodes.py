@@ -5,6 +5,8 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 
+from MDSplus._tdishr import TdiException
+
 from h1ds_mdsplus.models import MDSPlusTree
 
 dtype_mappings = {
@@ -131,7 +133,7 @@ def unsupported_view(request, data):
                               data.get_view_data(),
                               context_instance=RequestContext(request))
 
-mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[\.|:](?P<nodepath>[\w\.:]+)')
+mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
 
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
@@ -142,7 +144,6 @@ def mds_to_url(mds_data_object):
     tag_node_string = path_string.split('::')[1]
     if ('.' in tag_node_string) or (':' in tag_node_string):
         # we have a node path.
-
         components = mds_path_regex.search(path_string)
         slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
         return reverse('mds-node', kwargs={'tree':components.group('tree'),
@@ -154,6 +155,9 @@ def mds_to_url(mds_data_object):
         return reverse('mds-tag', kwargs={'tree':components.group('tree'), 
                                            'shot':mds_data_object.tree.shot,
                                            'tagname':components.group('tagname')})
+
+
+
 
 
 def map_url(data):
@@ -172,6 +176,24 @@ def map_url(data):
 
     return (data.getNodeName(), url, dd, data.tree.name)
 
+def get_mds_path_breadcrumbs(mds_data):
+    cache_name = '%s_%d_%d' %(mds_data.tree.name, 
+                              mds_data.tree.shot, mds_data.nid)
+    cached_data = cache.get(cache_name) 
+    if cached_data != None:
+        return cached_data
+    else:
+        if mds_data.getDepth() == 1:
+            breadcrumb_string = ""
+        else:
+            breadcrumb_string = get_mds_path_breadcrumbs(mds_data.getParent())
+            if mds_data.isMember():
+                breadcrumb_string+=":"
+            else:
+                breadcrumb_string+="."
+        breadcrumb_string+='<a href="%(url)s">%(name)s</a>' %{'url':mds_to_url(mds_data), 'name':mds_data.getNodeName()}
+        cache.set(cache_name, breadcrumb_string)
+        return breadcrumb_string
 
 
 
@@ -217,7 +239,7 @@ class MDSPlusDataWrapper(object):
                      #'input_tree':tree, 
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),
-                     #'breadcrumbs':get_breadcrumbs(mds_node, tree, shot),
+                     'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,
                      }
         return view_data
