@@ -140,7 +140,18 @@ def unsupported_view(requested_view_type):
                                   view_data,
                                   context_instance=RequestContext(request))
     return get_view
+
+def member_or_child(mds_data):
+    if mds_data.isChild():
+        return 'Child'
+    elif mds_data.isMember():
+        return 'Member'
+    else:
+        return 'Unknown'
+
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
+
+
 
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
@@ -237,9 +248,13 @@ class MDSPlusDataWrapper(object):
 
     def get_view_data(self):
         members, children = self.get_subnode_data()
+        node_metadata = {'datatype':self.dtype,
+                         'node id':self.mds_object.nid,
+                         'type':member_or_child(self.mds_object)}
         view_data = {'shot':self.shot,
                      'dtype':self.dtype,
                      #'tdi':tdi, 
+                     'node_metadata':node_metadata,
                      'children':children, 
                      'members':members, 
                      'tagnames':get_tree_tagnames(self.mds_object),

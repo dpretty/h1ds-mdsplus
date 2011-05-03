@@ -136,7 +136,17 @@
 {% endblock %}
 {% endblock %}
 
+{% block mdsmeta %}
+<h3>Node metadata</h3>
+<ul>
+{% for meta_name, meta_value in node_metadata.items %}
+<li><strong>{{meta_name}}: </strong>{{meta_value}}</li>
+{% endfor %}
+</ul>
+{% endblock mdsmeta%}
+
 {% block extrascript %}
+
 {% if input_tree %}
 <script>
 function updateLatestShot() {
