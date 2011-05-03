@@ -18,7 +18,7 @@ def int_view_html(request, data):
     # we don't care about whether a integer is unsigned, 8bit etc for 
     # HTML view, we we'll take all here.
     view_data = data.get_view_data()
-    view_data['node_data'] = data.mds_object.data()
+    view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/int_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
@@ -27,10 +27,19 @@ def float_view_html(request, data):
     # take all floats and assume python can convert all to string format
     # well enough for HTML.
     view_data = data.get_view_data()
-    view_data['node_data'] = data.mds_object.data()
+    view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/float_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
+
+def text_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/text_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+
+
     
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 
@@ -100,7 +109,11 @@ dtype_mappings = {
                },
     "DTYPE_FC":{'id':12, 'views':{}, 'filters':(), 'description':"Single Precision Real Complex (VAX format)"},
     "DTYPE_DC":{'id':13, 'views':{}, 'filters':(), 'description':"Double Precision Real Complex (VAX format)"},
-    "DTYPE_T":{'id':14, 'views':{}, 'filters':(), 'description':"Text (8-bit characters"},
+    "DTYPE_T":{'id':14, 
+               'views':{'html':text_view_html}, 
+               'filters':(), 
+               'description':"Text (8-bit characters)"
+               },
     "DTYPE_NU":{'id':15, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_NL":{'id':16, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_NLO":{'id':17, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
