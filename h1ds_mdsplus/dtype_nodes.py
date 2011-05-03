@@ -85,7 +85,7 @@ dtype_mappings = {
 }
 
 
-tagname_regex = re.compile('(?<=::).+')
+tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.
@@ -101,7 +101,7 @@ def get_tree_tagnames(mds_data_object, cache_timeout = 10):
         # TODO: there appears to be some sort of binary? tag name \x01 in H1data tree.
         # this will probably break things - so will need to change regex and allow
         # for None returned by regex.search()
-        tagnames = (tagname_regex.search(t).group() for t in mds_data_object.tree.findTags('*'))
+        tagnames = (tagname_regex.search(t).group('tagname') for t in mds_data_object.tree.findTags('*'))
         for tn in tagnames:
             url = reverse('mds-tag', kwargs={'tree':tree_name, 
                                              'shot':shot,
@@ -134,12 +134,26 @@ def unsupported_view(request, data):
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[\.|:](?P<nodepath>[\w\.:]+)')
 
 def mds_to_url(mds_data_object):
-    components = mds_path_regex.search(mds_data_object.__str__())
-    slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
-    return reverse('mds-node', kwargs={'tree':components.group('tree'), 
-                                       'shot':mds_data_object.tree.shot,
-                                       'tagname':components.group('tagname'),
-                                       'nodepath':slashed_nodepath})
+    # I haven't figured out how to do a single regex which would get the
+    # correct  tagname when a node path exists,  and not fail when there 
+    # is no node path. So we do a simple check to see if there is a node 
+    # path
+    path_string = mds_data_object.__str__()
+    tag_node_string = path_string.split('::')[1]
+    if ('.' in tag_node_string) or (':' in tag_node_string):
+        # we have a node path.
+
+        components = mds_path_regex.search(path_string)
+        slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
+        return reverse('mds-node', kwargs={'tree':components.group('tree'), 
+                                           'shot':mds_data_object.tree.shot,
+                                           'tagname':components.group('tagname'),
+                                           'nodepath':slashed_nodepath})
+    else:
+        components = tagname_regex.search(path_string)
+        return reverse('mds-tag', kwargs={'tree':components.group('tree'), 
+                                           'shot':mds_data_object.tree.shot,
+                                           'tagname':components.group('tagname')})
 
 
 def map_url(data):
