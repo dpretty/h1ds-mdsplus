@@ -135,8 +135,8 @@ mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[\.|:](?P<nod
 
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
-    # correct  tagname when a node path exists,  and not fail when there 
-    # is no node path. So we do a simple check to see if there is a node 
+    # correct  tagname when a node path exists,  and not fail when there
+    # is no node path. So we do a simple check to see if there is a node
     # path
     path_string = mds_data_object.__str__()
     tag_node_string = path_string.split('::')[1]
@@ -145,7 +145,7 @@ def mds_to_url(mds_data_object):
 
         components = mds_path_regex.search(path_string)
         slashed_nodepath = components.group('nodepath').replace('.','/').replace(':','/')
-        return reverse('mds-node', kwargs={'tree':components.group('tree'), 
+        return reverse('mds-node', kwargs={'tree':components.group('tree'),
                                            'shot':mds_data_object.tree.shot,
                                            'tagname':components.group('tagname'),
                                            'nodepath':slashed_nodepath})
