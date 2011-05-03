@@ -131,10 +131,9 @@
 
 {% block mdscontent %}
 <div id="mds-path-breadcrumb">{{path_breadcrumbs|safe}}</div>
-<div class="node-data">
+{% block node_error %}{% endblock %}
 {% block node_data %}
 {% endblock %}
-</div>
 {% endblock %}
 
 {% block extrascript %}

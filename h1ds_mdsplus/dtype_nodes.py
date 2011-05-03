@@ -9,9 +9,14 @@ from MDSplus._tdishr import TdiException
 
 from h1ds_mdsplus.models import MDSPlusTree
 
+def no_data_view_html(request, data):
+    return render_to_response('h1ds_mdsplus/no_data_view.html', 
+                              data.get_view_data(),
+                              context_instance=RequestContext(request))
+
 dtype_mappings = {
     "DTYPE_Z":{'id':0, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_MISSING":{'id':0, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
+    "DTYPE_MISSING":{'id':0, 'views':{'html':no_data_view_html}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_V":{'id':1, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_BU":{'id':2, 'views':{}, 'filters':(), 'description':"Unsigned Byte (8-bit unsigned integer)"},
     "DTYPE_WU":{'id':3, 'views':{}, 'filters':(), 'description':"Unsigned Word (16-bit unsigned integer)"},

@@ -1,8 +1,8 @@
 {% extends "h1ds_mdsplus/base_node.html" %}
 
-{% block node_data%}
-<div class="error-message">
+{% block node_error %}
+<div class="node-error">
 The requested view ({{requested_view}}) is not available for this data type ({{dtype}}).
 </div>
-{% endblock node_data %}
+{% endblock node_error %}
 
