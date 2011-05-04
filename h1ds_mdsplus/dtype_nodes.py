@@ -98,6 +98,14 @@ def action_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+def data_with_units_view_html(request, data):
+    # TODO, desplay returned datatype (e.g. signal) beneath node_data.
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/data_with_units_view.html',
+                              view_data,
+                              context_instance=RequestContext(request))
+
 
 # Filters for all dtypes
 filters_all = {
@@ -247,7 +255,11 @@ dtype_mappings = {
     "DTYPE_DEPENDENCY":{'id':208, 'views':{}, 'filters':(), 'description':"Dependency (depreciated?"},
     "DTYPE_CONDITION":{'id':209, 'views':{}, 'filters':(), 'description':"Condition (depreciated?"},
     "DTYPE_EVENT":{'id':210, 'views':{}, 'filters':(), 'description':"Event (depreciated?"},
-    "DTYPE_WITH_UNITS":{'id':211, 'views':{}, 'filters':(), 'description':"Data with units"},
+    "DTYPE_WITH_UNITS":{'id':211, 
+                        'views':{'html':data_with_units_view_html}, 
+                        'filters':(), 
+                        'description':"Data with units"
+                        },
     "DTYPE_CALL":{'id':212, 'views':{}, 'filters':(), 'description':"External function call"},
     "DTYPE_WITH_ERROR":{'id':213, 'views':{}, 'filters':(), 'description':"Data with error"},
     "DTYPE_LIST":{'id':214, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
