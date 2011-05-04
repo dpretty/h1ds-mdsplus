@@ -106,6 +106,13 @@ def data_with_units_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+def conglom_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    return render_to_response('h1ds_mdsplus/conglom_view.html',
+                              view_data,
+                              context_instance=RequestContext(request))
+
 
 # Filters for all dtypes
 filters_all = {
@@ -236,7 +243,11 @@ dtype_mappings = {
                       'filters':(), 
                       'description':"Built-in Function Call"
                       },
-    "DTYPE_CONGLOM":{'id':200, 'views':{}, 'filters':(), 'description':"Conglomerate/Device"},
+    "DTYPE_CONGLOM":{'id':200, 
+                     'views':{'html':conglom_view_html}, 
+                     'filters':(), 
+                     'description':"Conglomerate/Device"
+                     },
     "DTYPE_RANGE":{'id':201, 
                    'views':{'html':range_view_html}, 
                    'filters':(), 
