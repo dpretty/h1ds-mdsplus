@@ -75,6 +75,14 @@ def nodeid_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+def nodepath_view_html(request, data):
+    view_data = data.get_view_data()
+    view_data['node_data'] = data.mds_object.getData()
+    view_data['node_data_url'] = mds_to_url(view_data['node_data'])
+    return render_to_response('h1ds_mdsplus/nodepath_view.html', 
+                              view_data,
+                              context_instance=RequestContext(request))
+
 def range_view_html(request, data):
     view_data = data.get_view_data()
     view_data['node_data'] = data.mds_object.getData()
@@ -232,7 +240,11 @@ dtype_mappings = {
                  'filters':(), # TODO: follow link filter
                  'description':"Node (ID)"
                  },
-    "DTYPE_PATH":{'id':193, 'views':{}, 'filters':(), 'description':"Node (Path)"},
+    "DTYPE_PATH":{'id':193, 
+                  'views':{'html':nodepath_view_html}, 
+                  'filters':(), # TODO: follow link filter
+                  'description':"Node (Path)"
+                  },
     "DTYPE_PARAM":{'id':194, 'views':{}, 'filters':(), 'description':"Parameter"},
     "DTYPE_SIGNAL":{'id':195, 'views':{}, 'filters':(), 'description':"Signal"},
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
