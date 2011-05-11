@@ -4,10 +4,12 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
+from django.http import HttpResponse
 
 from MDSplus._tdishr import TdiException
 
 from h1ds_mdsplus.models import MDSPlusTree
+from h1ds_mdsplus.utils import discretise_array
 
 
 
@@ -39,13 +41,13 @@ def mds_to_url(mds_data_object):
 
 def no_data_view_html(request, data):
     return render_to_response('h1ds_mdsplus/no_data_view.html', 
-                              data.get_view_data(),
+                              data.get_view_data(request),
                               context_instance=RequestContext(request))
 
 def int_view_html(request, data):
     # we don't care about whether a integer is unsigned, 8bit etc for 
     # HTML view, we we'll take all here.
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/int_view.html', 
                               view_data,
@@ -54,21 +56,21 @@ def int_view_html(request, data):
 def float_view_html(request, data):
     # take all floats and assume python can convert all to string format
     # well enough for HTML.
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/float_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
 
 def text_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/text_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
 
 def nodeid_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     view_data['node_data_url'] = mds_to_url(view_data['node_data'])
     return render_to_response('h1ds_mdsplus/nodeid_view.html', 
@@ -76,7 +78,7 @@ def nodeid_view_html(request, data):
                               context_instance=RequestContext(request))
 
 def nodepath_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     view_data['node_data_url'] = mds_to_url(view_data['node_data'])
     return render_to_response('h1ds_mdsplus/nodepath_view.html', 
@@ -84,7 +86,7 @@ def nodepath_view_html(request, data):
                               context_instance=RequestContext(request))
 
 def range_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/range_view.html', 
                               view_data,
@@ -93,14 +95,14 @@ def range_view_html(request, data):
 def function_call_view_html(request, data):
     # TODO: show data returned by function (don't require filter, should
     # show returned data by default - along with function)
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/function_call_view.html', 
                               view_data,
                               context_instance=RequestContext(request))
 
 def action_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/action_view.html',
                               view_data,
@@ -108,23 +110,53 @@ def action_view_html(request, data):
 
 def data_with_units_view_html(request, data):
     # TODO, desplay returned datatype (e.g. signal) beneath node_data.
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/data_with_units_view.html',
                               view_data,
                               context_instance=RequestContext(request))
 
 def conglom_view_html(request, data):
-    view_data = data.get_view_data()
+    view_data = data.get_view_data(request)
     view_data['node_data'] = data.mds_object.getData()
     return render_to_response('h1ds_mdsplus/conglom_view.html',
                               view_data,
                               context_instance=RequestContext(request))
 
+def signal_view_html(request, data):
+    view_data = data.get_view_data(request)
+    # tell the HTML page what the datatype is, so it knows how to 
+    # process binary data sent to javascript for plotting.
+    try:
+        view_data['signal_dtype'] = data.mds_object.raw_of().mdsdtype
+    except AttributeError:
+        view_data['signal_dtype'] = data.mds_object.getData().getValue().raw_of().mdsdtype
+
+    return render_to_response('h1ds_mdsplus/signal_view.html',
+                              view_data,
+                              context_instance=RequestContext(request))
+
+def signal_view_bin(request, data):
+    """Use Boyd's quantised compression to return binary data."""
+    discretised_data = discretise_array(data.mds_object.data())
+    dim = data.mds_object.dim_of().data()
+
+    signal = discretised_data['iarr'].tostring()
+    response = HttpResponse(signal, mimetype='application/octet-stream')
+    response['X-H1DS-signal-min'] = discretised_data['minarr']
+    response['X-H1DS-signal-delta'] = discretised_data['deltar']
+    response['X-H1DS-dim-t0'] = dim[0]
+    response['X-H1DS-dim-delta'] = dim[1]-dim[0]
+    response['X-H1DS-dim-length'] = len(dim)
+    response['X-H1DS-signal-units'] = data.mds_object.units
+    response['X-H1DS-signal-dtype'] = str(discretised_data['iarr'].dtype)
+    response['X-H1DS-dim-units'] = data.mds_object.dim_of().units
+    return response
+
 
 # Filters for all dtypes
 filters_all = {
-    # TDI
+    # show TDI
     }
     
 dtype_mappings = {
@@ -246,7 +278,11 @@ dtype_mappings = {
                   'description':"Node (Path)"
                   },
     "DTYPE_PARAM":{'id':194, 'views':{}, 'filters':(), 'description':"Parameter"},
-    "DTYPE_SIGNAL":{'id':195, 'views':{}, 'filters':(), 'description':"Signal"},
+    "DTYPE_SIGNAL":{'id':195, 
+                    'views':{'html':signal_view_html, 'bin':signal_view_bin}, 
+                    'filters':(), 
+                    'description':"Signal"
+                    },
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
     "DTYPE_WINDOW":{'id':197, 'views':{}, 'filters':(), 'description':"Window"},
     "DTYPE_SLOPE":{'id':198, 'views':{}, 'filters':(), 'description':"Slope (depreciated?)"},
@@ -337,7 +373,7 @@ def get_trees():
 
 def unsupported_view(requested_view_type):
     def get_view(request, data):
-        view_data = data.get_view_data()
+        view_data = data.get_view_data(request)
         view_data['requested_view'] = requested_view_type
         return render_to_response('h1ds_mdsplus/unsupported_view.html', 
                                   #{'dtype':data.dtype, 'dtype_desc':dtype_desc},
@@ -395,7 +431,10 @@ def get_mds_path_breadcrumbs(mds_data):
         return breadcrumb_string
 
 
-
+def get_view_path(request, h1ds_view_name):
+    qd_copy = request.GET.copy()
+    qd_copy.update({'view': h1ds_view_name})
+    return '?'.join([request.path, qd_copy.urlencode()])
 
 ########################################################################
 ## H1DS Node class                                                    ##
@@ -426,7 +465,8 @@ class MDSPlusDataWrapper(object):
 
         return members, children
 
-    def get_view_data(self):
+    def get_view_data(self, request):
+        view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
         members, children = self.get_subnode_data()
         node_metadata = {'datatype':self.dtype,
                          'node id':self.mds_object.nid,
@@ -442,6 +482,7 @@ class MDSPlusDataWrapper(object):
                      #'input_tree':tree, 
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),
+                     'node_views':view_links,
                      'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,
                      }

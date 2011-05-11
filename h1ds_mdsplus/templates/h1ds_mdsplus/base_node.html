@@ -137,6 +137,7 @@
 {% endblock %}
 
 {% block mdsmeta %}
+<h3>Node views </h3>{% for node_view_name, node_view_link in node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
 <h3>Node metadata</h3>
 <ul>
 {% for meta_name, meta_value in node_metadata.items %}
@@ -145,7 +146,9 @@
 </ul>
 {% endblock mdsmeta%}
 
+
 {% block extrascript %}
+{% comment %}TODO: Move from here? this will get overridden by javascript from signal view.{% endcomment %}
 
 {% if input_tree %}
 <script>

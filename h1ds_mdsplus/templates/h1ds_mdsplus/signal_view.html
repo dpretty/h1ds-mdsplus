@@ -1,0 +1,60 @@
+{% extends "h1ds_mdsplus/base_node.html" %}
+
+{% block node_data %}
+<div class="node-data">
+<div id="signal-placeholder" style="width:600px;height:300px;"></div>  
+<div id="signal-overview" style="margin-left:50px;margin-top:20px;width:400px;height:50px"></div> 
+</div>
+
+info:
+
+signal dtype: {{signal_dtype}}
+
+{% endblock node_data %}
+
+
+{% block extrascript %}
+<script>
+
+function plotSignal(sigdat) {
+$.plot($("#signal-placeholder"),  [{label: "test", data:sigdat, clickable: false, hoverable: false }]  );
+//$.plot($("#signal-placeholder"),  [ sigdat ]  );
+} // end function
+
+function getH1DSBinData() {
+$.get(
+ '?view=bin',{},
+function (data) {
+  var view = new jDataView(data);
+  //var darraylen = view.length / 2;
+
+  var darraylen = 5000;
+  var darray = Array(darraylen);
+  var tarray = Array(darraylen);
+  //console.log(view.length);
+  //for( i=0; i < darraylen; i++){
+  //  tarray[i]=i;
+  //}
+  for( i=0; i < darraylen; i++){
+    darray[i]=[i,view.getInt16()];
+   // darray[i]=view.getInt16();
+  }
+  //console.log(darray);
+  //return darray;
+  plotSignal(darray);
+  },
+  'binary'
+);
+}
+
+
+
+$(document).ready(function() {
+data = getH1DSBinData();
+// console.log(data);
+//plotSignal(data);
+});
+</script>
+
+{% endblock extrascript %}
+
