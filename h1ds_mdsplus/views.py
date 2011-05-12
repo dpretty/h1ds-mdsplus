@@ -316,6 +316,20 @@ def get_tree(tree, shot, request):
     return t
 
 
+filter_regex=re.compile('^f(?P<fid>\d+?)_(?P<filtername>.+)')
+
+def get_filter_list(request):
+    filter_list = []
+    for key, value in request.GET.iteritems():
+        try:
+            fid_str,fname = filter_regex.search(key).groups()
+            filter_list.append([int(fid_str), fname, value])
+        except AttributeError:
+            # regex failed (not a filter f(int)_name key)
+            pass
+    filter_list.sort()
+    return filter_list
+
 def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
     """Display MDS tree node."""
     
@@ -324,6 +338,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
     mds_tree = get_tree(tree, shot, request)
     mds_path = url_to_mds(tree, tagname, nodepath)
     mds_node = MDSPlusDataWrapper(mds_tree.getNode(mds_path))
+    mds_node.apply_filters(get_filter_list(request))
     return mds_node.get_view(request, view)
 
 ### OLD VERSION

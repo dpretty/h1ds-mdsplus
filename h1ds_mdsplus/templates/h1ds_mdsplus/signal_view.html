@@ -23,27 +23,16 @@ $.plot($("#signal-placeholder"),  [{label: "test", data:sigdat, clickable: false
 
 function getH1DSBinData() {
 $.get(
- '?view=bin',{},
+ '?view=json&f999_maxsamples=300',{},
 function (data) {
-  var view = new jDataView(data);
-  //var darraylen = view.length / 2;
-
-  var darraylen = 5000;
-  var darray = Array(darraylen);
-  var tarray = Array(darraylen);
-  //console.log(view.length);
-  //for( i=0; i < darraylen; i++){
-  //  tarray[i]=i;
-  //}
-  for( i=0; i < darraylen; i++){
-    darray[i]=[i,view.getInt16()];
-   // darray[i]=view.getInt16();
+  // var d = data.node_data; 
+  var d = Array(data.node_data.length);
+  for( i=0; i < d.length; i++){
+    d[i]=[data.node_dim[i],data.node_data[i]];
   }
-  //console.log(darray);
-  //return darray;
-  plotSignal(darray);
+  plotSignal(d);
   },
-  'binary'
+  'json'
 );
 }
 
@@ -51,8 +40,6 @@ function (data) {
 
 $(document).ready(function() {
 data = getH1DSBinData();
-// console.log(data);
-//plotSignal(data);
 });
 </script>
 
