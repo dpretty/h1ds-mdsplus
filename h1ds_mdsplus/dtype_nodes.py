@@ -148,14 +148,10 @@ def signal_view_serialized(request, data, mode='xml'):
     except AttributeError:
         view_data['signal_dtype'] = data.mds_object.getData().getValue().raw_of().mdsdtype
 
-
+    view_data['data_units'] = str(data.filtered_data.units)
+    view_data['dim_units'] = str(data.filtered_data.dim_of().units)
     view_data['node_data'] = data.filtered_data.data().tolist()
-    try:
-        # Signal dim is an MDSplus Function
-        view_data['node_dim'] = data.filtered_data.dim_of().data().tolist()
-    except:
-        # Signal dim is just an array (i.e. created by filter.)
-        view_data['node_dim'] = data.filtered_data.dim_of().tolist()
+    view_data['node_dim'] = data.filtered_data.dim_of().data().tolist()
 
     if mode == 'xml':
         pass

@@ -17,7 +17,7 @@ signal dtype: {{signal_dtype}}
 <script>
 
 function plotSignal(sigdat) {
-$.plot($("#signal-placeholder"),  [{label: "test", data:sigdat, clickable: false, hoverable: false }]  );
+$.plot($("#signal-placeholder"),  [{label: sigdat.yunits+" v. "+sigdat.xunits, data:sigdat.data, clickable: true, hoverable: true }]  );
 //$.plot($("#signal-placeholder"),  [ sigdat ]  );
 } // end function
 
@@ -25,10 +25,9 @@ function getH1DSBinData() {
 $.get(
  '?view=json&f999_maxsamples=300',{},
 function (data) {
-  // var d = data.node_data; 
-  var d = Array(data.node_data.length);
-  for( i=0; i < d.length; i++){
-    d[i]=[data.node_dim[i],data.node_data[i]];
+  var d = {"data": Array(data.node_data.length), "xunits":data.dim_units, "yunits":data.data_units};
+  for( i=0; i < d.data.length; i++){
+    d.data[i]=[data.node_dim[i],data.node_data[i]];
   }
   plotSignal(d);
   },
