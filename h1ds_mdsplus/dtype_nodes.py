@@ -9,6 +9,8 @@ from django.http import HttpResponse
 
 from MDSplus._tdishr import TdiException
 from MDSplus._treeshr import TreeException
+from MDSplus import _mdsdtypes
+import MDSplus
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import discretise_array
@@ -19,6 +21,16 @@ tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
 
 
+def get_dtype(mds_data):
+    if hasattr(mds_data, 'getDtype'):
+        return mds_data.getDtype()
+    elif hasattr(mds_data, 'dtype'):
+        return mds_data.dtype
+    elif hasattr(mds_data, '_dtype'):
+        return mds_data._dtype
+    elif type(mds_data) == MDSplus.Dictionary:
+        return "DTYPE_DICTIONARY"
+    
 
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
@@ -138,21 +150,37 @@ def signal_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def signal_view_serialized(request, data, mode='xml'):
+def clean_signal_for_serialization(request, data):
     #view_data = data.get_view_data(request)
     view_data = {}
-    # tell the HTML page what the datatype is, so it knows how to 
-    # process binary data sent to javascript for plotting.
-    try:
-        view_data['signal_dtype'] = data.mds_object.raw_of().mdsdtype
-    except AttributeError:
-        view_data['signal_dtype'] = data.mds_object.getData().getValue().raw_of().mdsdtype
+    view_data['data_units'] = str(data.units)
+    view_data['dim_units'] = str(data.dim_of().units)
+    view_data['node_data'] = data.data().tolist()
+    view_data['node_dim'] = data.dim_of().data().tolist()
+    return view_data
 
-    view_data['data_units'] = str(data.filtered_data.units)
-    view_data['dim_units'] = str(data.filtered_data.dim_of().units)
-    view_data['node_data'] = data.filtered_data.data().tolist()
-    view_data['node_dim'] = data.filtered_data.dim_of().data().tolist()
+def signal_view_serialized(request, data, mode='xml'):
+    view_data = clean_signal_for_serialization(request, data.filtered_data)
 
+    if mode == 'xml':
+        pass
+    elif mode == 'json':
+        serial_data = json.dumps(view_data)
+        return HttpResponse(serial_data, mimetype='application/json')
+    else:
+        raise Exception
+
+def dictionary_view_serialized(request, data, mode='xml'):
+    view_data = {}
+    for key, value in data.filtered_data.items():
+        # TODO: what's the proper way of getting dtype from MDS object?
+        # some seem to have obj.dtype, some have obj.getDtype, some have
+        # obj.mdsdype. And the signal create from filter is obj._dtype...
+        if value._dtype == _mdsdtypes.DTYPE_SIGNAL:
+            view_data[key] = clean_signal_for_serialization(request, value)
+        else:
+            # TODO: support other dtypes in signal
+            raise Error("Non signal datapoints not supported.")
     if mode == 'xml':
         pass
     elif mode == 'json':
@@ -163,6 +191,10 @@ def signal_view_serialized(request, data, mode='xml'):
 
 def signal_view_json(request, data):
     return signal_view_serialized(request, data, mode='json')
+
+def dictionary_view_json(request, data):
+    return dictionary_view_serialized(request, data, mode='json')
+
 
 def signal_view_bin(request, data):
     """Use Boyd's quantised compression to return binary data."""
@@ -313,7 +345,7 @@ dtype_mappings = {
                     },
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
     "DTYPE_WINDOW":{'id':197, 'views':{}, 'filters':(), 'description':"Window"},
-    "DTYPE_SLOPE":{'id':198, 'views':{}, 'filters':(), 'description':"Slope (depreciated?)"},
+    "DTYPE_SLOPE":{'id':198, 'views':{}, 'filters':(), 'description':"Slope (deprecated?)"},
     "DTYPE_FUNCTION":{'id':199, 
                       'views':{'html':function_call_view_html}, 
                       'filters':(), 
@@ -337,11 +369,11 @@ dtype_mappings = {
     "DTYPE_DISPATCH":{'id':203, 'views':{}, 'filters':(), 'description':"Dispatch"},
     "DTYPE_PROGRAM":{'id':204, 'views':{}, 'filters':(), 'description':"Program (deprecited?"},
     "DTYPE_ROUTINE":{'id':205, 'views':{}, 'filters':(), 'description':"Routine"},
-    "DTYPE_PROCEDURE":{'id':206, 'views':{}, 'filters':(), 'description':"Procedure (depreciated?"},
+    "DTYPE_PROCEDURE":{'id':206, 'views':{}, 'filters':(), 'description':"Procedure (deprecated?"},
     "DTYPE_METHOD":{'id':207, 'views':{}, 'filters':(), 'description':"Method"},
-    "DTYPE_DEPENDENCY":{'id':208, 'views':{}, 'filters':(), 'description':"Dependency (depreciated?"},
-    "DTYPE_CONDITION":{'id':209, 'views':{}, 'filters':(), 'description':"Condition (depreciated?"},
-    "DTYPE_EVENT":{'id':210, 'views':{}, 'filters':(), 'description':"Event (depreciated?"},
+    "DTYPE_DEPENDENCY":{'id':208, 'views':{}, 'filters':(), 'description':"Dependency (deprecated?"},
+    "DTYPE_CONDITION":{'id':209, 'views':{}, 'filters':(), 'description':"Condition (deprecated?"},
+    "DTYPE_EVENT":{'id':210, 'views':{}, 'filters':(), 'description':"Event (deprecated?"},
     "DTYPE_WITH_UNITS":{'id':211, 
                         'views':{'html':data_with_units_view_html}, 
                         'filters':(), 
@@ -351,7 +383,10 @@ dtype_mappings = {
     "DTYPE_WITH_ERROR":{'id':213, 'views':{}, 'filters':(), 'description':"Data with error"},
     "DTYPE_LIST":{'id':214, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_TUPLE":{'id':215, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_DICTIONARY":{'id':216, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
+    "DTYPE_DICTIONARY":{'id':216, 
+                        'views':{'json':dictionary_view_json},
+                        'filters':(), 
+                        'description':"Unknown to Dave..."},
     "DTYPE_NATIVE_DOUBLE":{'id':53, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_NATIVE_FLOAT":{'id':52, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_DOUBLE_COMPLEX":{'id':54, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
@@ -478,11 +513,12 @@ class MDSPlusDataWrapper(object):
             self.filtered_data = self.mds_object.getData()
         except TreeException:
             self.filtered_data = None
+        self.filtered_dtype = self.dtype
         self.n_filters = 0
 
             
     def get_view(self, request, view_name):
-        view_function = dtype_mappings[self.dtype]['views'].get(view_name, unsupported_view(view_name))
+        view_function = dtype_mappings[self.filtered_dtype]['views'].get(view_name, unsupported_view(view_name))
         return view_function(request, self)
 
     def get_subnode_data(self):
@@ -503,6 +539,7 @@ class MDSPlusDataWrapper(object):
         for fid, fname, fval in filter_list:
             func = getattr(filter_functions, fname)
             self.filtered_data = func(self.filtered_data, fval)
+            self.filtered_dtype = get_dtype(self.filtered_data)
             self.n_filters += 1
         
     def get_view_data(self, request):

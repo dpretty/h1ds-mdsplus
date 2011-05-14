@@ -21,7 +21,28 @@ $.plot($("#signal-placeholder"),  [{label: sigdat.yunits+" v. "+sigdat.xunits, d
 //$.plot($("#signal-placeholder"),  [ sigdat ]  );
 } // end function
 
-function getH1DSBinData() {
+function getH1DSMinMaxData() {
+  $.get(
+    '?view=json&f999_nbins_minmax=600',{},
+     function (data) {
+       console.log(data);
+       var d = {"signalmin":{"data": Array(data.sigmin.node_data.length)},
+                "signalmax":{"data": Array(data.sigmax.node_data.length)}};
+       for( i=0; i < d.signalmin.data.length; i++){
+         d.signalmin.data[i]=[data.sigmin.node_dim[i],data.sigmin.node_data[i]];
+         d.signalmax.data[i]=[data.sigmax.node_dim[i],data.sigmax.node_data[i]];
+     }
+     var dataset = [{id: 'sigmin', data:d.signalmin.data, lines:{show:true, lineWidth:0, fill:false}, color:"rgb(50,50,255)"},
+		     {id: 'sigmax', data:d.signalmax.data, lines:{show:true, lineWidth:0, fill:0.5}, color:"rgb(50,50,255)", fillBetween: 'sigmin'}]
+
+     $.plot($("#signal-placeholder"),  dataset  );
+     },
+     'json'
+  );
+}
+
+
+function getH1DSData() {
 $.get(
  '?view=json&f999_maxsamples=300',{},
 function (data) {
@@ -38,7 +59,7 @@ function (data) {
 
 
 $(document).ready(function() {
-data = getH1DSBinData();
+data = getH1DSMinMaxData();
 });
 </script>
 
