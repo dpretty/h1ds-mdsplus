@@ -3,7 +3,7 @@
 {% block node_data %}
 <div class="node-data">
 <div id="signal-placeholder" style="width:600px;height:300px;"></div>  
-<div id="signal-overview" style="margin-left:50px;margin-top:20px;width:400px;height:50px"></div> 
+<div id="signal-overview" style="width:600px;height:100px"></div> 
 </div>
 
 info:
@@ -16,16 +16,17 @@ signal dtype: {{signal_dtype}}
 {% block extrascript %}
 <script>
 
-function plotSignal(sigdat) {
-$.plot($("#signal-placeholder"),  [{label: sigdat.yunits+" v. "+sigdat.xunits, data:sigdat.data, clickable: true, hoverable: true }]  );
-//$.plot($("#signal-placeholder"),  [ sigdat ]  );
-} // end function
 
-function getH1DSMinMaxData() {
-  $.get(
-    '?view=json&f999_nbins_minmax=600',{},
-     function (data) {
-       console.log(data);
+function formatDataForPlots(data) {
+       //console.log(data);
+       if (data.sigmin == undefined) {
+       var d = Array(data.node_data.length);
+       for( i=0; i < d.length; i++){
+         d[i]=[data.node_dim[i],data.node_data[i]];
+     }
+       var dataset = [{data:d, color:"rgb(50,50,255)"}];
+       return dataset;
+}
        var d = {"signalmin":{"data": Array(data.sigmin.node_data.length)},
                 "signalmax":{"data": Array(data.sigmax.node_data.length)}};
        for( i=0; i < d.signalmin.data.length; i++){
@@ -33,33 +34,54 @@ function getH1DSMinMaxData() {
          d.signalmax.data[i]=[data.sigmax.node_dim[i],data.sigmax.node_data[i]];
      }
      var dataset = [{id: 'sigmin', data:d.signalmin.data, lines:{show:true, lineWidth:0, fill:false}, color:"rgb(50,50,255)"},
-		     {id: 'sigmax', data:d.signalmax.data, lines:{show:true, lineWidth:0, fill:0.5}, color:"rgb(50,50,255)", fillBetween: 'sigmin'}]
+		     {id: 'sigmax', data:d.signalmax.data, lines:{show:true, lineWidth:0, fill:0.5}, color:"rgb(50,50,255)", fillBetween: 'sigmin'}];
+     return dataset;
+} // end formatDataForPlots
 
-     $.plot($("#signal-placeholder"),  dataset  );
+function plotSignals() {
+  $.get(
+    '?view=json&f999_nbins_minmax=600',{},
+     function (data) {
+       var dataset = formatDataForPlots(data);
+     var options = {selection:{mode:"x"}};
+     var sigplot = $.plot($("#signal-placeholder"),  dataset, options  );
+     var overviewplot = $.plot($("#signal-overview"),  dataset , options  );
+
+     $("#signal-placeholder").bind("plotselected", function (event, ranges) {
+        // do the zooming
+        var new_url = '?view=json&f980_dimrange='+ranges.xaxis.from+'_'+ranges.xaxis.to+'&f990_nbins_minmax=300';
+        //console.log(new_url);
+        $.get(new_url, {}, function(newdata) {
+        var new_d = formatDataForPlots(newdata);
+
+        sigplot = $.plot($("#signal-placeholder"), new_d, options);
+                     //$.extend(true, {}, options, {
+                     //     xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+                     // }));
+
+});
+		     
+
+
+
+
+        // don't fire event on the overview to prevent eternal loop
+        overviewplot.setSelection(ranges, true);
+    });
+    
+    $("#signal-overview").bind("plotselected", function (event, ranges) {
+        sigplot.setSelection(ranges);
+    });
+
+
      },
      'json'
   );
 }
 
 
-function getH1DSData() {
-$.get(
- '?view=json&f999_maxsamples=300',{},
-function (data) {
-  var d = {"data": Array(data.node_data.length), "xunits":data.dim_units, "yunits":data.data_units};
-  for( i=0; i < d.data.length; i++){
-    d.data[i]=[data.node_dim[i],data.node_data[i]];
-  }
-  plotSignal(d);
-  },
-  'json'
-);
-}
-
-
-
 $(document).ready(function() {
-data = getH1DSMinMaxData();
+data = plotSignals();
 });
 </script>
 

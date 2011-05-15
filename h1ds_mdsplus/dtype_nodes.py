@@ -21,17 +21,6 @@ tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
 
 
-def get_dtype(mds_data):
-    if hasattr(mds_data, 'getDtype'):
-        return mds_data.getDtype()
-    elif hasattr(mds_data, 'dtype'):
-        return mds_data.dtype
-    elif hasattr(mds_data, '_dtype'):
-        return mds_data._dtype
-    elif type(mds_data) == MDSplus.Dictionary:
-        return "DTYPE_DICTIONARY"
-    
-
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
     # correct  tagname when a node path exists,  and not fail when there
@@ -395,6 +384,21 @@ dtype_mappings = {
     "DTYPE_FLOAT":{'id':52, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
 }
 
+
+map_dtype_id = {}
+for k,v in dtype_mappings.items():
+    map_dtype_id[str(v['id'])] = k
+
+
+def get_dtype(mds_data):
+    if hasattr(mds_data, 'getDtype'):
+        return mds_data.getDtype()
+    elif hasattr(mds_data, 'dtype'):
+        return mds_data.dtype
+    elif hasattr(mds_data, '_dtype'):
+        return map_dtype_id[str(mds_data._dtype)]
+    elif type(mds_data) == MDSplus.Dictionary:
+        return "DTYPE_DICTIONARY"
 
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):

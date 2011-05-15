@@ -16,6 +16,8 @@ def maxsamples(data, max_samples_str):
 def nbins_minmax(data, n_bins_str):
     n_bins = int(n_bins_str)
     numpy_array = data.data()
+    if len(numpy_array) < 2*n_bins:
+        return data
     numpy_arr_dimof = data.dim_of().data()
     delta_sample = len(numpy_array)/n_bins
     
@@ -35,3 +37,15 @@ def nbins_minmax(data, n_bins_str):
     return_dict = MDSplus.Dictionary({'sigmin':MDSplus.Signal(min_array, None, new_dim),
                                       'sigmax':MDSplus.Signal(max_array, None, new_dim)})
     return return_dict
+
+
+def dimrange(data, range_str):
+    min_val, max_val = map(float, range_str.split('_'))
+    numpy_array = data.data()
+    numpy_arr_dimof = data.dim_of().data()
+
+    min_e, max_e = np.searchsorted(numpy_arr_dimof, [min_val, max_val])
+    new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[min_e:max_e], data.units))
+    new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[min_e:max_e], data.dim_of().units))
+    return MDSplus.Signal(new_array, None, new_dim)
+    
