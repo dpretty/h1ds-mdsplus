@@ -99,5 +99,5 @@ class MeanValue(BaseFilter):
         self.data = data
 
     def filter(self):
-        mean_value = mean(self.data.data())
+        mean_value = np.mean(self.data.data())
         return MDSplus.Float32(mean_value)

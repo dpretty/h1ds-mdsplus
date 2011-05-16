@@ -381,7 +381,10 @@ dtype_mappings = {
     "DTYPE_DOUBLE_COMPLEX":{'id':54, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_DOUBLE":{'id':53, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_FLOAT_COMPLEX":{'id':54, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
-    "DTYPE_FLOAT":{'id':52, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
+    "DTYPE_FLOAT":{'id':52,
+                   'views':{'html':float_view_html}, 
+                   'filters':(),
+                   'description':"Unknown to Dave..."},
 }
 
 
@@ -393,6 +396,8 @@ for k,v in dtype_mappings.items():
 def get_dtype(mds_data):
     if hasattr(mds_data, 'getDtype'):
         return mds_data.getDtype()
+    elif hasattr(mds_data, 'mdsdtype'):
+        return map_dtype_id[str(mds_data.mdsdtype)]
     elif hasattr(mds_data, 'dtype'):
         return mds_data.dtype
     elif hasattr(mds_data, '_dtype'):
@@ -522,6 +527,7 @@ class MDSPlusDataWrapper(object):
 
             
     def get_view(self, request, view_name):
+        print self.filtered_dtype
         view_function = dtype_mappings[self.filtered_dtype]['views'].get(view_name, unsupported_view(view_name))
         return view_function(request, self)
 
@@ -540,6 +546,7 @@ class MDSPlusDataWrapper(object):
         return members, children
 
     def apply_filters(self, filter_list):
+        print filter_list
         for fid, fname, fval in filter_list:
             filter_class = getattr(df, fname)
             self.filtered_data = filter_class(self.filtered_data, fval).filter()
@@ -555,6 +562,7 @@ class MDSPlusDataWrapper(object):
                          'type':member_or_child(self.mds_object)}
         view_data = {'shot':self.shot,
                      'dtype':self.dtype,
+                     'filtered_dtype':self.filtered_dtype,
                      #'tdi':tdi, 
                      'node_metadata':node_metadata,
                      'children':children, 
