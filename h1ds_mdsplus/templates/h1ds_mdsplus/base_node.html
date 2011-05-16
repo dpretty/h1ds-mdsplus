@@ -137,9 +137,14 @@
 {% endblock %}
 
 {% block mdsmeta %}
-<h3>Node views </h3>{% for node_view_name, node_view_link in node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
-<h3>Node filters</h3>{% for fdict in node_filters %}<div class="mds-filter"><a title="{{fdict.doc}}">{{fdict.t|safe}}</a></div>{% endfor%}
-<h3>Node metadata</h3>
+<h2>Filtered data</h2>
+<h3>Applied filters<h3>{% for applied_filter in filter_list %}{{applied_filter}}{% endfor %}
+<h3>views </h3>{% for node_view_name, node_view_link in f_node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
+<h3>filters</h3>{% for fdict in f_node_filters %}<div class="mds-filter">{{fdict.t|safe}}</div>{% endfor%}
+<h2>MDSplus Node</h2>
+<h3>views </h3>{% for node_view_name, node_view_link in node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
+<h3>filters</h3>{% for fdict in node_filters %}<div class="mds-filter">{{fdict.t|safe}}</div>{% endfor%}
+<h3>metadata</h3>
 <ul>
 {% for meta_name, meta_value in node_metadata.items %}
 <li><strong>{{meta_name}}: </strong>{{meta_value}}</li>

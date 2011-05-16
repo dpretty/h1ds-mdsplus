@@ -11,7 +11,7 @@ class MaxSamples(BaseFilter):
     Example: To get the signal with 20 samples, use MaxSamples=20
     """
     
-    template = "MaxSamples"
+    template = """<form style='margin: 0; padding: 0'><span class="left">subsample</span><span class="right"><input type="text" size=5 name="n_bins" /> <input style='display:inline;' type='submit' value='+'/></span></form>"""
 
     def __init__(self, data, arg_string):
         self.data = data
@@ -35,7 +35,7 @@ class NBinsMinMax(BaseFilter):
     Example: to resample a signal to 50 bins, use NBinsMinMax=50
     """
 
-    template="NBinsMinMax"
+    template = """<form style='margin: 0; padding: 0'><span class="left">Min/max (nbins)</span><span class="right"><input type="text" size=5 name="n_bins" /> <input style='display:inline;' type='submit' value='+'/></span></form>"""
 
     def __init__(self, data, arg_string):
         self.data = data
@@ -71,7 +71,7 @@ class DimRange(BaseFilter):
     Example: to change the range of a signal to 1.23 < t < 1.51, use DimRange=1.23_1.52
     """
 
-    template = "DimRange"
+    template = """<form style='margin: 0; padding: 0'><span class="left">Range</span> <span class="right"><input size=5 type="text" name="from" /> <input type="text" size=5 name="to" /> <input style='display:inline;' type='submit' value='+'/></span></form>"""
 
     def __init__(self, data, arg_string):
         self.data = data
@@ -93,7 +93,8 @@ class MeanValue(BaseFilter):
     Example: MeanValue=1 (the query value can be anything).
     """
 
-    template = "MeanValue"
+    template = """<form style='margin: 0; padding: 0'><span class="left">Mean value</span><span class="right"><input style='display:inline;' type='submit' value='+'/></span></form>"""
+                                           
 
     def __init__(self, data, arg_string):
         self.data = data

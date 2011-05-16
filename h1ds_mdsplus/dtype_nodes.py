@@ -518,6 +518,7 @@ class MDSPlusDataWrapper(object):
         self.mds_object = mds_object
         self.dtype = str(self.mds_object.getDtype())
         self.shot = self.mds_object.tree.shot
+        self.filter_list = []
         try:
             self.filtered_data = self.mds_object.getData()
         except TreeException:
@@ -546,7 +547,7 @@ class MDSPlusDataWrapper(object):
         return members, children
 
     def apply_filters(self, filter_list):
-        print filter_list
+        self.filter_list = filter_list
         for fid, fname, fval in filter_list:
             filter_class = getattr(df, fname)
             self.filtered_data = filter_class(self.filtered_data, fval).filter()
@@ -556,6 +557,9 @@ class MDSPlusDataWrapper(object):
     def get_view_data(self, request):
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
         filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.template} for i in dtype_mappings[self.dtype]['filters']]
+        f_view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.filtered_dtype]['views'].keys()]
+        f_filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.template} for i in dtype_mappings[self.filtered_dtype]['filters']]
+
         members, children = self.get_subnode_data()
         node_metadata = {'datatype':self.dtype,
                          'node id':self.mds_object.nid,
@@ -573,8 +577,11 @@ class MDSPlusDataWrapper(object):
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),
                      'node_views':view_links,
-                     'request_query':json.dumps(request.GET),
                      'node_filters':filter_links,
+                     'f_node_views':f_view_links,
+                     'f_node_filters':f_filter_links,
+                     'request_query':json.dumps(request.GET),
+                     'filter_list':self.filter_list,
                      'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,
                      }
