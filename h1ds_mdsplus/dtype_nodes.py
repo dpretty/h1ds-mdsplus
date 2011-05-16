@@ -541,13 +541,14 @@ class MDSPlusDataWrapper(object):
 
     def apply_filters(self, filter_list):
         for fid, fname, fval in filter_list:
-            func = getattr(filter_functions, fname)
-            self.filtered_data = func(self.filtered_data, fval)
+            filter_class = getattr(filter_functions, fname)
+            self.filtered_data = filter_class(self.filtered_data, fval).filter()
             self.filtered_dtype = get_dtype(self.filtered_data)
             self.n_filters += 1
         
     def get_view_data(self, request):
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
+        #filter_links = [[]]
         members, children = self.get_subnode_data()
         node_metadata = {'datatype':self.dtype,
                          'node id':self.mds_object.nid,

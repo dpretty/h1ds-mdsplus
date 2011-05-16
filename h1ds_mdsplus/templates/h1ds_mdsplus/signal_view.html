@@ -40,7 +40,7 @@ function formatDataForPlots(data) {
 
 function plotSignals() {
   $.get(
-    '?view=json&f999_nbins_minmax=600',{},
+    '?view=json&f999_NBinsMinMax=600',{},
      function (data) {
        var dataset = formatDataForPlots(data);
      var options = {selection:{mode:"x"}};
@@ -49,7 +49,7 @@ function plotSignals() {
 
      $("#signal-placeholder").bind("plotselected", function (event, ranges) {
         // do the zooming
-        var new_url = '?view=json&f980_dimrange='+ranges.xaxis.from+'_'+ranges.xaxis.to+'&f990_nbins_minmax=300';
+        var new_url = '?view=json&f980_DimRange='+ranges.xaxis.from+'_'+ranges.xaxis.to+'&f990_NBinsMinMax=300';
         //console.log(new_url);
         $.get(new_url, {}, function(newdata) {
         var new_d = formatDataForPlots(newdata);
