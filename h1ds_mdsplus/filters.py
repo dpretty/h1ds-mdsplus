@@ -85,3 +85,19 @@ class DimRange(BaseFilter):
         new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[min_e:max_e], self.data.units))
         new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[min_e:max_e], self.data.dim_of().units))
         return MDSplus.Signal(new_array, None, new_dim)
+
+
+class MeanValue(BaseFilter):
+    """Mean of signal.
+
+    Example: MeanValue=1 (the query value can be anything).
+    """
+
+    template = "MeanValue"
+
+    def __init__(self, data, arg_string):
+        self.data = data
+
+    def filter(self):
+        mean_value = mean(self.data.data())
+        return MDSplus.Float32(mean_value)
