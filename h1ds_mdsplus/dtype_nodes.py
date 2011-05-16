@@ -14,8 +14,8 @@ import MDSplus
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import discretise_array
-import h1ds_mdsplus.filters as filter_functions
-
+#df -> dtype filters
+import h1ds_mdsplus.filters as df
 
 tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
@@ -329,7 +329,7 @@ dtype_mappings = {
     "DTYPE_PARAM":{'id':194, 'views':{}, 'filters':(), 'description':"Parameter"},
     "DTYPE_SIGNAL":{'id':195, 
                     'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json}, 
-                    'filters':(), 
+                    'filters':(df.MaxSamples, df.NBinsMinMax, df.DimRange), 
                     'description':"Signal"
                     },
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
@@ -541,14 +541,14 @@ class MDSPlusDataWrapper(object):
 
     def apply_filters(self, filter_list):
         for fid, fname, fval in filter_list:
-            filter_class = getattr(filter_functions, fname)
+            filter_class = getattr(df, fname)
             self.filtered_data = filter_class(self.filtered_data, fval).filter()
             self.filtered_dtype = get_dtype(self.filtered_data)
             self.n_filters += 1
         
     def get_view_data(self, request):
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
-        #filter_links = [[]]
+        filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.template} for i in dtype_mappings[self.dtype]['filters']]
         members, children = self.get_subnode_data()
         node_metadata = {'datatype':self.dtype,
                          'node id':self.mds_object.nid,
@@ -565,6 +565,8 @@ class MDSPlusDataWrapper(object):
                      #'input_path':path,
                      #'input_query':request.GET.urlencode(),
                      'node_views':view_links,
+                     'request_query':json.dumps(request.GET),
+                     'node_filters':filter_links,
                      'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,
                      }

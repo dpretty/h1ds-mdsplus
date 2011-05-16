@@ -6,9 +6,6 @@
 <div id="signal-overview" style="width:600px;height:100px"></div> 
 </div>
 
-info:
-
-signal dtype: {{signal_dtype}}
 
 {% endblock node_data %}
 
@@ -39,8 +36,10 @@ function formatDataForPlots(data) {
 } // end formatDataForPlots
 
 function plotSignals() {
+  var original_query = {{ request_query|safe }};
+  var new_query = $.extend({}, original_query, {'view':'json', 'f999_NBinsMinMax':600})
   $.get(
-    '?view=json&f999_NBinsMinMax=600',{},
+    '',new_query,
      function (data) {
        var dataset = formatDataForPlots(data);
      var options = {selection:{mode:"x"}};
@@ -49,17 +48,14 @@ function plotSignals() {
 
      $("#signal-placeholder").bind("plotselected", function (event, ranges) {
         // do the zooming
-        var new_url = '?view=json&f980_DimRange='+ranges.xaxis.from+'_'+ranges.xaxis.to+'&f990_NBinsMinMax=300';
+        var new_query = $.extend({}, original_query, {'view':'json', 'f980_DimRange':ranges.xaxis.from+'_'+ranges.xaxis.to, 'f990_NBinsMinMax':300});
         //console.log(new_url);
-        $.get(new_url, {}, function(newdata) {
+        $.get('', new_query, function(newdata) {
         var new_d = formatDataForPlots(newdata);
 
         sigplot = $.plot($("#signal-placeholder"), new_d, options);
-                     //$.extend(true, {}, options, {
-                     //     xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
-                     // }));
 
-});
+		     });
 		     
 
 

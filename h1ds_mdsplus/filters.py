@@ -3,14 +3,19 @@ import numpy as np
 
 
 class BaseFilter(object):
-    pass
+    template = ""
 
 class MaxSamples(BaseFilter):
-    """Resample signal."""
+    """Resample signal.
+
+    Example: To get the signal with 20 samples, use MaxSamples=20
+    """
+    
+    template = "MaxSamples"
+
     def __init__(self, data, arg_string):
         self.data = data
         self.max_samples = int(arg_string)
-        
     def filter(self):
         numpy_array = self.data.data()
         numpy_arr_dimof = self.data.dim_of().data()
@@ -23,7 +28,15 @@ class MaxSamples(BaseFilter):
 
 
 class NBinsMinMax(BaseFilter):
-    """Take a Signal and return a pair of signals (in MDSplus Dictionary) with min and max values with n bins."""
+    """Take a Signal and return a pair of signals (in MDSplus Dictionary) with min and max values with n bins.
+
+    The returned MDSplus dictionary has the structure {'sigmin':(signal with min values), 'sigmax':(signal with max values)}
+    
+    Example: to resample a signal to 50 bins, use NBinsMinMax=50
+    """
+
+    template="NBinsMinMax"
+
     def __init__(self, data, arg_string):
         self.data = data
         self.n_bins = int(arg_string)
@@ -53,7 +66,13 @@ class NBinsMinMax(BaseFilter):
         return return_dict
 
 class DimRange(BaseFilter):
-    """Reduce range of signal."""
+    """Reduce range of signal.
+    
+    Example: to change the range of a signal to 1.23 < t < 1.51, use DimRange=1.23_1.52
+    """
+
+    template = "DimRange"
+
     def __init__(self, data, arg_string):
         self.data = data
         self.min_val, self.max_val = map(float, arg_string.split('_'))
