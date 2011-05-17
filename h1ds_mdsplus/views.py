@@ -20,6 +20,7 @@ from utils import discretise_array
 from datetime import datetime
 
 from h1ds_mdsplus.dtype_nodes import MDSPlusDataWrapper
+from h1ds_mdsplus.filters import filter_mapping
 
 
 
@@ -520,3 +521,63 @@ def homepage(request):
     default_tree = MDSPlusTree.objects.all()[0]
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
 
+def apply_filter(request):
+    # name of filter_class
+    qdict = request.GET.copy()
+    filter_name = qdict.pop('filter')[-1]
+    filter_class = filter_mapping[filter_name.lower()]
+
+    return_path = qdict.pop('path')[-1]
+    new_filter_values = []
+    for a in filter_class.template_info['args']:
+        aname = qdict.pop(a)[-1]
+        new_filter_values.append(aname)
+    new_filter_str = '_'.join(new_filter_values)
+
+    # get maximum filter number
+    filter_list = get_filter_list(request)
+    if len(filter_list) == 0:
+        max_filter_num = 0
+    else:
+        max_filter_num = max([i[0] for i in filter_list])
+
+    # add new filter to query dict
+    new_filter_key = 'f%d_%s' %(max_filter_num+1, filter_class.__name__)
+    qdict.update({new_filter_key:new_filter_str})
+    return_url = '?'.join([return_path, qdict.urlencode()])
+    return HttpResponseRedirect(return_url)
+    
+
+def update_filter(request):
+    # name of filter_class
+    qdict = request.GET.copy()
+    filter_name = qdict.pop('filter')[-1]
+    filter_class = filter_mapping[filter_name.lower()]
+
+    return_path = qdict.pop('path')[-1]
+    new_filter_values = []
+    for a in filter_class.template_info['args']:
+        aname = qdict.pop(a)[-1]
+        new_filter_values.append(aname)
+    new_filter_str = '_'.join(new_filter_values)
+
+    filter_id = int(qdict.pop('fid')[-1])
+
+    # add new filter to query dict
+    filter_key = 'f%d_%s' %(filter_id, filter_class.__name__)
+
+    qdict[filter_key] = new_filter_str
+    return_url = '?'.join([return_path, qdict.urlencode()])
+    return HttpResponseRedirect(return_url)
+
+def remove_filter(request):
+    qdict = request.GET.copy()
+    filter_id = int(qdict.pop('fid')[-1])
+    return_path = qdict.pop('path')[-1]
+    new_filter_values = []
+    for k,v in qdict.items():
+        if k.startswith('f%d_' %filter_id):
+            qdict.pop(k)
+    return_url = '?'.join([return_path, qdict.urlencode()])
+    return HttpResponseRedirect(return_url)
+    

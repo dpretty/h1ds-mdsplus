@@ -519,6 +519,7 @@ class MDSPlusDataWrapper(object):
         self.dtype = str(self.mds_object.getDtype())
         self.shot = self.mds_object.tree.shot
         self.filter_list = []
+        self.filter_history = []
         try:
             self.filtered_data = self.mds_object.getData()
         except TreeException:
@@ -551,14 +552,17 @@ class MDSPlusDataWrapper(object):
         for fid, fname, fval in filter_list:
             filter_class = getattr(df, fname)
             self.filtered_data = filter_class(self.filtered_data, fval).filter()
+            self.filter_history.append([fid, filter_class, fval])
             self.filtered_dtype = get_dtype(self.filtered_data)
             self.n_filters += 1
         
     def get_view_data(self, request):
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
-        filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.template} for i in dtype_mappings[self.dtype]['filters']]
+        filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.get_template(request)} for i in dtype_mappings[self.dtype]['filters']]
         f_view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.filtered_dtype]['views'].keys()]
-        f_filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.template} for i in dtype_mappings[self.filtered_dtype]['filters']]
+        f_filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.get_template(request)} for i in dtype_mappings[self.filtered_dtype]['filters']]
+
+        applied_filter_links = [i.get_template_applied(request,j, fid) for fid,i,j in self.filter_history]
 
         members, children = self.get_subnode_data()
         node_metadata = {'datatype':self.dtype,
@@ -581,7 +585,7 @@ class MDSPlusDataWrapper(object):
                      'f_node_views':f_view_links,
                      'f_node_filters':f_filter_links,
                      'request_query':json.dumps(request.GET),
-                     'filter_list':self.filter_list,
+                     'filter_list':applied_filter_links,
                      'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,
                      }
