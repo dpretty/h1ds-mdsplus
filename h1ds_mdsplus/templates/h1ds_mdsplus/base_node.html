@@ -14,14 +14,13 @@
 {% endcomment %}
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
-    <P>
-    <LABEL for="requested-shot">Shot: </LABEL>
-    <INPUT type="text" id="requested-shot" name="requested-shot">
+    <span class="left"><LABEL for="requested-shot">go to shot</LABEL></span>
+    <span class="right">
     <INPUT type="hidden" name="input-path" value="{{input_path}}">
     <INPUT type="hidden" name="input-tree" value="{{input_tree}}">
     <INPUT type="hidden" name="input-query" value="{{input_query}}">
-    <INPUT type="submit" value="go to shot">
-    </P>
+    <INPUT type="text" size=5 id="requested-shot" name="requested-shot">
+    <INPUT title="go to shot" type="submit" value=">"></span>
  </FORM>
 </div>
 
@@ -30,7 +29,7 @@
 {% for b in breadcrumbs %}{% if not forloop.last %}<li class="mds-node-item unpopulated"><span class="mds-node-name"><a href="{{b.1}}">{{b.0}}</a></span>{% else %}<li>{{b.0}}{% endif %}<span class="mds-node-id">{{b.2}}</span><span class="mds-node-tree">{{b.3}}</span></li>{% endfor %}
 </ul>
 
-<h3>Children:</h3>
+<h3>children</h3>
 <table width="100%" class="side-table">
   {% table item children 2 %}
   {% if table.startrow %}
@@ -54,7 +53,7 @@
   {% endtable %}
 </table>
 
-<h3>Members:</h3>
+<h3>members</h3>
 <table width="100%" class="side-table">
   {% table item members 2 %}
   {% if table.startrow %}
@@ -78,7 +77,7 @@
   {% endtable %}
 </table>
 
-<h3>Tags:</h3>
+<h3>tags</h3>
 <table width="100%" class="side-table">
   {% table item tagnames 2 %}
   {% if table.startrow %}
@@ -102,7 +101,7 @@
   {% endtable %}
 </table>
 
-<h3>Trees:</h3>
+<h3>trees</h3>
 <table width="100%" class="side-table">
   {% table item treelinks 2 %}
   {% if table.startrow %}
@@ -137,19 +136,11 @@
 {% endblock %}
 
 {% block mdsmeta %}
-<h2>Filtered data</h2>
-<h3>Applied filters<h3>{% for applied_filter in filter_list %}{{applied_filter|safe}}{% endfor %}
+{% if filter_list %}
+<h3>applied filters<h3>{% for applied_filter in filter_list %}{{applied_filter|safe}}{% endfor %}
+{% endif %}
 <h3>views </h3>{% for node_view_name, node_view_link in f_node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
 <h3>filters</h3>{% for fdict in f_node_filters %}{{fdict.t|safe}}{% endfor%}
-<h2>MDSplus Node</h2>
-<h3>views </h3>{% for node_view_name, node_view_link in node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
-<h3>filters</h3>{% for fdict in node_filters %}{{fdict.t|safe}}{% endfor%}
-<h3>metadata</h3>
-<ul>
-{% for meta_name, meta_value in node_metadata.items %}
-<li><strong>{{meta_name}}: </strong>{{meta_value}}</li>
-{% endfor %}
-</ul>
 {% endblock mdsmeta%}
 
 
