@@ -137,7 +137,7 @@
 
 {% block mdsmeta %}
 {% if filter_list %}
-<h3>applied filters<h3>{% for applied_filter in filter_list %}{{applied_filter|safe}}{% endfor %}
+<h3>applied filters</h3>{% for applied_filter in filter_list %}{{applied_filter|safe}}{% endfor %}
 {% endif %}
 <h3>views </h3>{% for node_view_name, node_view_link in f_node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
 <h3>filters</h3>{% for fdict in f_node_filters %}{{fdict.t|safe}}{% endfor%}

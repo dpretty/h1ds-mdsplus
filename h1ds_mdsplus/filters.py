@@ -15,8 +15,9 @@ class BaseFilter(object):
         submit_url = reverse("apply-filter")
         existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
         input_str = ''.join(['<input type="text" size=5 name="%s">' %i for i in cls.template_info['args']])
+        input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for i,j in enumerate(cls.template_info['args'])])
         
-        template = '<div class="mds-filter"><form action="%(submit_url)s"><span class="left">%(text)s</span><span class="right">%(input_str)s<input type="submit" title="add" value="+"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form></div>' %{'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'submit_url':submit_url, 'path':request.path, 'input_query':existing_query_string}
+        template = '<div class="mds-filter"><form action="%(submit_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="submit" title="add" value="+"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form></div>' %{'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'submit_url':submit_url, 'path':request.path, 'input_query':existing_query_string}
         return template
 
     @classmethod
@@ -26,9 +27,9 @@ class BaseFilter(object):
 
         existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
         split_args = arg_str.split('_')
-        input_str = ''.join(['<input type="text" size=5 name="%s" value="%s">' %(j,split_args[i]) for i,j in enumerate(cls.template_info['args'])])
+        input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':split_args[i]} for i,j in enumerate(cls.template_info['args'])])
 
-        update_template = '<form action="%(update_url)s"><span class="left">%(text)s</span><span class="right">%(input_str)s<input type="hidden" name="fid" value="%(fid)s"><input title="update" type="submit" value="u"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form>' %{'update_url':update_url, 'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'path':request.path, 'input_query':existing_query_string, 'fid':fid}
+        update_template = '<form action="%(update_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="hidden" name="fid" value="%(fid)s"><input title="update" type="submit" value="u"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form>' %{'update_url':update_url, 'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'path':request.path, 'input_query':existing_query_string, 'fid':fid}
         
         remove_template = '<span class="right"><form action="%(remove_url)s"><input type="hidden" name="path" value="%(path)s"><input type="hidden" name="fid" value="%(fid)s"><input title="remove" type="submit" value="-"/>%(existing_query)s</form></span>' %{'remove_url':remove_url, 'existing_query':existing_query_string, 'path':request.path, 'fid':fid}
         
@@ -37,14 +38,14 @@ class BaseFilter(object):
         return template
         
 
-class MaxSamples(BaseFilter):
+class Resample(BaseFilter):
     """Resample signal.
 
-    Example: To get the signal with 20 samples, use MaxSamples=20
+    Example: To get the signal with 20 samples, use Resample=20
     """
 
-    template_info = {'text':"resample",
-                     'args':['n_bins']}
+    template_info = {'text':"Resample signal, returning signal with n_samples samples.",
+                     'args':['n_samples']}
 
     def __init__(self, data, arg_string):
         self.data = data
@@ -55,20 +56,20 @@ class MaxSamples(BaseFilter):
         delta_sample = len(numpy_array)/self.max_samples
         
         # put trailing [:max_samples] in case we get an extra one at the end
-        new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[::delta_sample][:self.max_samples], data.units))
-        new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.max_samples], data.dim_of().units))
+        new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[::delta_sample][:self.max_samples], self.data.units))
+        new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.max_samples], self.data.dim_of().units))
         return MDSplus.Signal(new_array, None, new_dim)
 
 
-class NBinsMinMax(BaseFilter):
+class ResampleMinMax(BaseFilter):
     """Take a Signal and return a pair of signals (in MDSplus Dictionary) with min and max values with n bins.
 
     The returned MDSplus dictionary has the structure {'sigmin':(signal with min values), 'sigmax':(signal with max values)}
     
-    Example: to resample a signal to 50 bins, use NBinsMinMax=50
+    Example: to resample a signal to 50 bins, use ResampleMinMax=50
     """
 
-    template_info = {'text':"Min/max (nbins)",
+    template_info = {'text':"Resample signal and return an MDSplus Dictionary containing two signals 'sigmin' and 'sigmax', with min and max values for each bin.",
                      'args':['n_bins']}
 
     def __init__(self, data, arg_string):
@@ -104,7 +105,7 @@ class DimRange(BaseFilter):
     
     Example: to change the range of a signal to 1.23 < t < 1.51, use DimRange=1.23_1.52
     """
-    template_info = {'text':"Range",
+    template_info = {'text':"Return the section of the signal with dimension in the interval [from:to]",
                      'args':['from', 'to']}
 
 
@@ -127,7 +128,7 @@ class MeanValue(BaseFilter):
 
     Example: MeanValue=1 (the query value can be anything).
     """
-    template_info = {'text':"Mean value",
+    template_info = {'text':"Return the mean value of the signal",
                      'args':[]}
 
 
@@ -141,8 +142,8 @@ class MeanValue(BaseFilter):
 # Dictionary which keeps lower case class mappings
 
 filter_mapping = {
-    'maxsamples':MaxSamples,
-    'nbinsminmax':NBinsMinMax,
+    'resample':Resample,
+    'resampleminmax':ResampleMinMax,
     'dimrange':DimRange,
     'meanvalue':MeanValue,
     }

@@ -37,7 +37,7 @@ function formatDataForPlots(data) {
 
 function plotSignals() {
   var original_query = {{ request_query|safe }};
-  var new_query = $.extend({}, original_query, {'view':'json', 'f999_NBinsMinMax':600})
+  var new_query = $.extend({}, original_query, {'view':'json', 'f999_ResampleMinMax':600})
   $.get(
     '',new_query,
      function (data) {
@@ -48,7 +48,7 @@ function plotSignals() {
 
      $("#signal-placeholder").bind("plotselected", function (event, ranges) {
         // do the zooming
-        var new_query = $.extend({}, original_query, {'view':'json', 'f980_DimRange':ranges.xaxis.from+'_'+ranges.xaxis.to, 'f990_NBinsMinMax':300});
+        var new_query = $.extend({}, original_query, {'view':'json', 'f980_DimRange':ranges.xaxis.from+'_'+ranges.xaxis.to, 'f990_ResampleMinMax':300});
         //console.log(new_url);
         $.get('', new_query, function(newdata) {
         var new_d = formatDataForPlots(newdata);

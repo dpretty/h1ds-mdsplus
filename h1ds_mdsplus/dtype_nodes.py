@@ -329,7 +329,7 @@ dtype_mappings = {
     "DTYPE_PARAM":{'id':194, 'views':{}, 'filters':(), 'description':"Parameter"},
     "DTYPE_SIGNAL":{'id':195, 
                     'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json}, 
-                    'filters':(df.MaxSamples, df.NBinsMinMax, df.DimRange, df.MeanValue), 
+                    'filters':(df.Resample, df.ResampleMinMax, df.DimRange, df.MeanValue), 
                     'description':"Signal"
                     },
     "DTYPE_DIMENSION":{'id':196, 'views':{}, 'filters':(), 'description':"Dimension"},
