@@ -333,7 +333,16 @@ def get_filter_list(request):
 
 def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
     """Display MDS tree node."""
-    
+
+    if request.GET.has_key('go_to_shot'):
+        new_get = request.GET.copy()
+        new_shot = int(new_get.pop('go_to_shot')[-1])
+        request.GET = new_get
+        # TODO: this is a hack..., shouldn't hard code this...
+        #new_url = "/mdsplus/%s/%d/%s/%s/?%s" %(tree, new_shot, tagname, nodepath, new_get.urlencode())
+        new_url = reverse('mds-node', kwargs={'tree':tree, 'shot':new_shot, 'tagname':tagname, 'nodepath':nodepath})
+        new_url += '?%s' %(new_get.urlencode())
+        return HttpResponseRedirect(new_url)
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
     mds_tree = get_tree(tree, shot, request)
@@ -440,17 +449,15 @@ def tree_overview(request, tree, format="html"):
     """Display tree at latest shot."""
     return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))#, 'format':format}))
 
+shot_regex = re.compile(r".*?\/(\d+?)\/.*?")
+
 def request_shot(request):
     """Redirect to shot, as requested by HTTP post."""
-    shot = request.POST['requested-shot']
-    input_path = request.POST['input-path']
-    input_tree = request.POST['input-tree']
-    input_query = request.POST['input-query']
-    return_url = '/'.join([input_tree, shot, input_path])
-    if input_query == '':
-        return HttpResponseRedirect(return_url)
-    else:        
-        return HttpResponseRedirect(return_url+'?'+input_query)
+    shot = request.POST['go_to_shot']
+    input_path = request.POST['reqpath']
+    input_shot = shot_regex.findall(input_path)[0]
+    new_path = input_path.replace(input_shot, shot)
+    return HttpResponseRedirect(new_path)
 
 def request_url(request):
     """Return the URL for the requested MDS parameters."""

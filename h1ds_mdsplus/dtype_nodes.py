@@ -585,6 +585,7 @@ class MDSPlusDataWrapper(object):
                      'f_node_views':f_view_links,
                      'f_node_filters':f_filter_links,
                      'request_query':json.dumps(request.GET),
+                     'request_fullpath':request.get_full_path(),
                      'filter_list':applied_filter_links,
                      'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
                      #'debug_data':debug_data,

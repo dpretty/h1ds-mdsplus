@@ -3,24 +3,37 @@
 {% load templatetable %}
 {% block leftpanel %}
 
-{% if input_tree %}
-<h3>latest <span id="mds-nav-treename">{{input_tree}}</span> shot: <span class="latest_shot"></span></h3>
-{% endif %}
-
-{% comment %}
-<div id="mdsplus-breadcrumb">
- <p>{% ifequal shot "-1" %} MDSplus template (shot -1){% else %}{% ifequal shot "0" %}latest shot (<span id="mds-nav-shot" class="latest_shot">{{shot}}</span>){% else %}<a href="{% url mds-node input_tree shot|add:'-1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'-1'}} </a>  < <span id="mds-nav-shot">{{shot}}</span> > <a href="{% url mds-node input_tree shot|add:'1' input_path %}{% if input_query%}?{{input_query}}{% endif %}"> {{shot|add:'1'}}</a> {% endifequal %}{% endifequal %}</p> 
+<div class="scolmask sthreecol">
+  <div class="scolmid">
+    <div class="scolleft">
+	<div class="scol1"><strong>{{shot}}</strong></div>
+	<div class="scol2">
+	  <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+	    <span class="left">
+	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	      <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'-1'}}">
+	      <INPUT title="go to shot" type="submit" value="<"></span>
+	  </FORM>
+	</div>
+	<div class="scol3">
+	  <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+	    <span class="right">
+	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	      <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'1'}}">
+	      <INPUT title="go to shot" type="submit" value=">"></span>
+	  </FORM>
+	</div>
+      </div>
+  </div>
 </div>
-{% endcomment %}
+
 <div id="request-shot">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <span class="left"><LABEL for="requested-shot">go to shot</LABEL></span>
     <span class="right">
-    <INPUT type="hidden" name="input-path" value="{{input_path}}">
-    <INPUT type="hidden" name="input-tree" value="{{input_tree}}">
-    <INPUT type="hidden" name="input-query" value="{{input_query}}">
-    <INPUT type="text" size=5 id="requested-shot" name="requested-shot">
-    <INPUT title="go to shot" type="submit" value=">"></span>
+    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+    <INPUT type="text" size=5 id="requested-shot" name="go_to_shot">
+    <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
  </FORM>
 </div>
 
