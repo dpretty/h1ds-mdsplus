@@ -17,7 +17,7 @@ class BaseFilter(object):
         input_str = ''.join(['<input type="text" size=5 name="%s">' %i for i in cls.template_info['args']])
         input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for i,j in enumerate(cls.template_info['args'])])
         
-        template = '<div class="mds-filter"><form action="%(submit_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="submit" title="add" value="+"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form></div>' %{'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'submit_url':submit_url, 'path':request.path, 'input_query':existing_query_string}
+        template = '<div class="sidebarcontent"><form action="%(submit_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="submit" title="add" value="+"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form></div>' %{'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'submit_url':submit_url, 'path':request.path, 'input_query':existing_query_string}
         return template
 
     @classmethod
@@ -33,7 +33,7 @@ class BaseFilter(object):
         
         remove_template = '<span class="right"><form action="%(remove_url)s"><input type="hidden" name="path" value="%(path)s"><input type="hidden" name="fid" value="%(fid)s"><input title="remove" type="submit" value="-"/>%(existing_query)s</form></span>' %{'remove_url':remove_url, 'existing_query':existing_query_string, 'path':request.path, 'fid':fid}
         
-        template = '<div class="mds-filter">'+remove_template+update_template+'</div>'
+        template = '<div class="sidebarcontent">'+remove_template+update_template+'</div>'
 
         return template
         

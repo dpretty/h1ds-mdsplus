@@ -557,6 +557,7 @@ class MDSPlusDataWrapper(object):
             self.n_filters += 1
         
     def get_view_data(self, request):
+        # TODO: clean up.
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
         filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.get_template(request)} for i in dtype_mappings[self.dtype]['filters']]
         f_view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.filtered_dtype]['views'].keys()]

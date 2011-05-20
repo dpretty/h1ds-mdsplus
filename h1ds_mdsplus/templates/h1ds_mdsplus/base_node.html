@@ -3,44 +3,15 @@
 {% load templatetable %}
 {% block leftpanel %}
 
-<div class="scolmask sthreecol">
-  <div class="scolmid">
-    <div class="scolleft">
-	<div class="scol1"><strong>{{shot}}</strong></div>
-	<div class="scol2">
-	  <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
-	    <span class="left">
-	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'-1'}}">
-	      <INPUT title="go to shot" type="submit" value="<"></span>
-	  </FORM>
-	</div>
-	<div class="scol3">
-	  <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
-	    <span class="right">
-	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'1'}}">
-	      <INPUT title="go to shot" type="submit" value=">"></span>
-	  </FORM>
-	</div>
-      </div>
-  </div>
-</div>
-
-<div id="request-shot">
+<div class="sidebarcontent">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
-    <span class="left"><LABEL for="requested-shot">go to shot</LABEL></span>
+    <span class="left">select shot</span>
     <span class="right">
     <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
     <INPUT type="text" size=5 id="requested-shot" name="go_to_shot">
     <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
  </FORM>
 </div>
-
-
-<ul class="mds-tree">
-{% for b in breadcrumbs %}{% if not forloop.last %}<li class="mds-node-item unpopulated"><span class="mds-node-name"><a href="{{b.1}}">{{b.0}}</a></span>{% else %}<li>{{b.0}}{% endif %}<span class="mds-node-id">{{b.2}}</span><span class="mds-node-tree">{{b.3}}</span></li>{% endfor %}
-</ul>
 
 <h3>children</h3>
 <table width="100%" class="side-table">
@@ -142,7 +113,20 @@
 
 
 {% block mdscontent %}
-<div id="mds-path-breadcrumb">{{path_breadcrumbs|safe}}</div>
+<div class="centreinfobox"><span class="right"><strong>{{path_breadcrumbs|safe}}</strong></span>
+<span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+<INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	    <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'-1'}}">
+	    <INPUT title="go to shot" type="submit" value="<">
+	</FORM></span>
+<span class="left paddedtext"><strong> {{shot}} </strong></span>
+
+<span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	    <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'1'}}">
+	    <INPUT title="go to shot" type="submit" value=">">
+	</FORM></span>
+</div>
 {% block node_error %}{% endblock %}
 {% block node_data %}
 {% endblock %}
