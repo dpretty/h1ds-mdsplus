@@ -15,8 +15,8 @@ import MDSplus
 from MDSplus._treeshr import TreeException
 from MDSplus._tdishr import TdiException
 
-from models import MDSPlusTree
-from utils import discretise_array
+from h1ds_mdsplus.models import MDSPlusTree
+from h1ds_mdsplus.utils import discretise_array, get_latest_shot
 from datetime import datetime
 
 from h1ds_mdsplus.dtype_nodes import MDSPlusDataWrapper
@@ -488,17 +488,14 @@ def request_url(request):
     return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
 
 
-def latest_shot(request, tree_name):
-    """Return latest shot (AJAX only)."""
-    try:
-        t = MDSplus.Tree(tree_name, 0, 'READONLY')
-        latest_shot = t.shot
-    except:
-        latest_shot=-1
-    if request.is_ajax():
-        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
-    else:
+def latest_shot(request, tree_name=None):
+    """Return latest shot (AJAX only for now...)."""
+    if not request.is_ajax():
         return HttpResponseRedirect('/')
+
+    latest_shot = get_latest_shot(tree_name)
+        
+    return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
         
 
 def mds_navigation_subtree(request, tree_name, shot, node_id):

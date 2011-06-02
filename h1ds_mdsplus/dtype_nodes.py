@@ -65,6 +65,19 @@ def float_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
+
+def float_view_serialized(request, data, mode='xml'):
+    if mode == 'xml':
+        pass
+    elif mode == 'json':
+        serial_data = json.dumps({'mds_dtype':data.filtered_dtype, 'data':float(data.filtered_data)})
+        return HttpResponse(serial_data, mimetype='application/json')
+    else:
+        raise Exception
+
+def float_view_json(request, data):
+    return float_view_serialized(request, data, mode='json')
+
 def text_view_html(request, data):
     view_data = data.get_view_data(request)
     view_data['node_data'] = data.filtered_data
@@ -382,7 +395,7 @@ dtype_mappings = {
     "DTYPE_DOUBLE":{'id':53, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_FLOAT_COMPLEX":{'id':54, 'views':{}, 'filters':(), 'description':"Unknown to Dave..."},
     "DTYPE_FLOAT":{'id':52,
-                   'views':{'html':float_view_html}, 
+                   'views':{'html':float_view_html, 'json':float_view_json}, 
                    'filters':(),
                    'description':"Unknown to Dave..."},
 }

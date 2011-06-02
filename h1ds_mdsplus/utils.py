@@ -32,6 +32,27 @@ except:
 
     from numpy import savez
 
+from h1ds_mdsplus.models import MDSPlusTree
+import MDSplus
+
+def get_latest_shot(tree_name = None):
+    """Get latest shot from tree.
+
+    If tree_name is not provided, use the default tree."""
+
+    if tree_name == None:
+        # Get default tree.
+        default_tree = MDSPlusTree.objects.all()[0]
+        tree_name = default_tree.name
+    try:
+        t = MDSplus.Tree(tree_name, 0, 'READONLY')
+        latest_shot = t.shot
+    except:
+        latest_shot=-1
+    return latest_shot
+
+
+
 def discretise_array(arr, eps=0, bits=0, maxcount=0, verbose=0, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 
