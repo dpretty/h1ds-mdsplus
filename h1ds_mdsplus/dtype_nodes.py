@@ -47,6 +47,11 @@ def no_data_view_html(request, data):
                               data.get_view_data(request),
                               context_instance=RequestContext(request))
 
+def no_data_view_json(request, data):
+    serial_data = json.dumps({'mds_dtype':data.filtered_dtype, 'data':None})
+    return HttpResponse(serial_data, mimetype='application/json')
+    
+
 def int_view_html(request, data):
     # we don't care about whether a integer is unsigned, 8bit etc for 
     # HTML view, we we'll take all here.
@@ -228,7 +233,7 @@ dtype_mappings = {
                'description':"Unknown to Dave..."
                },
     "DTYPE_MISSING":{'id':0, 
-                     'views':{'html':no_data_view_html}, 
+                     'views':{'html':no_data_view_html, 'json':no_data_view_json}, 
                      'filters':(), 
                      'description':"Unknown to Dave..."
                      },
@@ -562,12 +567,14 @@ class MDSPlusDataWrapper(object):
 
     def apply_filters(self, filter_list):
         self.filter_list = filter_list
-        for fid, fname, fval in filter_list:
-            filter_class = getattr(df, fname)
-            self.filtered_data = filter_class(self.filtered_data, fval).filter()
-            self.filter_history.append([fid, filter_class, fval])
-            self.filtered_dtype = get_dtype(self.filtered_data)
-            self.n_filters += 1
+        # Don't apply filters to nodes with missing data
+        if self.dtype != 'DTYPE_MISSING':
+            for fid, fname, fval in filter_list:
+                filter_class = getattr(df, fname)
+                self.filtered_data = filter_class(self.filtered_data, fval).filter()
+                self.filter_history.append([fid, filter_class, fval])
+                self.filtered_dtype = get_dtype(self.filtered_data)
+                self.n_filters += 1
         
     def get_view_data(self, request):
         # TODO: clean up.
