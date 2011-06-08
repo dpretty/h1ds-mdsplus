@@ -133,6 +133,16 @@
 {% endblock %}
 
 {% block mdsmeta %}
+{% if summary_dtype %}
+<div class="sidebarcontent">
+<FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
+    <span class="left">add to summary database</span>
+    <span class="right">
+    <INPUT type="hidden" id="url" name="url" value="{{absolute_uri|safe}}">
+    <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
+ </FORM>
+</div>
+{% endif %}
 {% if filter_list %}
 <h3>applied filters</h3>{% for applied_filter in filter_list %}{{applied_filter|safe}}{% endfor %}
 {% endif %}
