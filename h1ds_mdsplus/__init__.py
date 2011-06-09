@@ -37,3 +37,8 @@ except DatabaseError:
     # TODO: Find a better solution.
     pass
 
+
+mds_sql_mapping = {
+    "DTYPE_FLOAT":"FLOAT",
+    }
+
