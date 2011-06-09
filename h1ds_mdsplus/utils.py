@@ -52,6 +52,16 @@ def get_latest_shot(tree_name = None):
     return latest_shot
 
 
+def url_path_components_to_mds_path(tree, tagname, nodepath):
+    if nodepath == '':
+        return r'\%(tree)s::%(tagname)s'%{'tree':tree,
+                                          'tagname':tagname}
+    else:
+        formatted_nodepath = nodepath.strip(':').replace('/','.')
+        return r'\%(tree)s::%(tagname)s.%(nodepath)s'%{'tree':tree,
+                                                      'tagname':tagname,
+                                                      'nodepath':formatted_nodepath}
+
 
 def discretise_array(arr, eps=0, bits=0, maxcount=0, verbose=0, delta_encode=False):
     """
