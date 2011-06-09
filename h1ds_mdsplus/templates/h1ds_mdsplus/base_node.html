@@ -133,6 +133,8 @@
 {% endblock %}
 
 {% block mdsmeta %}
+{{dtype}}
+{{filtered_dtype}}
 {% if summary_dtype %}
 <div class="sidebarcontent">
 <FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}

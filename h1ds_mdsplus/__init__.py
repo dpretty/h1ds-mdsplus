@@ -40,5 +40,6 @@ except DatabaseError:
 
 mds_sql_mapping = {
     "DTYPE_FLOAT":"FLOAT",
+    "DTYPE_F":"FLOAT",
     }
 

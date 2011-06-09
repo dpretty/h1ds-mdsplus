@@ -5,7 +5,6 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 from django.http import HttpResponse
-#from django.utils import simplejson
 
 from MDSplus._tdishr import TdiException
 from MDSplus._treeshr import TreeException
@@ -288,7 +287,7 @@ dtype_mappings = {
                'description':"Signed Quadword (64-bit signed integer)"
                },
     "DTYPE_F":{'id':10, 
-               'views':{'html':float_view_html}, 
+               'views':{'html':float_view_html, 'json':float_view_json}, 
                'filters':(), 
                'description':"Single Precision Real (VAX format)"
                },
