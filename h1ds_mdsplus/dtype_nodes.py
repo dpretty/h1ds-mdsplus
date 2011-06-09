@@ -538,7 +538,7 @@ def get_view_path(request, h1ds_view_name):
 class MDSPlusDataWrapper(object):
     def __init__(self,mds_object):
         self.mds_object = mds_object
-        self.dtype = str(self.mds_object.getDtype())
+        self.dtype = str(get_dtype(self.mds_object))
         self.shot = self.mds_object.tree.shot
         self.filter_list = []
         self.filter_history = []

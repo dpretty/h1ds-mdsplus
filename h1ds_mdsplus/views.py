@@ -22,7 +22,18 @@ shot_regex = re.compile(r".*?\/(\d+?)\/.*?")
 filter_regex=re.compile('^f(?P<fid>\d+?)_(?P<filtername>.+)')
 
 def get_filter_list(request):
+    """Parse GET query sring and return sorted list of filter names.
+
+    Arguments:
+    request -- a HttpRequest instance with HTTP GET parameters.
+    
+    """
     filter_list = []
+
+    if not request.method == 'GET':
+        # If the HTTP method is not GET, return an empty list.
+        return filter_list
+
     for key, value in request.GET.iteritems():
         try:
             fid_str,fname = filter_regex.search(key).groups()
@@ -30,18 +41,31 @@ def get_filter_list(request):
         except AttributeError:
             # regex failed (not a filter f(int)_name key)
             pass
+
     filter_list.sort()
     return filter_list
 
-def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
-    """Display MDS tree node."""
+def node(request, tree="", shot=0, tagname="top", nodepath=""):
+    """Display MDS tree node.
+
+    Arguments:
+    request -- a HttpRequest instance
+
+    Keyword arguments:
+    tree -- name on an MDSPlusTree instance TODO: should this be a non-keyword argument (no default)?
+    shot -- shot number (default 0)
+    tagname -- MDSplus tag name (default 'top')
+    nodepath -- MDSplus node path, with dot (.) and colon (:) replaced with URL path slashes (/) (default "")
+    
+    An instance of MDSPlusDataWrapper  is created for the requested node
+    which handles filters and returns an appropriate HttpResponse.
+    
+    """
 
     if request.GET.has_key('go_to_shot'):
         new_get = request.GET.copy()
         new_shot = int(new_get.pop('go_to_shot')[-1])
         request.GET = new_get
-        # TODO: this is a hack..., shouldn't hard code this...
-        #new_url = "/mdsplus/%s/%d/%s/%s/?%s" %(tree, new_shot, tagname, nodepath, new_get.urlencode())
         new_url = reverse('mds-node', kwargs={'tree':tree, 'shot':new_shot, 'tagname':tagname, 'nodepath':nodepath})
         new_url += '?%s' %(new_get.urlencode())
         return HttpResponseRedirect(new_url)
@@ -67,12 +91,14 @@ def node(request, tree="", shot=0, tagname="top", nodepath="", format="html"):
     return mds_node.get_view(request, view)
 
 
-def tree_overview(request, tree, format="html"):
+def tree_overview(request, tree):
     """Display tree at latest shot."""
-    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))#, 'format':format}))
+    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))
 
 def request_shot(request):
     """Redirect to shot, as requested by HTTP post."""
+    if not request.method == 'POST':
+        return HttpResponseRedirect("/")        
     shot = request.POST['go_to_shot']
     input_path = request.POST['reqpath']
     input_shot = shot_regex.findall(input_path)[0]
