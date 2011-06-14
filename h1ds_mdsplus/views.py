@@ -1,4 +1,4 @@
-import re
+import re, json
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response
@@ -10,7 +10,7 @@ from MDSplus._treeshr import TreeException
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
-from h1ds_mdsplus.dtype_nodes import MDSPlusDataWrapper
+from h1ds_mdsplus.dtype_nodes import MDSPlusNodeWrapper
 from h1ds_mdsplus.filters import filter_mapping
 
 # Match any URL path component comprising only digits.
@@ -57,7 +57,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     tagname -- MDSplus tag name (default 'top')
     nodepath -- MDSplus node path, with dot (.) and colon (:) replaced with URL path slashes (/) (default "")
     
-    An instance of MDSPlusDataWrapper  is created for the requested node
+    An instance of MDSPlusNodeWrapper  is created for the requested node
     which handles filters and returns an appropriate HttpResponse.
     
     """
@@ -74,21 +74,40 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     try:
         mds_tree_model_instance = MDSPlusTree.objects.get(name=tree)
     except ObjectDoesNotExist:
+        # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_tree.html', 
                                   {'shot':shot,
                                    'input_tree':tree},
                                   context_instance=RequestContext(request))        
     mds_tree = mds_tree_model_instance.get_tree(shot)
     if mds_tree == None:
+        # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
                                   {'shot':shot,
                                    'input_tree':tree},
                                   context_instance=RequestContext(request))
         
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
-    mds_node = MDSPlusDataWrapper(mds_tree.getNode(mds_path))
+    mds_node = MDSPlusNodeWrapper(mds_tree.getNode(mds_path))
     mds_node.apply_filters(get_filter_list(request))
-    return mds_node.get_view(request, view)
+
+    # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
+    html_metadata = {
+        'mds_path':mds_path,
+        'shot':shot,
+        }
+
+    if view == 'json':
+        data_dict = mds_node.get_view('json', dict_only=True)
+        # add metadata...
+        data_dict.update({'meta':html_metadata})
+        return HttpResponse(json.dumps(data_dict), mimetype='application/json')
+    
+    return render_to_response('h1ds_mdsplus/node.html', 
+                              {'mdsnode':mds_node, 'html_metadata':html_metadata},
+                              context_instance=RequestContext(request))
+
+    #return mds_node.get_view(request, view)
 
 
 def tree_overview(request, tree):

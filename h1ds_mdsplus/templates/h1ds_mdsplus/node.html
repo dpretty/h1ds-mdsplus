@@ -1,0 +1,197 @@
+{% extends "h1ds_mdsplus/mdsplus_base.html" %}
+
+<!-- *************************************************************** -->
+<!-- ****** Load template tags ************************************* -->
+<!-- *************************************************************** -->
+
+<!-- This loads the 'display_data' and 'show_filter' template tags, used
+for displaying mds data and H1DS data filters in the template. -->
+{% load mdsdata %}
+
+<!-- This loads the 'table' template tag, used for dynamic generation of
+HTML tables. -->
+{% load templatetable %}
+
+<!-- *************************************************************** -->
+<!-- ****** Left panel ********************************************* -->
+<!-- *************************************************************** -->
+
+<!-- The left panel includes navigation links for the mdsplus tree: shot
+selection,  links to  node descendants  (members and  children), mdsplus
+tags and other mdsplus trees. -->
+{% block leftpanel %}
+
+<!--  This generates  the 'select  shot'  form in  the top  left of  the
+page. -->
+<div class="sidebarcontent">
+<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+    <span class="left">select shot</span>
+    <span class="right">
+    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+    <INPUT type="text" size=5 id="requested-shot" name="go_to_shot">
+    <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
+ </FORM>
+</div>
+
+<!-- Generate a table with links to child nodes. -->
+<h3>children</h3>
+<table width="100%" class="side-table">
+  {% table item mdsnode.children 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+
+<!-- Generate  a table with links to  member nodes. -->
+<h3>members</h3>
+<table width="100%" class="side-table">
+  {% table item mdsnode.members 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+
+<!-- Generate a table with links to mdsplus tags. -->
+<h3>tags</h3>
+<table width="100%" class="side-table">
+  {% table item mdsnode.tagnames 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+
+<!--  Generate  a  table  with  links to  mdsplus  trees  recognised  by
+H1DS. -->
+<h3>trees</h3>
+<table width="100%" class="side-table">
+  {% table item mdsnode.treelinks 2 %}
+  {% if table.startrow %}
+  {% if table.oddrow %}
+  <tr class="highlight">
+    {% else %}
+  <tr>
+    {% endif %}
+    {% endif %}
+    {% if table.lastcellinrow %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+      {% else %}
+    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+      {% endif %}
+      <div class="options displayNone"></div>
+      <a href="{{item.1}}">{{item.0}}</a>
+    </td>
+    {% if table.endrow %}
+  </tr>
+  {% endif %}
+  {% endtable %}
+</table>
+{% endblock leftpanel %}
+
+<!-- *************************************************************** -->
+<!-- ****** MDSplus data ******************************************* -->
+<!-- *************************************************************** -->
+
+{% block mdscontent %}
+<div class="centreinfobox"><span class="right"><strong>{{path_breadcrumbs|safe}}</strong></span>
+<span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+<INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	    <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'-1'}}">
+	    <INPUT title="go to shot" type="submit" value="<">
+	</FORM></span>
+<span class="left paddedtext"><strong> {{mdsnode.shot}} </strong></span>
+
+<span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
+	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	    <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'1'}}">
+	    <INPUT title="go to shot" type="submit" value=">">
+	</FORM></span>
+</div>
+{% block node_error %}{% endblock node_error %}
+{% block node_data %}{% display_data mdsnode %}{% endblock node_data %}
+{% endblock mdscontent %}
+
+
+<!-- *************************************************************** -->
+<!-- ****** Right panel ******************************************** -->
+<!-- *************************************************************** -->
+
+
+{% block mdsmeta %}
+
+<!-- If there is a summary data (SQL) dtype associated with the filtered
+data then display a form for adding the data to the summary database -->
+{% if mdsnode.filtered_summary_dtype %}
+<div class="sidebarcontent">
+  <FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
+    <span class="left">add to summary database</span>
+    <span class="right">
+      <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+      <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
+  </FORM>
+</div>
+{% endif %}
+
+<!--  If the  data has  been filtered,  display the  applied  filters in
+order, with option to adjust or remove each filter -->
+{% if mdsnode.filter_history %}
+<h3>active filters</h3>{% for filter_id, active_filter, filter_data in mdsnode.filter_history %}{% show_active_filter active_filter filter_id filter_data %}{% endfor %}
+{% endif %}
+
+<!-- List the views (H1DS views such as html, json, etc, not django view
+functions) available for the node data type -->
+<h3>views </h3>{% for view_name in mdsnode.available_views %}{% show_view view_name %} {% endfor %}
+
+<!--  List the filters  which can  be applied  to the  (possibly already
+filtered) data -->
+
+<h3>filters</h3>{% for filter in mdsnode.available_filters %}{% show_filter filter %}{% endfor %}
+
+{% endblock mdsmeta%}

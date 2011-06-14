@@ -20,7 +20,6 @@ from h1ds_mdsplus import mds_sql_mapping
 tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
 
-
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
     # correct  tagname when a node path exists,  and not fail when there
@@ -42,10 +41,8 @@ def mds_to_url(mds_data_object):
                                            'shot':mds_data_object.tree.shot,
                                            'tagname':components.group('tagname')})
 
-def no_data_view_html(request, data):
-    return render_to_response('h1ds_mdsplus/no_data_view.html', 
-                              data.get_view_data(request),
-                              context_instance=RequestContext(request))
+def no_data_view_html(data):
+    return "This node has no data."
 
 def no_data_view_json(request, data):
     serial_data = json.dumps({'mds_dtype':data.filtered_dtype,
@@ -63,29 +60,34 @@ def int_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def float_view_html(request, data):
+def float_view_html(data):
     # take all floats and assume python can convert all to string format
     # well enough for HTML.
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/float_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+    #view_data = data.get_view_data(request)
+    #view_data['node_data'] = data.filtered_data
+    #return render_to_response('h1ds_mdsplus/float_view.html', 
+    #                          view_data,
+    #                          context_instance=RequestContext(request))
+    return str(data.filtered_data)
 
+def float_view_serialized(data, mode='xml', dict_only=False):
 
-def float_view_serialized(request, data, mode='xml'):
+    view_data = {'mds_dtype':data.filtered_dtype,
+                 'summary_dtype':mds_sql_mapping.get(data.filtered_dtype),
+                 'data':float(data.filtered_data),
+                 }
+    if dict_only == True:
+        return view_data
+
     if mode == 'xml':
         pass
     elif mode == 'json':
-        serial_data = json.dumps({'mds_dtype':data.filtered_dtype,
-                                  'summary_dtype':mds_sql_mapping.get(data.filtered_dtype),
-                                  'data':float(data.filtered_data)})
-        return HttpResponse(serial_data, mimetype='application/json')
+        return json.dumps(view_data)
     else:
         raise Exception
 
-def float_view_json(request, data):
-    return float_view_serialized(request, data, mode='json')
+def float_view_json(data, **kwargs):
+    return float_view_serialized(data, mode='json', **kwargs)
 
 def text_view_html(request, data):
     view_data = data.get_view_data(request)
@@ -148,21 +150,13 @@ def conglom_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def signal_view_html(request, data):
-    view_data = data.get_view_data(request)
-    # tell the HTML page what the datatype is, so it knows how to 
-    # process binary data sent to javascript for plotting.
-    try:
-        view_data['signal_dtype'] = data.mds_object.raw_of().mdsdtype
-    except AttributeError:
-        view_data['signal_dtype'] = data.mds_object.getData().getValue().raw_of().mdsdtype
+def signal_view_html(data):
+    return """
+    <div id="signal-placeholder" style="width:600px;height:300px;"></div>
+    <div id="signal-overview" style="width:600px;height:100px"></div>
+    """
 
-    return render_to_response('h1ds_mdsplus/signal_view.html',
-                              view_data,
-                              context_instance=RequestContext(request))
-
-def clean_signal_for_serialization(request, data):
-    #view_data = data.get_view_data(request)
+def clean_signal_for_serialization(data):
     view_data = {}
     view_data['data_units'] = str(data.units)
     view_data['dim_units'] = str(data.dim_of().units)
@@ -170,41 +164,51 @@ def clean_signal_for_serialization(request, data):
     view_data['node_dim'] = data.dim_of().data().tolist()
     return view_data
 
-def signal_view_serialized(request, data, mode='xml'):
-    view_data = clean_signal_for_serialization(request, data.filtered_data)
+def signal_view_serialized(data, mode='xml', dict_only=False):
+    """Return the data in serialised form, i.e. XML, JSON, etc.
+    
+    Keywork arguments:
+    dict_only -- don't actually serialise the data, just return the data
+    which would be  serialised as a dictionary. This  is useful if other
+    data (e.g. metadata) is to be added before serialisation).
+
+    """
+    view_data = clean_signal_for_serialization(data.filtered_data)
+    if dict_only:
+        return view_data
 
     if mode == 'xml':
         pass
     elif mode == 'json':
-        serial_data = json.dumps(view_data)
-        return HttpResponse(serial_data, mimetype='application/json')
+        return json.dumps(view_data)
     else:
         raise Exception
 
-def dictionary_view_serialized(request, data, mode='xml'):
+def dictionary_view_serialized(data, mode='xml', dict_only=False):
     view_data = {}
     for key, value in data.filtered_data.items():
         # TODO: what's the proper way of getting dtype from MDS object?
         # some seem to have obj.dtype, some have obj.getDtype, some have
         # obj.mdsdype. And the signal create from filter is obj._dtype...
         if value._dtype == _mdsdtypes.DTYPE_SIGNAL:
-            view_data[key] = clean_signal_for_serialization(request, value)
+            view_data[key] = clean_signal_for_serialization(value)
         else:
             # TODO: support other dtypes in signal
             raise Error("Non signal datapoints not supported.")
+    if dict_only:
+        return view_data
     if mode == 'xml':
         pass
     elif mode == 'json':
-        serial_data = json.dumps(view_data)
-        return HttpResponse(serial_data, mimetype='application/json')
+        return json.dumps(view_data)
     else:
         raise Exception
 
-def signal_view_json(request, data):
-    return signal_view_serialized(request, data, mode='json')
+def signal_view_json(data, **kwargs):
+    return signal_view_serialized(data, mode='json', **kwargs)
 
-def dictionary_view_json(request, data):
-    return dictionary_view_serialized(request, data, mode='json')
+def dictionary_view_json(data, **kwargs):
+    return dictionary_view_serialized(data, mode='json', **kwargs)
 
 
 def signal_view_bin(request, data):
@@ -483,11 +487,6 @@ def member_or_child(mds_data):
     else:
         return 'Unknown'
 
-
-
-
-
-
 def map_url(data):
     #data_tree=data.__str__().strip('\\').split('::')[0]
     #pre_path = '/mdsplus/%s/%d/' %(data_tree, int(shot)) ## shouldn't hardcode this here...
@@ -535,7 +534,7 @@ def get_view_path(request, h1ds_view_name):
 ########################################################################
 
 
-class MDSPlusDataWrapper(object):
+class MDSPlusNodeWrapper(object):
     def __init__(self,mds_object):
         self.mds_object = mds_object
         self.dtype = str(get_dtype(self.mds_object))
@@ -547,13 +546,20 @@ class MDSPlusDataWrapper(object):
         except TreeException:
             self.filtered_data = None
         self.filtered_dtype = self.dtype
+        self.filtered_summary_dtype = mds_sql_mapping.get(self.filtered_dtype)
         self.n_filters = 0
+        
+        self.members, self.children = self.get_subnode_data()
 
+        self.tagnames = get_tree_tagnames(self.mds_object)
+        self.treelinks = get_trees()
+
+        self.available_filters = dtype_mappings[self.filtered_dtype]['filters']
+        self.available_views = dtype_mappings[self.filtered_dtype]['views'].keys()
             
-    def get_view(self, request, view_name):
-        print self.filtered_dtype
+    def get_view(self, view_name, **kwargs):
         view_function = dtype_mappings[self.filtered_dtype]['views'].get(view_name, unsupported_view(view_name))
-        return view_function(request, self)
+        return view_function(self, **kwargs)
 
     def get_subnode_data(self):
         
@@ -578,8 +584,13 @@ class MDSPlusDataWrapper(object):
                 self.filtered_data = filter_class(self.filtered_data, fval).filter()
                 self.filter_history.append([fid, filter_class, fval])
                 self.filtered_dtype = get_dtype(self.filtered_data)
+                self.filtered_summary_dtype = mds_sql_mapping.get(self.filtered_dtype)
                 self.n_filters += 1
-        
+        self.available_filters = dtype_mappings[self.filtered_dtype]['filters']
+        self.available_views = dtype_mappings[self.filtered_dtype]['views'].keys()
+
+
+    """
     def get_view_data(self, request):
         # TODO: clean up.
         view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
@@ -618,3 +629,4 @@ class MDSPlusDataWrapper(object):
                      #'debug_data':debug_data,
                      }
         return view_data
+        """
