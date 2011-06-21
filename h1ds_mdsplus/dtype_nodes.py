@@ -51,24 +51,14 @@ def no_data_view_json(request, data):
     return HttpResponse(serial_data, mimetype='application/json')
     
 
-def int_view_html(request, data):
+def int_view_html(data):
     # we don't care about whether a integer is unsigned, 8bit etc for 
-    # HTML view, we we'll take all here.
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/int_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+    return unicode(data.filtered_data)
 
 def float_view_html(data):
     # take all floats and assume python can convert all to string format
     # well enough for HTML.
-    #view_data = data.get_view_data(request)
-    #view_data['node_data'] = data.filtered_data
-    #return render_to_response('h1ds_mdsplus/float_view.html', 
-    #                          view_data,
-    #                          context_instance=RequestContext(request))
-    return str(data.filtered_data)
+    return unicode(data.filtered_data)
 
 def float_view_serialized(data, mode='xml', dict_only=False):
 
@@ -89,12 +79,8 @@ def float_view_serialized(data, mode='xml', dict_only=False):
 def float_view_json(data, **kwargs):
     return float_view_serialized(data, mode='json', **kwargs)
 
-def text_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/text_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+def text_view_html(data):
+    return unicode(data.filtered_data)
 
 def nodeid_view_html(request, data):
     view_data = data.get_view_data(request)
@@ -104,13 +90,8 @@ def nodeid_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def nodepath_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    view_data['node_data_url'] = mds_to_url(view_data['node_data'])
-    return render_to_response('h1ds_mdsplus/nodepath_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+def nodepath_view_html(data):
+    return unicode(data.filtered_data)
 
 def range_view_html(request, data):
     view_data = data.get_view_data(request)
@@ -119,21 +100,13 @@ def range_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def function_call_view_html(request, data):
+def function_call_view_html(data):
     # TODO: show data returned by function (don't require filter, should
     # show returned data by default - along with function)
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/function_call_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+    return unicode(data.filtered_data)
 
-def action_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/action_view.html',
-                              view_data,
-                              context_instance=RequestContext(request))
+def action_view_html(data):
+    return unicode(data.filtered_data)
 
 def data_with_units_view_html(request, data):
     # TODO, desplay returned datatype (e.g. signal) beneath node_data.
@@ -143,12 +116,9 @@ def data_with_units_view_html(request, data):
                               view_data,
                               context_instance=RequestContext(request))
 
-def conglom_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/conglom_view.html',
-                              view_data,
-                              context_instance=RequestContext(request))
+def conglom_view_html(data):
+    return unicode(data.filtered_data)
+    
 
 def signal_view_html(data):
     return """
@@ -537,6 +507,8 @@ def get_view_path(request, h1ds_view_name):
 class MDSPlusNodeWrapper(object):
     def __init__(self,mds_object):
         self.mds_object = mds_object
+        self.path_breadcrumbs = get_mds_path_breadcrumbs(self.mds_object)
+
         self.dtype = str(get_dtype(self.mds_object))
         self.shot = self.mds_object.tree.shot
         self.filter_list = []

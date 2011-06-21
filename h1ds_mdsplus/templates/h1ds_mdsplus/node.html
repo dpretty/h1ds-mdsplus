@@ -140,7 +140,7 @@ H1DS. -->
 <!-- *************************************************************** -->
 
 {% block mdscontent %}
-<div class="centreinfobox"><span class="right"><strong>{{path_breadcrumbs|safe}}</strong></span>
+<div class="centreinfobox"><span class="right"><strong>{{mdsnode.path_breadcrumbs|safe}}</strong></span>
 <span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
 <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	    <INPUT type="hidden" name="go_to_shot" value="{{shot|add:'-1'}}">
