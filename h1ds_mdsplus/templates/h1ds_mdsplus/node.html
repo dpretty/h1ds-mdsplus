@@ -182,7 +182,7 @@ data then display a form for adding the data to the summary database -->
 <!--  If the  data has  been filtered,  display the  applied  filters in
 order, with option to adjust or remove each filter -->
 {% if mdsnode.filter_history %}
-<h3>active filters</h3>{% for filter_id, active_filter, filter_data in mdsnode.filter_history %}{% show_active_filter active_filter filter_id filter_data %}{% endfor %}
+<h3>active filters</h3>{% show_active_filters mdsnode %}
 {% endif %}
 
 <!-- List the views (H1DS views such as html, json, etc, not django view
@@ -192,6 +192,7 @@ functions) available for the node data type -->
 <!--  List the filters  which can  be applied  to the  (possibly already
 filtered) data -->
 
-<h3>filters</h3>{% for filter in mdsnode.available_filters %}{% show_filter filter %}{% endfor %}
+<h3>filters</h3>
+{% show_filters mdsnode %}
 
 {% endblock mdsmeta%}
