@@ -29,6 +29,6 @@ class NodeUnitTest(unittest.TestCase):
         root_node = mds_tree.getNode("\\%s::top" %django_mds_tree.name)
         node_list = get_nodes(root_node)
         for node_i, node in enumerate(node_list):
-            print node_i+1, len(node_list), node
+            print node_i+1, len(node_list), node, node.getFullPath()
             response = self.client.get(mds_to_url(node))
             self.assertEqual(response.status_code, 200)

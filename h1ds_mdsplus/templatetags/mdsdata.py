@@ -9,7 +9,7 @@ class MDSDataTemplateNode(template.Node):
     def render(self, context):
         try:
             data = self.data_var.resolve(context)
-            return '<div class="centrecontent">%s</div>' %data.get_view('html')
+            return '<div class="centrecontent"><div class="label">%s</div><div class="data">%s</div></div>' %(data.filtered_dtype, data.get_view('html'))
         except template.VariableDoesNotExist:
             return ''
 

@@ -25,7 +25,8 @@ def mds_to_url(mds_data_object):
     # correct  tagname when a node path exists,  and not fail when there
     # is no node path. So we do a simple check to see if there is a node
     # path
-    path_string = mds_data_object.__str__()
+    #path_string = mds_data_object.__str__()
+    path_string = unicode(mds_data_object.getFullPath())
     tag_node_string = path_string.split('::')[1]
     if ('.' in tag_node_string) or (':' in tag_node_string):
         # we have a node path.
@@ -82,23 +83,15 @@ def float_view_json(data, **kwargs):
 def text_view_html(data):
     return unicode(data.filtered_data)
 
-def nodeid_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    view_data['node_data_url'] = mds_to_url(view_data['node_data'])
-    return render_to_response('h1ds_mdsplus/nodeid_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+def nodeid_view_html(data):
+    return u"<a href=%s>%s</a>" %(mds_to_url(data.filtered_data),
+                                  unicode(data.filtered_data))
 
 def nodepath_view_html(data):
     return unicode(data.filtered_data)
 
-def range_view_html(request, data):
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/range_view.html', 
-                              view_data,
-                              context_instance=RequestContext(request))
+def range_view_html(data):
+    return unicode(data.filtered_data)
 
 def function_call_view_html(data):
     # TODO: show data returned by function (don't require filter, should
@@ -108,13 +101,9 @@ def function_call_view_html(data):
 def action_view_html(data):
     return unicode(data.filtered_data)
 
-def data_with_units_view_html(request, data):
+def data_with_units_view_html(data):
     # TODO, desplay returned datatype (e.g. signal) beneath node_data.
-    view_data = data.get_view_data(request)
-    view_data['node_data'] = data.filtered_data
-    return render_to_response('h1ds_mdsplus/data_with_units_view.html',
-                              view_data,
-                              context_instance=RequestContext(request))
+    return unicode(data.filtered_data)
 
 def conglom_view_html(data):
     return unicode(data.filtered_data)
