@@ -139,7 +139,12 @@ def homepage(request):
     # Tree objects are ordered by the display_order field, so if we grab 
     # a single object it should be the one with the lowest display_order
     # value, which is what we use as the default tree.
-    default_tree = MDSPlusTree.objects.all()[0]
+    try:
+        default_tree = MDSPlusTree.objects.all()[0]
+    except IndexError:
+        # This occurs if there are no MDSPlusTree instances
+        return render_to_response('h1ds_mdsplus/no_trees_found.html', 
+                                  context_instance=RequestContext(request))
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
 
 def apply_filter(request):
