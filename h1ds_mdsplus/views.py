@@ -72,7 +72,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
     try:
-        mds_tree_model_instance = MDSPlusTree.objects.get(name=tree)
+        mds_tree_model_instance = MDSPlusTree.objects.get(name__iexact=tree)
     except ObjectDoesNotExist:
         # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_tree.html', 
