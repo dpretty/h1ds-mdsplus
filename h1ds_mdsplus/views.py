@@ -104,7 +104,8 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
         return HttpResponse(json.dumps(data_dict), mimetype='application/json')
     
     return render_to_response('h1ds_mdsplus/node.html', 
-                              {'mdsnode':mds_node, 'html_metadata':html_metadata},
+                              {'mdsnode':mds_node, 'html_metadata':html_metadata,
+                               'request_fullpath':request.get_full_path()},
                               context_instance=RequestContext(request))
 
     #return mds_node.get_view(request, view)
