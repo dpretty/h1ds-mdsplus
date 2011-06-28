@@ -1,4 +1,5 @@
 import re, json
+import numpy
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -103,7 +104,12 @@ def action_view_html(data):
 
 def data_with_units_view_html(data):
     # TODO, desplay returned datatype (e.g. signal) beneath node_data.
+    #return u"<a href=%s>%s</a>" %(mds_to_url(data.filtered_data),
+    #                              unicode(data.filtered_data))
     return unicode(data.filtered_data)
+    #actual_data = data.data()
+    #if isinstance(actual_data, numpy.ndarray):
+        
 
 def conglom_view_html(data):
     return unicode(data.filtered_data)
@@ -379,7 +385,10 @@ for k,v in dtype_mappings.items():
 
 
 def get_dtype(mds_data):
-    if hasattr(mds_data, 'getDtype'):
+    _t = type(mds_data)
+    if _t.__module__ == 'numpy':
+        return _t.__name__
+    elif hasattr(mds_data, 'getDtype'):
         return mds_data.getDtype()
     elif hasattr(mds_data, 'mdsdtype'):
         return map_dtype_id[str(mds_data.mdsdtype)]
@@ -503,6 +512,8 @@ class MDSPlusNodeWrapper(object):
         self.filter_list = []
         self.filter_history = []
         try:
+            if self.dtype == 'DTYPE_WITH_UNITS':
+                self.filtered_data = self.mds_object.data()
             self.filtered_data = self.mds_object.getData()
         except TreeException:
             self.filtered_data = None
