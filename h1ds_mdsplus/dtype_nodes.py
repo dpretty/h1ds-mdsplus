@@ -1,4 +1,5 @@
 import re, json
+from types import NoneType
 import numpy
 
 from django.shortcuts import render_to_response
@@ -6,6 +7,7 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.conf import settings
 
 from MDSplus._tdishr import TdiException
 from MDSplus._treeshr import TreeException
@@ -16,7 +18,20 @@ from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import discretise_array
 #df -> dtype filters
 import h1ds_mdsplus.filters as df
-from h1ds_mdsplus import mds_sql_mapping
+from h1ds_mdsplus import sql_type_mapping
+
+try:
+    NODE_BLACKLIST = settings.H1DS_MDSPLUS_NODE_BLACKLIST
+except:
+    NODE_BLACKLIST = []
+
+class BlacklistType(type):
+    def __str__(cls):
+        return "%s"%cls.__name__
+
+class Blacklist:
+    __metaclass__ = BlacklistType
+
 
 tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
@@ -43,8 +58,14 @@ def mds_to_url(mds_data_object):
                                            'shot':mds_data_object.tree.shot,
                                            'tagname':components.group('tagname')})
 
+def generic_data_view(data):
+    return unicode(data.data)
+
 def no_data_view_html(data):
     return "This node has no data."
+
+def blacklist_view_html(data):
+    return "This node has been blacklisted."
 
 def no_data_view_json(request, data):
     serial_data = json.dumps({'mds_dtype':data.filtered_dtype,
@@ -193,13 +214,9 @@ def signal_view_bin(request, data):
     response['X-H1DS-dim-units'] = data.mds_object.dim_of().units
     return response
 
-
-# Filters for all dtypes
-filters_all = {
-    # show TDI
-    }
-    
-dtype_mappings = {
+## TODO: remove the mds dtype mappings for views and filters
+## should be able to import this information from MDSplus library
+mds_dtype_mappings = {
     "DTYPE_Z":{'id':0, 
                'views':{}, 
                'filters':(), 
@@ -379,6 +396,31 @@ dtype_mappings = {
 }
 
 
+dtype_mappings = {
+    NoneType:{'views':{'html':no_data_view_html, 'json':no_data_view_json}, 
+              'filters':(),
+              },
+    numpy.string_:{'views':{'html':generic_data_view}, 
+                   'filters':(), #TODO: length filter
+                   },
+    numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
+                   'filters':(df.Resample, df.ResampleMinMax, df.DimRange, df.MeanValue),
+                   },
+    numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
+                   'filters':(),
+                   },
+    numpy.int32:{'views':{'html':generic_data_view},
+                 'filters':(),
+                 },
+    numpy.uint8:{'views':{'html':generic_data_view},
+                 'filters':(),
+                 },
+    type(Blacklist()):{'views':{'html':blacklist_view_html},
+                       'filters':(),
+                       }
+    }
+
+"""
 map_dtype_id = {}
 for k,v in dtype_mappings.items():
     map_dtype_id[str(v['id'])] = k
@@ -398,7 +440,7 @@ def get_dtype(mds_data):
         return map_dtype_id[str(mds_data._dtype)]
     elif type(mds_data) == MDSplus.Dictionary:
         return "DTYPE_DICTIONARY"
-
+"""
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.
@@ -504,33 +546,60 @@ def get_view_path(request, h1ds_view_name):
 
 class MDSPlusNodeWrapper(object):
     def __init__(self,mds_object):
+        """A uniform interface to all MDS data objects.
+
+        This wrapper holds additional information about the data object,
+        such as  which filters  have been applied  to it, and  which are
+        available...
+
+        The MDS TDI is executed  during instantiation, so don't use this
+        wrapper unless you're going to be using the data (e.g. don't use
+        it to loop through trees etc).
+        """
+        # The original mds object
         self.mds_object = mds_object
+
+            
+        # A HTML string of the full MDS path with links to each path component.
         self.path_breadcrumbs = get_mds_path_breadcrumbs(self.mds_object)
 
-        self.dtype = str(get_dtype(self.mds_object))
+        # shot number of the data
         self.shot = self.mds_object.tree.shot
-        self.filter_list = []
+
+        # the (numpy) data visible to the user
+        if self.mds_object.getFullPath() in NODE_BLACKLIST:
+            self.data = Blacklist()
+        else:
+            try:
+                self.data = self.mds_object.data()
+            except:
+                self.data = None
+
+        ###### EDIT LINE
+
+        #self.dtype = str(get_dtype(self.mds_object))
+        #self.filter_list = []
         self.filter_history = []
-        try:
-            if self.dtype == 'DTYPE_WITH_UNITS':
-                self.filtered_data = self.mds_object.data()
-            self.filtered_data = self.mds_object.getData()
-        except TreeException:
-            self.filtered_data = None
-        self.filtered_dtype = self.dtype
-        self.filtered_summary_dtype = mds_sql_mapping.get(self.filtered_dtype)
-        self.n_filters = 0
+        #try:
+        #    if self.dtype == 'DTYPE_WITH_UNITS':
+        #        self.filtered_data = self.mds_object.data()
+        #    self.filtered_data = self.mds_object.getData()
+        #except TreeException:
+        #    self.filtered_data = None
+        #self.filtered_dtype = self.dtype
+        #self.filtered_summary_dtype = mds_sql_mapping.get(self.filtered_dtype)
+        #self.n_filters = 0
         
         self.members, self.children = self.get_subnode_data()
 
         self.tagnames = get_tree_tagnames(self.mds_object)
         self.treelinks = get_trees()
 
-        self.available_filters = dtype_mappings[self.filtered_dtype]['filters']
-        self.available_views = dtype_mappings[self.filtered_dtype]['views'].keys()
+        self.available_filters = dtype_mappings[type(self.data)]['filters']
+        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
             
     def get_view(self, view_name, **kwargs):
-        view_function = dtype_mappings[self.filtered_dtype]['views'].get(view_name, unsupported_view(view_name))
+        view_function = dtype_mappings[type(self.data)]['views'].get(view_name, unsupported_view(view_name))
         return view_function(self, **kwargs)
 
     def get_subnode_data(self):
@@ -548,57 +617,12 @@ class MDSPlusNodeWrapper(object):
         return members, children
 
     def apply_filters(self, filter_list):
-        self.filter_list = filter_list
-        # Don't apply filters to nodes with missing data
-        if self.dtype != 'DTYPE_MISSING':
-            for fid, fname, fval in filter_list:
-                filter_class = getattr(df, fname)
-                self.filtered_data = filter_class(self.filtered_data, fval).filter()
-                self.filter_history.append([fid, filter_class, fval])
-                self.filtered_dtype = get_dtype(self.filtered_data)
-                self.filtered_summary_dtype = mds_sql_mapping.get(self.filtered_dtype)
-                self.n_filters += 1
-        self.available_filters = dtype_mappings[self.filtered_dtype]['filters']
-        self.available_views = dtype_mappings[self.filtered_dtype]['views'].keys()
+        for fid, fname, fval in filter_list:
+            filter_class = getattr(df, fname)
+            self.data = filter_class(self.data, fval).filter()
+            self.filter_history.append([fid, filter_class, fval])
+            self.summary_dtype = sql_type_mapping.get(type(self.data))
+            self.n_filters += 1
+        self.available_filters = dtype_mappings[type(self.data)]['filters']
+        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
 
-
-    """
-    def get_view_data(self, request):
-        # TODO: clean up.
-        view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.dtype]['views'].keys()]
-        filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.get_template(request)} for i in dtype_mappings[self.dtype]['filters']]
-        f_view_links = [[i, get_view_path(request,i)] for i in dtype_mappings[self.filtered_dtype]['views'].keys()]
-        f_filter_links = [{'name':i.__name__, 'doc':i.__doc__, 't':i.get_template(request)} for i in dtype_mappings[self.filtered_dtype]['filters']]
-
-        applied_filter_links = [i.get_template_applied(request,j, fid) for fid,i,j in self.filter_history]
-
-        members, children = self.get_subnode_data()
-        node_metadata = {'datatype':self.dtype,
-                         'node id':self.mds_object.nid,
-                         'type':member_or_child(self.mds_object)}
-        view_data = {'shot':self.shot,
-                     'dtype':self.dtype,
-                     'filtered_dtype':self.filtered_dtype,
-                     #'tdi':tdi, 
-                     'node_metadata':node_metadata,
-                     'children':children, 
-                     'members':members, 
-                     'tagnames':get_tree_tagnames(self.mds_object),
-                     'treelinks':get_trees(),
-                     #'input_tree':tree, 
-                     #'input_path':path,
-                     #'input_query':request.GET.urlencode(),
-                     'node_views':view_links,
-                     'node_filters':filter_links,
-                     'f_node_views':f_view_links,
-                     'f_node_filters':f_filter_links,
-                     'request_query':json.dumps(request.GET),
-                     'request_fullpath':request.get_full_path(),
-                     'absolute_uri':request.build_absolute_uri(),
-                     'filter_list':applied_filter_links,
-                     'summary_dtype':mds_sql_mapping.get(self.filtered_dtype),
-                     'path_breadcrumbs':get_mds_path_breadcrumbs(self.mds_object),
-                     #'debug_data':debug_data,
-                     }
-        return view_data
-        """

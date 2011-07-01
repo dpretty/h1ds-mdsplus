@@ -43,3 +43,5 @@ mds_sql_mapping = {
     "DTYPE_F":"FLOAT",
     }
 
+
+sql_type_mapping = {}
