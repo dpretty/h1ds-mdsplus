@@ -62,14 +62,14 @@ class Resample(BaseFilter):
 
 
 class ResampleMinMax(BaseFilter):
-    """Take a Signal and return a pair of signals (in MDSplus Dictionary) with min and max values with n bins.
+    """Take a signal and return a pair of signals as a dictionary with min and max values with n bins.
 
-    The returned MDSplus dictionary has the structure {'sigmin':(signal with min values), 'sigmax':(signal with max values)}
+    The returned dictionary has the structure {'sigmin':(datawrapper signal with min values), 'sigmax':(datawrapper signal with max values)}
     
     Example: to resample a signal to 50 bins, use ResampleMinMax=50
     """
 
-    template_info = {'text':"Resample signal and return an MDSplus Dictionary containing two signals 'sigmin' and 'sigmax', with min and max values for each bin.",
+    template_info = {'text':"Resample signal and return a dictionary containing two signals 'sigmin' and 'sigmax', with min and max values for each bin.",
                      'args':['n_bins']}
 
     def __init__(self, data, arg_string):
@@ -77,13 +77,15 @@ class ResampleMinMax(BaseFilter):
         self.n_bins = int(arg_string)
 
     def filter(self):
-        numpy_array = self.data.data()
+        numpy_array = self.data.data
         if len(numpy_array) < 2*self.n_bins:
             return self.data
-        numpy_arr_dimof = self.data.dim_of().data()
+        numpy_arr_dimof = self.data.dim
         delta_sample = len(numpy_array)/self.n_bins
 
-        new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.n_bins], self.data.dim_of().units))
+        #new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.n_bins], self.data.dim_of().units))
+
+        self.data.dim = self.data.dim[::delta_sample][:self.n_bins]
 
         max_data = []
         min_data = []

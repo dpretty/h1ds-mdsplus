@@ -10,7 +10,7 @@ from MDSplus._treeshr import TreeException
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
-from h1ds_mdsplus.dtype_nodes import MDSPlusNodeWrapper
+from h1ds_mdsplus.dtype_nodes import NodeWrapper
 from h1ds_mdsplus.filters import filter_mapping
 
 # Match any URL path component comprising only digits.
@@ -57,7 +57,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     tagname -- MDSplus tag name (default 'top')
     nodepath -- MDSplus node path, with dot (.) and colon (:) replaced with URL path slashes (/) (default "")
     
-    An instance of MDSPlusNodeWrapper  is created for the requested node
+    An instance of NodeWrapper  is created for the requested node
     which handles filters and returns an appropriate HttpResponse.
     
     """
@@ -88,7 +88,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
                                   context_instance=RequestContext(request))
         
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
-    mds_node = MDSPlusNodeWrapper(mds_tree.getNode(mds_path))
+    mds_node = NodeWrapper(mds_tree.getNode(mds_path))
     mds_node.apply_filters(get_filter_list(request))
 
     # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
