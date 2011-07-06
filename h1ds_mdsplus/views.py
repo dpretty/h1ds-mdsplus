@@ -1,4 +1,4 @@
-import re, json
+import re, json, inspect
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response
@@ -10,9 +10,8 @@ from MDSplus._treeshr import TreeException
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
-from h1ds_mdsplus.dtype_nodes import NodeWrapper
-from h1ds_mdsplus.filters import filter_mapping
-
+from h1ds_mdsplus.wrappers import NodeWrapper
+import h1ds_mdsplus.filters as df
 # Match any URL path component comprising only digits.
 # e.g. "foo/bar/12345/stuff" -> 12345
 shot_regex = re.compile(r".*?\/(\d+?)\/.*?")
@@ -89,7 +88,8 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
         
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
     mds_node = NodeWrapper(mds_tree.getNode(mds_path))
-    mds_node.apply_filters(get_filter_list(request))
+    for fid, name, value in get_filter_list(request):
+        mds_node.data.apply_filter(name, value)
 
     # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
     html_metadata = {
@@ -149,17 +149,17 @@ def homepage(request):
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
 
 def apply_filter(request):
-    # name of filter_class
+    # name of filter function
     qdict = request.GET.copy()
     filter_name = qdict.pop('filter')[-1]
-    filter_class = filter_mapping[filter_name.lower()]
+    filter_function = getattr(df, filter_name)
 
     return_path = qdict.pop('path')[-1]
     new_filter_values = []
-    for a in filter_class.template_info['args']:
+    for a in inspect.getargspec(filter_function).args[1:]:
         aname = qdict.pop(a)[-1]
         new_filter_values.append(aname)
-    new_filter_str = '_'.join(new_filter_values)
+    new_filter_str = '__'.join(new_filter_values)
 
     # get maximum filter number
     filter_list = get_filter_list(request)
@@ -169,7 +169,7 @@ def apply_filter(request):
         max_filter_num = max([i[0] for i in filter_list])
 
     # add new filter to query dict
-    new_filter_key = 'f%d_%s' %(max_filter_num+1, filter_class.__name__)
+    new_filter_key = 'f%d_%s' %(max_filter_num+1, filter_name)
     qdict.update({new_filter_key:new_filter_str})
     return_url = '?'.join([return_path, qdict.urlencode()])
     return HttpResponseRedirect(return_url)

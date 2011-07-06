@@ -106,6 +106,7 @@ def clean_signal_for_serialization(data):
     view_data['dim_units'] = str(data.dim_units)
     view_data['node_data'] = data.data.tolist()
     view_data['node_dim'] = data.dim.tolist()
+    view_data['labels'] = data.label
     return view_data
 
 def signal_view_serialized(data, mode='xml', dict_only=False):
@@ -181,9 +182,12 @@ dtype_mappings = {
                    'filters':(), #TODO: length filter
                    },
     numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
-                   'filters':(df.Resample, df.ResampleMinMax, df.DimRange, df.MeanValue),
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean),
                    },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
+                   'filters':(),
+                   },
+    numpy.float64:{'views':{'html':generic_data_view, 'json':float_view_json},
                    'filters':(),
                    },
     numpy.int32:{'views':{'html':generic_data_view},
@@ -300,14 +304,59 @@ def get_view_path(request, h1ds_view_name):
 ########################################################################
 
 class DataWrapper(object):
-    pass
+    def __init__(self, mds_object):
+        """Take an MDS object and provide a uniform interface to all data types."""        
+        self.original_mds = {'path':mds_object.getFullPath(), 'shot':mds_object.tree.shot}
+        if self.original_mds['path'] in NODE_BLACKLIST:
+            self.data = Blacklist()
+            self.units = None
+            self.dim = None
+            self.dim_units = None
+        else:
+            try:
+                self.data = mds_object.data()
+            except (TdiException, AttributeError):
+                self.data = None
+            try:
+                self.units = mds_object.units
+            except TdiException:
+                self.units = None
+            try:
+                self.dim = mds_object.dim_of().data()
+            except TdiException:
+                self.dim = None
+            try:
+                self.dim_units = mds_object.dim_of().units
+            except TdiException:
+                self.dim_units = None
 
+        self.filter_history = []
+        self.available_filters = dtype_mappings[type(self.data)]['filters']
+        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
+        self.summary_dtype = sql_type_mapping.get(type(self.data))
+        # TODO... labels need to have same dimension as data... and get from introspection where possible
+        self.label = ('data',)
+        
+    def apply_filter(self, name, value):
+        filter_function = getattr(df, name)
+        if value == "":
+            filter_args = []
+        else:
+            filter_args = value.split('__')
+        filter_function(self, *filter_args)
+        self.filter_history.append((filter_function, filter_args))
+        self.summary_dtype = sql_type_mapping.get(type(self.data))
+        self.available_filters = dtype_mappings[type(self.data)]['filters']
+        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
 
+    def get_view(self, view_name):
+        # TODO: is there a need for more detailed logic than the simple datatype key, value mapping?
+        return dtype_mappings[type(self.data)]['views'].get(view_name, unsupported_view(view_name))
+        
 
 ########################################################################
 ## Node Wrapper                                                       ##
 ########################################################################
-
 
 class NodeWrapper(object):
     def __init__(self,mds_object):
@@ -323,7 +372,6 @@ class NodeWrapper(object):
         """
         # The original mds object
         self.mds_object = mds_object
-
             
         # A HTML string of the full MDS path with links to each path component.
         self.path_breadcrumbs = get_mds_path_breadcrumbs(self.mds_object)
@@ -332,42 +380,16 @@ class NodeWrapper(object):
         self.shot = self.mds_object.tree.shot
 
         # the (numpy) data visible to the user
-        if self.mds_object.getFullPath() in NODE_BLACKLIST:
-            self.data = Blacklist()
-            self.units = None
-            self.dim = None
-            self.dim_units = None
-        else:
-            try:
-                self.data = self.mds_object.data()
-            except (TdiException, AttributeError):
-                self.data = None
-            try:
-                self.units = self.mds_object.units
-            except TdiException:
-                self.units = None
-            try:
-                self.dim = self.mds_object.dim_of().data()
-            except TdiException:
-                self.dim = None
-            try:
-                self.dim_units = self.mds_object.dim_of().units
-            except TdiException:
-                self.dim_units = None
+        self.data = DataWrapper(self.mds_object)
 
-        self.filter_history = []
-        
         self.members, self.children = self.get_subnode_data()
 
         self.tagnames = get_tree_tagnames(self.mds_object)
         self.treelinks = get_trees()
 
-        self.available_filters = dtype_mappings[type(self.data)]['filters']
-        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
-            
     def get_view(self, view_name, **kwargs):
-        view_function = dtype_mappings[type(self.data)]['views'].get(view_name, unsupported_view(view_name))
-        return view_function(self, **kwargs)
+        view_function = self.data.get_view(view_name)
+        return view_function(self.data, **kwargs)
 
     def get_subnode_data(self):
         
@@ -382,14 +404,3 @@ class NodeWrapper(object):
             members = None
 
         return members, children
-
-    def apply_filters(self, filter_list):
-        for fid, fname, fval in filter_list:
-            filter_class = getattr(df, fname)
-            self.data = filter_class(self.data, fval).filter()
-            self.filter_history.append([fid, filter_class, fval])
-            self.summary_dtype = sql_type_mapping.get(type(self.data))
-            self.n_filters += 1
-        self.available_filters = dtype_mappings[type(self.data)]['filters']
-        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
-

@@ -2,7 +2,7 @@ from django.utils import unittest
 from django.test.client import Client
 
 from h1ds_mdsplus.models import MDSPlusTree
-from h1ds_mdsplus.dtype_nodes import mds_to_url
+from h1ds_mdsplus.wrappers import mds_to_url
 
 import MDSplus
 

@@ -1,16 +1,16 @@
+import inspect
 from django import template
 from django.core.urlresolvers import reverse
-
+from django.utils.html import escape
 register = template.Library()
 
 class MDSDataTemplateNode(template.Node):
-    def __init__(self, data_name):
-        self.data_var = template.Variable(data_name)
+    def __init__(self, node_name):
+        self.node_var = template.Variable(node_name)
     def render(self, context):
         try:
-            data = self.data_var.resolve(context)
-            #return '<div class="centrecontent"><div class="label">%s</div><div class="data">%s</div></div>' %(data.filtered_dtype, data.get_view('html'))
-            return '<div class="centrecontent"><div class="label">%s</div><div class="data">%s</div></div>' %("DATATYPE LABEL?", data.get_view('html'))
+            node = self.node_var.resolve(context)
+            return '<div class="centrecontent"><div class="data">%s</div></div>' %(node.get_view('html'))
         except template.VariableDoesNotExist:
             return ''
 
@@ -85,9 +85,10 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
 
         else:
             submit_url = reverse("apply-filter")
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for i,j in enumerate(filter_instance.template_info['args'])])
-
-            return_string =  filter_html %{'text':filter_instance.template_info['text'],
+            arg_list = inspect.getargspec(filter_instance).args[1:]
+            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for j in arg_list])
+            docstring = inspect.getdoc(filter_instance)
+            return_string =  filter_html %{'text':docstring,
                                            'input_str':input_str,
                                            'clsname':filter_instance.__name__,
                                            'submit_url':submit_url,
@@ -100,12 +101,16 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
 
 @register.simple_tag(takes_context=True)
 def show_filters(context, mdsnode):
-    return "".join([get_filter(context, f) for f in mdsnode.available_filters])
+    return "".join([get_filter(context, f) for f in mdsnode.data.available_filters])
 
 
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, mdsnode):
     return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in mdsnode.filter_history])
+
+@register.simple_tag(takes_context=True)
+def show_info(context, mdsnode):
+    return "TODO... dtype: %s" % escape(str(type(mdsnode.data.data)))
 
 
 

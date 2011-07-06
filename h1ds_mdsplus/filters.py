@@ -1,151 +1,44 @@
 from django.core.urlresolvers import reverse
-#from django.http import QueryDict
 import MDSplus
 import numpy as np
 
-#
-# Note: you need to add each filter to the filter_mapping dict below
-#
-
-class BaseFilter(object):
-    template = ""
-
-    @classmethod
-    def get_template(cls, request):
-        submit_url = reverse("apply-filter")
-        existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
-        input_str = ''.join(['<input type="text" size=5 name="%s">' %i for i in cls.template_info['args']])
-        input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for i,j in enumerate(cls.template_info['args'])])
+def resample(dwrapper, n_samples):
+    n_samples = int(n_samples)
+    signal_length = dwrapper.data.T.shape[0]
+    delta_sample = signal_length/n_bins
         
-        template = '<div class="sidebarcontent"><form action="%(submit_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="submit" title="add" value="+"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form></div>' %{'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'submit_url':submit_url, 'path':request.path, 'input_query':existing_query_string}
-        return template
+    # put trailing [:max_samples] in case we get an extra one at the end
+    dwrapper.data = dwrapper.data[::delta_sample][:self.max_samples]
+    dwrapper.dim = dwrapper.dim[::delta_sample][:self.max_samples]
 
-    @classmethod
-    def get_template_applied(cls, request, arg_str, fid):
-        update_url = reverse("update-filter")
-        remove_url = reverse("remove-filter")
-
-        existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
-        split_args = arg_str.split('_')
-        input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':split_args[i]} for i,j in enumerate(cls.template_info['args'])])
-
-        update_template = '<form action="%(update_url)s"><span class="left" title="%(text)s">%(clsname)s</span><span class="right">%(input_str)s<input type="hidden" name="fid" value="%(fid)s"><input title="update" type="submit" value="u"/></span><input type="hidden" name="filter" value="%(clsname)s"><input type="hidden" name="path" value="%(path)s">%(input_query)s</form>' %{'update_url':update_url, 'text':cls.template_info['text'], 'input_str':input_str, 'clsname':cls.__name__, 'path':request.path, 'input_query':existing_query_string, 'fid':fid}
-        
-        remove_template = '<span class="right"><form action="%(remove_url)s"><input type="hidden" name="path" value="%(path)s"><input type="hidden" name="fid" value="%(fid)s"><input title="remove" type="submit" value="-"/>%(existing_query)s</form></span>' %{'remove_url':remove_url, 'existing_query':existing_query_string, 'path':request.path, 'fid':fid}
-        
-        template = '<div class="sidebarcontent">'+remove_template+update_template+'</div>'
-
-        return template
-        
-
-class Resample(BaseFilter):
-    """Resample signal.
-
-    Example: To get the signal with 20 samples, use Resample=20
-    """
-
-    template_info = {'text':"Resample signal, returning signal with n_samples samples.",
-                     'args':['n_samples']}
-
-    def __init__(self, data, arg_string):
-        self.data = data
-        self.max_samples = int(arg_string)
-    def filter(self):
-        numpy_array = self.data.data()
-        numpy_arr_dimof = self.data.dim_of().data()
-        delta_sample = len(numpy_array)/self.max_samples
-        
-        # put trailing [:max_samples] in case we get an extra one at the end
-        new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[::delta_sample][:self.max_samples], self.data.units))
-        new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.max_samples], self.data.dim_of().units))
-        return MDSplus.Signal(new_array, None, new_dim)
-
-
-class ResampleMinMax(BaseFilter):
-    """Take a signal and return a pair of signals as a dictionary with min and max values with n bins.
-
-    The returned dictionary has the structure {'sigmin':(datawrapper signal with min values), 'sigmax':(datawrapper signal with max values)}
-    
-    Example: to resample a signal to 50 bins, use ResampleMinMax=50
-    """
-
-    template_info = {'text':"Resample signal and return a dictionary containing two signals 'sigmin' and 'sigmax', with min and max values for each bin.",
-                     'args':['n_bins']}
-
-    def __init__(self, data, arg_string):
-        self.data = data
-        self.n_bins = int(arg_string)
-
-    def filter(self):
-        numpy_array = self.data.data
-        if len(numpy_array) < 2*self.n_bins:
-            return self.data
-        numpy_arr_dimof = self.data.dim
-        delta_sample = len(numpy_array)/self.n_bins
-
-        #new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[::delta_sample][:self.n_bins], self.data.dim_of().units))
-
-        self.data.dim = self.data.dim[::delta_sample][:self.n_bins]
-
+def resample_minmax(dwrapper, n_bins):
+    """TODO: only works for 1D array..."""
+    n_bins = int(n_bins)
+    signal_length = dwrapper.data.T.shape[0]
+    if signal_length >= 2*n_bins:
+        delta_sample = signal_length/n_bins
+        dwrapper.dim = dwrapper.dim[::delta_sample][:n_bins]
         max_data = []
         min_data = []
 
-        for i in range(self.n_bins):
-            tmp = numpy_array[i*delta_sample:(i+1)*delta_sample]
+        for i in range(n_bins):
+            tmp = dwrapper.data[i*delta_sample:(i+1)*delta_sample]
             max_data.append(max(tmp))
             min_data.append(min(tmp))
 
-        max_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(np.array(max_data), self.data.units))
-        min_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(np.array(min_data), self.data.units))
+        dwrapper.label = ('min', 'max',)
+        dwrapper.data = np.array([min_data, max_data])
 
-        return_dict = MDSplus.Dictionary({'sigmin':MDSplus.Signal(min_array, None, new_dim),
-                                          'sigmax':MDSplus.Signal(max_array, None, new_dim)})
-        return return_dict
+def mean(dwrapper):
+    """TODO: test for 2+ dimensional arrays"""
+    dwrapper.data = np.mean(dwrapper.data)
+    dwrapper.dim = None
+    dwrapper.label = ('mean(%s)' %dwrapper.label[0],)
 
-class DimRange(BaseFilter):
-    """Reduce range of signal.
-    
-    Example: to change the range of a signal to 1.23 < t < 1.51, use DimRange=1.23_1.52
-    """
-    template_info = {'text':"Return the section of the signal with dimension in the interval [from:to]",
-                     'args':['from', 'to']}
-
-
-    def __init__(self, data, arg_string):
-        self.data = data
-        self.min_val, self.max_val = map(float, arg_string.split('_'))
-        
-    def filter(self):
-        numpy_array = self.data.data()
-        numpy_arr_dimof = self.data.dim_of().data()
-
-        min_e, max_e = np.searchsorted(numpy_arr_dimof, [self.min_val, self.max_val])
-        new_array = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_array[min_e:max_e], self.data.units))
-        new_dim = MDSplus.Function(opcode="BUILD_WITH_UNITS", args=(numpy_arr_dimof[min_e:max_e], self.data.dim_of().units))
-        return MDSplus.Signal(new_array, None, new_dim)
-
-
-class MeanValue(BaseFilter):
-    """Mean of signal.
-
-    Example: MeanValue=1 (the query value can be anything).
-    """
-    template_info = {'text':"Return the mean value of the signal",
-                     'args':[]}
-
-
-    def __init__(self, data, arg_string):
-        self.data = data
-
-    def filter(self):
-        mean_value = np.mean(self.data.data())
-        return MDSplus.Float32(mean_value)
-
-# Dictionary which keeps lower case class mappings
-
-filter_mapping = {
-    'resample':Resample,
-    'resampleminmax':ResampleMinMax,
-    'dimrange':DimRange,
-    'meanvalue':MeanValue,
-    }
+def dim_range(dwrapper, min_val, max_val):
+    """Reduce range of signal."""
+    min_val = float(min_val)
+    max_val = float(max_val)
+    min_e, max_e = np.searchsorted(dwrapper.dim, [min_val, max_val])
+    dwrapper.data = dwrapper.data[min_e:max_e]
+    dwrapper.dim = dwrapper.dim[min_e:max_e]
