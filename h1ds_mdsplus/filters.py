@@ -2,14 +2,14 @@ from django.core.urlresolvers import reverse
 import MDSplus
 import numpy as np
 
-def resample(dwrapper, n_samples):
-    n_samples = int(n_samples)
+def resample(dwrapper, max_samples):
+    max_samples = int(max_samples)
     signal_length = dwrapper.data.T.shape[0]
-    delta_sample = signal_length/n_bins
+    delta_sample = signal_length/max_samples
         
     # put trailing [:max_samples] in case we get an extra one at the end
-    dwrapper.data = dwrapper.data[::delta_sample][:self.max_samples]
-    dwrapper.dim = dwrapper.dim[::delta_sample][:self.max_samples]
+    dwrapper.data = dwrapper.data[::delta_sample][:max_samples]
+    dwrapper.dim = dwrapper.dim[::delta_sample][:max_samples]
 
 def resample_minmax(dwrapper, n_bins):
     """TODO: only works for 1D array..."""

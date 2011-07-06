@@ -89,7 +89,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
     mds_node = NodeWrapper(mds_tree.getNode(mds_path))
     for fid, name, value in get_filter_list(request):
-        mds_node.data.apply_filter(name, value)
+        mds_node.data.apply_filter(fid, name, value)
 
     # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
     html_metadata = {
@@ -179,19 +179,19 @@ def update_filter(request):
     # name of filter_class
     qdict = request.GET.copy()
     filter_name = qdict.pop('filter')[-1]
-    filter_class = filter_mapping[filter_name.lower()]
+    filter_function = getattr(df, filter_name)
 
     return_path = qdict.pop('path')[-1]
     new_filter_values = []
-    for a in filter_class.template_info['args']:
+    for a in inspect.getargspec(filter_function).args[1:]:
         aname = qdict.pop(a)[-1]
         new_filter_values.append(aname)
-    new_filter_str = '_'.join(new_filter_values)
+    new_filter_str = '__'.join(new_filter_values)
 
     filter_id = int(qdict.pop('fid')[-1])
 
     # add new filter to query dict
-    filter_key = 'f%d_%s' %(filter_id, filter_class.__name__)
+    filter_key = 'f%d_%s' %(filter_id, filter_name)
 
     qdict[filter_key] = new_filter_str
     return_url = '?'.join([return_path, qdict.urlencode()])

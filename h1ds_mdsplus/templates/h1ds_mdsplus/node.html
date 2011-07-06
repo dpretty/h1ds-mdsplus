@@ -181,7 +181,7 @@ data then display a form for adding the data to the summary database -->
 
 <!--  If the  data has  been filtered,  display the  applied  filters in
 order, with option to adjust or remove each filter -->
-{% if mdsnode.filter_history %}
+{% if mdsnode.data.filter_history %}
 <h3>active filters</h3>{% show_active_filters mdsnode %}
 {% endif %}
 

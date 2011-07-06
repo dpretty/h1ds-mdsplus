@@ -61,18 +61,20 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
     try:
         request = context['request']
         existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
+        arg_list = inspect.getargspec(filter_instance).args[1:]
+        docstring = inspect.getdoc(filter_instance)
         if is_active:
             if filter_data == None:
                 filter_data = ""
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")
 
-            split_args = filter_data.split('_')
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':split_args[i]} for i,j in enumerate(filter_instance.template_info['args'])])
+            split_args = filter_data.split('__')
+            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':split_args[i]} for i,j in enumerate(arg_list)])
 
             return_string = active_filter_html %{
                 'update_url':update_url,
-                'text':filter_instance.template_info['text'],
+                'text':docstring,
                 'input_str':input_str,
                 'clsname':filter_instance.__name__,
                 'path':request.path,
@@ -85,9 +87,7 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
 
         else:
             submit_url = reverse("apply-filter")
-            arg_list = inspect.getargspec(filter_instance).args[1:]
             input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for j in arg_list])
-            docstring = inspect.getdoc(filter_instance)
             return_string =  filter_html %{'text':docstring,
                                            'input_str':input_str,
                                            'clsname':filter_instance.__name__,
@@ -106,7 +106,7 @@ def show_filters(context, mdsnode):
 
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, mdsnode):
-    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in mdsnode.filter_history])
+    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in mdsnode.data.filter_history])
 
 @register.simple_tag(takes_context=True)
 def show_info(context, mdsnode):
