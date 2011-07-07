@@ -2,6 +2,26 @@ from django.core.urlresolvers import reverse
 import MDSplus
 import numpy as np
 
+########################################################################
+## signal -> scalar                                                   ##
+########################################################################
+
+def max_val(dwrapper):
+    """TODO: test for 2+ dimensional arrays"""
+    dwrapper.data = np.max(dwrapper.data)
+    dwrapper.dim = None
+    dwrapper.label = ('max(%s)' %dwrapper.label[0],)
+    
+def mean(dwrapper):
+    """TODO: test for 2+ dimensional arrays"""
+    dwrapper.data = np.mean(dwrapper.data)
+    dwrapper.dim = None
+    dwrapper.label = ('mean(%s)' %dwrapper.label[0],)
+
+########################################################################
+## signal -> signal                                                   ##
+########################################################################
+
 def resample(dwrapper, max_samples):
     max_samples = int(max_samples)
     signal_length = dwrapper.data.T.shape[0]
@@ -28,12 +48,6 @@ def resample_minmax(dwrapper, n_bins):
 
         dwrapper.label = ('min', 'max',)
         dwrapper.data = np.array([min_data, max_data])
-
-def mean(dwrapper):
-    """TODO: test for 2+ dimensional arrays"""
-    dwrapper.data = np.mean(dwrapper.data)
-    dwrapper.dim = None
-    dwrapper.label = ('mean(%s)' %dwrapper.label[0],)
 
 def dim_range(dwrapper, min_val, max_val):
     """Reduce range of signal."""
