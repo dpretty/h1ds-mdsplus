@@ -27,9 +27,30 @@ def element(dwrapper, index):
     dwrapper.dim = None
     dwrapper.label = ('%s[%s]' %(dwrapper.label[0], index),)
 
+def peak_to_peak(dwrapper):
+    """Max(signal) - min(signal)."""
+    dwrapper.data = max(dwrapper.data) - min(dwrapper.data)
+    dwrapper.dim = None
+    dwrapper.label = ('max(%(lab)s)-min(%(lab)s)' %{'lab':dwrapper.label[0]},)
+
 ########################################################################
 ## signal -> signal                                                   ##
 ########################################################################
+
+def prl_lpn(dwrapper, f0, order):
+    """prl_lpn
+    
+    TODO: only working for order = 1
+    """
+    order = int(order)
+    N = int(0.5 + 0.5/(dwrapper.dim[1]-dwrapper.dim[0])/float(f0))
+    a = np.cumsum(dwrapper.data)
+    if order > 1:
+        # if (_order > 1 ) return(prl_lpn(prl_lpn( _signal, _f0, _order-1),_f0, 1));
+        pass
+    else:
+        dwrapper.data = (a[N:]-a[:-N])/float(N)
+        dwrapper.label = ('prl_lpn(%s)' %dwrapper.label[0],)
 
 def resample(dwrapper, max_samples):
     max_samples = int(max_samples)
@@ -65,3 +86,18 @@ def dim_range(dwrapper, min_val, max_val):
     min_e, max_e = np.searchsorted(dwrapper.dim, [min_val, max_val])
     dwrapper.data = dwrapper.data[min_e:max_e]
     dwrapper.dim = dwrapper.dim[min_e:max_e]
+
+########################################################################
+## scalar or vector -> same                                           ##
+########################################################################
+
+def multiply(dwrapper, factor):
+    """Multiply data by scale factor"""
+    dwrapper.data = float(factor)*dwrapper.data
+    dwrapper.label = ('%s*(%s)' %(factor, dwrapper.label[0]),)
+
+def divide(dwrapper, factor):
+    """Divide data by scale factor"""
+    dwrapper.data = dwrapper.data/float(factor)
+    dwrapper.label = ('(%s)/%s' %(dwrapper.label[0], factor),)
+
