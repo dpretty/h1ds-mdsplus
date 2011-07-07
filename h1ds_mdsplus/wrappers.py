@@ -67,12 +67,30 @@ def no_data_view_html(data):
 def blacklist_view_html(data):
     return "This node has been blacklisted."
 
-def no_data_view_json(request, data):
-    serial_data = json.dumps({'mds_dtype':data.summary_dtype,
-                              'summary_dtype':mds_sql_mapping.get(data.filtered_dtype),
-                              'data':None})
+def blacklist_view_json(data, dict_only=False):
+    data_dict =  {'summary_dtype':data.summary_dtype,
+                 'data':"This node has been blacklisted"}
+    if dict_only:
+        return data_dict
+    serial_data = json.dumps(data_dict)
     return HttpResponse(serial_data, mimetype='application/json')
-    
+
+def no_data_view_json(data, dict_only=False):
+    data_dict =  {'summary_dtype':data.summary_dtype,
+                 'data':None}
+    if dict_only:
+        return data_dict
+    serial_data = json.dumps(data_dict)
+    return HttpResponse(serial_data, mimetype='application/json')
+
+def string_view_json(data, dict_only=False):
+    data_dict =  {'summary_dtype':data.summary_dtype,
+                 'data':str(data.data)}
+    if dict_only:
+        return data_dict
+    serial_data = json.dumps(data_dict)
+    return HttpResponse(serial_data, mimetype='application/json')
+
 
 def float_view_serialized(data, mode='xml', dict_only=False):
 
@@ -91,6 +109,24 @@ def float_view_serialized(data, mode='xml', dict_only=False):
 
 def float_view_json(data, **kwargs):
     return float_view_serialized(data, mode='json', **kwargs)
+
+def int_view_serialized(data, mode='xml', dict_only=False):
+
+    view_data = {'summary_dtype':data.summary_dtype,
+                 'data':int(data.data),
+                 }
+    if dict_only == True:
+        return view_data
+
+    if mode == 'xml':
+        pass
+    elif mode == 'json':
+        return json.dumps(view_data)
+    else:
+        raise Exception
+
+def int_view_json(data, **kwargs):
+    return int_view_serialized(data, mode='json', **kwargs)
 
 
 def signal_view_html(data):
@@ -177,7 +213,7 @@ dtype_mappings = {
     NoneType:{'views':{'html':no_data_view_html, 'json':no_data_view_json}, 
               'filters':(),
               },
-    numpy.string_:{'views':{'html':generic_data_view}, 
+    numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
     numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
@@ -189,13 +225,13 @@ dtype_mappings = {
     numpy.float64:{'views':{'html':generic_data_view, 'json':float_view_json},
                    'filters':(),
                    },
-    numpy.int32:{'views':{'html':generic_data_view},
+    numpy.int32:{'views':{'html':generic_data_view, 'json':int_view_json},
                  'filters':(),
                  },
-    numpy.uint8:{'views':{'html':generic_data_view},
+    numpy.uint8:{'views':{'html':generic_data_view, 'json':int_view_json},
                  'filters':(),
                  },
-    type(Blacklist()):{'views':{'html':blacklist_view_html},
+    type(Blacklist()):{'views':{'html':blacklist_view_html, 'json':blacklist_view_json},
                        'filters':(),
                        }
     }
