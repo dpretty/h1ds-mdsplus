@@ -22,6 +22,10 @@ class NodeUnitTest(unittest.TestCase):
         self.tree = MDSPlusTree.objects.create(name="h1data", description="test data", path="/home/dave/data", display_order=10)
         self.client = Client()
 
+    def tearDown(self):
+        django_mds_tree = MDSPlusTree.objects.all()[0]
+        django_mds_tree.delete()
+
     def test_html(self):
         # get root node of default tree, latest shot.
         for shot in [0]:

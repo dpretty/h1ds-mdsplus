@@ -217,7 +217,7 @@ dtype_mappings = {
                    'filters':(), #TODO: length filter
                    },
     numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
-                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val),
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element),
                    },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
                    'filters':(),
@@ -226,6 +226,9 @@ dtype_mappings = {
                    'filters':(),
                    },
     numpy.int32:{'views':{'html':generic_data_view, 'json':int_view_json},
+                 'filters':(),
+                 },
+    numpy.int16:{'views':{'html':generic_data_view, 'json':int_view_json},
                  'filters':(),
                  },
     numpy.uint8:{'views':{'html':generic_data_view, 'json':int_view_json},

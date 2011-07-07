@@ -39,13 +39,8 @@ except DatabaseError:
     pass
 
 
-mds_sql_mapping = {
-    "DTYPE_FLOAT":"FLOAT",
-    "DTYPE_F":"FLOAT",
-    }
-
-
 sql_type_mapping = {
     numpy.float32:"FLOAT",
     numpy.float64:"FLOAT",
+    numpy.int32:"INT",
     }

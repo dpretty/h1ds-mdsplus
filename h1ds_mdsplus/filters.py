@@ -18,6 +18,15 @@ def mean(dwrapper):
     dwrapper.dim = None
     dwrapper.label = ('mean(%s)' %dwrapper.label[0],)
 
+def element(dwrapper, index):
+    """Get an element of an array.
+
+    The first element has index 0.
+    """
+    dwrapper.data = dwrapper.data[int(index)]
+    dwrapper.dim = None
+    dwrapper.label = ('%s[%s]' %(dwrapper.label[0], index),)
+
 ########################################################################
 ## signal -> signal                                                   ##
 ########################################################################

@@ -3,6 +3,7 @@ from celery.task.control import inspect
 from django.core.urlresolvers import reverse
 
 import MDSplus
+from MDSplus._treeshr import TreeException
 
 from h1ds_core.models import H1DSSignal
 from h1ds_mdsplus.tasks import mds_event_listener
