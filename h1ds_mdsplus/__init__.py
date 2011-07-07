@@ -1,6 +1,7 @@
 """A web interface to the MDSPlus data acquisition system."""
 
 import os
+import numpy
 from django.db.utils import DatabaseError
 
 from h1ds_mdsplus.models import MDSPlusTree, MDSEventListener
@@ -44,4 +45,7 @@ mds_sql_mapping = {
     }
 
 
-sql_type_mapping = {}
+sql_type_mapping = {
+    numpy.float32:"FLOAT",
+    numpy.float64:"FLOAT",
+    }

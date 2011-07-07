@@ -68,7 +68,7 @@ def blacklist_view_html(data):
     return "This node has been blacklisted."
 
 def no_data_view_json(request, data):
-    serial_data = json.dumps({'mds_dtype':data.filtered_dtype,
+    serial_data = json.dumps({'mds_dtype':data.summary_dtype,
                               'summary_dtype':mds_sql_mapping.get(data.filtered_dtype),
                               'data':None})
     return HttpResponse(serial_data, mimetype='application/json')
@@ -76,8 +76,7 @@ def no_data_view_json(request, data):
 
 def float_view_serialized(data, mode='xml', dict_only=False):
 
-    view_data = {'mds_dtype':data.filtered_dtype,
-                 'summary_dtype':mds_sql_mapping.get(data.filtered_dtype),
+    view_data = {'summary_dtype':data.summary_dtype,
                  'data':float(data.data),
                  }
     if dict_only == True:
@@ -334,6 +333,7 @@ class DataWrapper(object):
         self.available_filters = dtype_mappings[type(self.data)]['filters']
         self.available_views = dtype_mappings[type(self.data)]['views'].keys()
         self.summary_dtype = sql_type_mapping.get(type(self.data))
+        print "... ", type(self.data), self.summary_dtype
         # TODO... labels need to have same dimension as data... and get from introspection where possible
         self.label = ('data',)
         
@@ -346,6 +346,7 @@ class DataWrapper(object):
         filter_function(self, *filter_args)
         self.filter_history.append((fid, filter_function, value))
         self.summary_dtype = sql_type_mapping.get(type(self.data))
+        print "... ", type(self.data), self.summary_dtype
         self.available_filters = dtype_mappings[type(self.data)]['filters']
         self.available_views = dtype_mappings[type(self.data)]['views'].keys()
 

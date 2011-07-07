@@ -168,7 +168,7 @@ H1DS. -->
 
 <!-- If there is a summary data (SQL) dtype associated with the filtered
 data then display a form for adding the data to the summary database -->
-{% if mdsnode.filtered_summary_dtype %}
+{% if mdsnode.data.summary_dtype %}
 <div class="sidebarcontent">
   <FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
     <span class="left">add to summary database</span>
