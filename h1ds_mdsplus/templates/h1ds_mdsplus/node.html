@@ -187,7 +187,7 @@ order, with option to adjust or remove each filter -->
 
 <!-- List the views (H1DS views such as html, json, etc, not django view
 functions) available for the node data type -->
-<h3>views </h3>{% for view_name in mdsnode.available_views %}{% show_view view_name %} {% endfor %}
+<h3>views </h3>{% for view_name in mdsnode.data.available_views %}{% show_view view_name %} {% endfor %}
 
 <!--  List the filters  which can  be applied  to the  (possibly already
 filtered) data -->
