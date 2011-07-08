@@ -1,3 +1,5 @@
+from urlparse import urlparse, urlunparse
+import urllib2, json
 from django.core.urlresolvers import reverse
 import MDSplus
 import numpy as np
@@ -101,3 +103,33 @@ def divide(dwrapper, factor):
     dwrapper.data = dwrapper.data/float(factor)
     dwrapper.label = ('(%s)/%s' %(dwrapper.label[0], factor),)
 
+def subtract(dwrapper, value):
+    """Subtract the value.
+
+    Value can be a URL, with shot replaced by %(shot)d
+    (only operations using the same shot are presently supported)
+    """
+
+    if value.startswith("http://"):
+        url = value %{'shot':dwrapper.original_mds['shot']}
+        # make sure we get the JSON view, in case the user didn't add view=json
+        # Split URL into [scheme, netloc, path, params, query, fragments]
+        parsed_url = urlparse(url)
+
+        # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
+        parsed_url_list = [i for i in parsed_url]
+        
+        # Now we can update the URL query string to enforce the JSON view.
+        parsed_url_list[4] = '&'.join([parsed_url[4], 'view=json'])
+        
+        # And here is our original URL with view=json query added
+        attr_url_json = urlunparse(parsed_url_list)
+        request = urllib2.Request(attr_url_json)
+        response = json.loads(urllib2.urlopen(request).read())
+        value = float(response['data'])
+        
+    else:
+        value = float(value)
+
+    dwrapper.data = dwrapper.data - value
+    dwrapper.label = ('%s - %s' %(dwrapper.label[0], value),)
