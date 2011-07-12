@@ -39,20 +39,26 @@ def peak_to_peak(dwrapper):
 ## signal -> signal                                                   ##
 ########################################################################
 
+def _do_prl_lpn(signal, dim, f0, order):
+    """This  function is required  to handle  the recursion  in prl_lpn.
+
+    Handle  only the  signal,  not  the data  wrapper.  Also, we  assume
+    arguments have already been cast to numeric types.
+    """
+    N = int(0.5 + 0.5/(dim[1]-dim[0])/f0)
+    a = np.cumsum(signal)
+    if order > 1:
+        return _do_prl_lpn(_do_prl_lpn(signal, dim, f0, order-1), dim, f0, 1)
+    else:
+        return (a[N:]-a[:-N])/float(N)
+
 def prl_lpn(dwrapper, f0, order):
     """prl_lpn
     
     TODO: only working for order = 1
     """
-    order = int(order)
-    N = int(0.5 + 0.5/(dwrapper.dim[1]-dwrapper.dim[0])/float(f0))
-    a = np.cumsum(dwrapper.data)
-    if order > 1:
-        # if (_order > 1 ) return(prl_lpn(prl_lpn( _signal, _f0, _order-1),_f0, 1));
-        pass
-    else:
-        dwrapper.data = (a[N:]-a[:-N])/float(N)
-        dwrapper.label = ('prl_lpn(%s)' %dwrapper.label[0],)
+    dwrapper.data = _do_prl_lpn(dwrapper.data, dwrapper.dim, float(f0), int(order))
+    dwrapper.label = ('prl_lpn(%s, %s, %s)' %(dwrapper.label[0], f0, order),)
 
 def resample(dwrapper, max_samples):
     max_samples = int(max_samples)
@@ -133,3 +139,82 @@ def subtract(dwrapper, value):
 
     dwrapper.data = dwrapper.data - value
     dwrapper.label = ('%s - %s' %(dwrapper.label[0], value),)
+
+########################################################################
+## summdb filters TODO list...
+##
+##
+## [X] tt_sec /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:TT"
+## [X] rga_imax /home/datasys/bin/h1data_mdsvalue.py "maxval(.operations:rga_i)"
+## [X] th_main /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.LOG:THERMAL_MAIN"
+## [X] i_ring /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:I_RING,-0.1, -0.05 )"
+## [X] la_slit /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:SLIT_WIDTH"
+## [X] ech_ib /home/datasys/bin/h1data_mdsvalue.py "maxval(.ech:i_coll)"
+## [X] gas1_M /home/datasys/bin/h1data_mdsvalue.py "data(.LOG.MACHINE:GAS1_Z)[1]"
+## [X] mains /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V240_RMS,-4.1, -3.5)*2.4/2.35"
+## [X] mag_fl1 /home/datasys/bin/h1data_mdsvalue.py "prl_var(.electr_dens.camac:a14_5:input_4, .005, .075)"
+## [X] rfptop /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.rf:p_fwd_top, 20,1))"
+## [X] la_dial /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:DIAL"
+## [X] hxray_0 /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:HXRAY_0, 1,1))"
+## [ ] wg_bolo /home/datasys/bin/h1data_mdsvalue.py "1e3*(maxval(prl_lpn(.ech:wg_bolo,1))-prl_mean(.ech:wg_bolo,-1.1, -0.1 ))"
+## [ ] th_sec /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.LOG:THERMAL_SEC"
+## [ ] v_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_MAIN,-0.6, -0.1 )"
+## [ ] v_sec /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_SEC, -0.6, -0.1)"
+## [ ] HDB_del /home/datasys/bin/h1data_mdsvalue.py "first_pulse(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [ ] im1 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I1"
+## [ ] gas3_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_FLOW"
+## [ ] is2 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I2"
+## [ ] is1 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I1"
+## [ ] mains_droop /home/datasys/bin/h1data_mdsvalue.py "(prl_mean(.OPERATIONS:V240_RMS, -0.6, -0.1) - prl_mean(.OPERATIONS:V2## 40_RMS,-4.1, -3.5))/2.35"
+## [ ] rf_drive /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.rf:rf_drive,0,.05)"
+## [ ] t_mid /home/datasys/bin/h1data_mdsvalue.py "mean(.operations:i_fault^10*dim_of(.operations:i_fault))/mean(.operations:i## _fault^10)"
+## [ ] gas1_Z /home/datasys/bin/h1data_mdsvalue.py "data(.LOG.MACHINE:GAS1_Z)[0]"
+## [ ] ech_vb /home/datasys/bin/h1data_mdsvalue.py "maxval(slanted_baseline(.ech:v_beam,200))"
+## [ ] gas3_z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_Z"
+## [ ] p_iong /home/datasys/bin/h1data_mdsvalue.py "1e6*prl_mean(.operations:iong_300t,-4.1, -3.5)"
+## [ ] rftune2 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE2"
+## [ ] i_f_sl /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 0.5,1))"
+## [ ] gas2_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_FLOW"
+## [ ] la_int /home/datasys/bin/h1data_mdsvalue.py "maxval(.SPECTROSCOPY.SURVEY:LARRY)"
+## [ ] puff_v /home/datasys/bin/h1data_mdsvalue.py "maxval(.operations:puff_135)-minval(.operations:puff_135)"
+## [ ] rf_peak /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.rf:p_fwd_top, 200,1))"
+## [ ] is3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I3"
+## [ ] t_snap /home/datasys/bin/h1data_mdsvalue.py "0.03"
+## [ ] dia_var /home/datasys/bin/h1data_mdsvalue.py "prl_var(.OPERATIONS:DIAMAG, -.06, -.01)"
+## [ ] gas2_Z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_Z"
+## [ ] ech_est /home/datasys/bin/h1data_mdsvalue.py "maxval(5*max((slanted_baseline(.ech:v_beam,200)-60),0)*(.ech:i_coll-4))"
+## [ ] tt_main /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:TT"
+## [ ] ne18_bmax /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.electr_dens.ne_het:ne_centre, 1000,1))"
+## [ ] b_p6 /home/datasys/bin/h1data_mdsvalue.py "1e6*.LOG.MACHINE:BASE_PRESS"
+## [ ] ech_pulse /home/datasys/bin/h1data_mdsvalue.py "-1"
+## [ ] rftune1 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE1"
+## [ ] mag_fllf /home/datasys/bin/h1data_mdsvalue.py "prl_var(prl_lpn(.electr_dens.camac:a14_5:input_4, 15000,1),.005,.075)"
+## [ ] rftune4 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE4"
+## [ ] im3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I3"
+## [ ] im2 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I2"
+## [ ] i_f_pk /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 10,1))"
+## [ ] HDB_num /home/datasys/bin/h1data_mdsvalue.py "pulse_number(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [ ] HDB_wid /home/datasys/bin/h1data_mdsvalue.py "pulse_width(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [ ] la_trim /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:TRIM"
+## [ ] i_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:I_RING,-0.2, -0.1 )"
+## [ ] i_sec /home/datasys/bin/mean_mdsvalue.py ".operations:i_sec"
+## [ ] i_fault /home/datasys/bin/mean_mdsvalue.py ".operations:i_fault"
+## [ ] i_top /home/datasys/bin/mean_mdsvalue.py ".rf:i_top"
+## [ ] i_bot /home/datasys/bin/mean_mdsvalue.py ".rf:i_bot"
+## [ ] ne18_bar /home/datasys/bin/mean_mdsvalue_check_baseline.py ".electr_dens.ne_het:ne_centre"
+## [ ] w_dia /home/datasys/bin/mean_mdsvalue_check_baseline.py ".operations:diamag"
+## [ ] rf_power /home/datasys/bin/mean_mdsvalue_check_baseline.py ".rf:p_rf_net"
+## [ ] k_h /home/datasys/bin/kappa.py h
+## [ ] k_v /home/datasys/bin/kappa.py v
+## [ ] k_i /home/datasys/bin/kappa.py i
+## [ ] recorded /home/datasys/bin/gettime
+## [ ] lcu_gas_1_flow /home/datasys/bin/gas_flow.py 1
+## [ ] lcu_gas_2_flow /home/datasys/bin/gas_flow.py 2
+## [ ] lcu_gas_3_flow /home/datasys/bin/gas_flow.py 3
+## [ ] lcu_gas_4_flow /home/datasys/bin/gas_flow.py 4
+## [ ] lcu_gas_5_flow /home/datasys/bin/gas_flow.py 5
+## [ ] shunt_kh /home/datasys/bin/shunt_kh.py
+##
+##
+########################################################################
+########################################################################
