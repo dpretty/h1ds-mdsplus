@@ -65,12 +65,11 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
         docstring = inspect.getdoc(filter_instance)
         if is_active:
             if filter_data == None:
-                filter_data = ""
+                filter_data = []
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")
 
-            split_args = filter_data.split('__')
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':split_args[i]} for i,j in enumerate(arg_list)])
+            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':filter_data[i]} for i,j in enumerate(arg_list)])
 
             return_string = active_filter_html %{
                 'update_url':update_url,

@@ -12,13 +12,23 @@ from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
 import h1ds_mdsplus.filters as df
+
+########################################################################
+## Helper functions                                                   ##
+########################################################################
+
 # Match any URL path component comprising only digits.
 # e.g. "foo/bar/12345/stuff" -> 12345
 shot_regex = re.compile(r".*?\/(\d+?)\/.*?")
 
-# Match strings "f(fid)_(filtername)", where fid is the filter ID.
-# e.g. "f5_mean" -> fid is 5, filtername is 'mean'
-filter_regex=re.compile('^f(?P<fid>\d+?)_(?P<filtername>.+)')
+# Match strings "f(fid)_name", where fid is the filter ID
+filter_name_regex = re.compile('^f(?P<fid>\d+?)_name')
+
+# Match strings "f(fid)_arg(arg number)", where fid is the filter ID
+filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
+
+# Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
+filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
 
 def get_filter_list(request):
     """Parse GET query sring and return sorted list of filter names.
@@ -33,16 +43,57 @@ def get_filter_list(request):
         # If the HTTP method is not GET, return an empty list.
         return filter_list
 
+    # First, create a dictionary with filter numbers as keys:
+    # e.g. {1:{'name':filter, 'args':{1:arg1, 2:arg2, ...}, kwargs:{}}
+    # note  that the  args  are stored  in  a dictionary  at this  point
+    # because we cannot assume GET query will be ordered.
+    filter_dict = {}
     for key, value in request.GET.iteritems():
-        try:
-            fid_str,fname = filter_regex.search(key).groups()
-            filter_list.append([int(fid_str), fname, value])
-        except AttributeError:
-            # regex failed (not a filter f(int)_name key)
-            pass
+        
+        name_match = filter_name_regex.match(key)
+        if name_match != None:
+            fid = int(name_match.groups()[0])
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['name'] = value
+            continue
 
-    filter_list.sort()
+        arg_match = filter_arg_regex.match(key)
+        if arg_match != None:
+            fid = int(arg_match.groups()[0])
+            argn = int(arg_match.groups()[1])
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['args'][argn] = value
+            continue
+
+        kwarg_match = filter_kwarg_regex.match(key)
+        if kwarg_match != None:
+            fid = int(arg_match.groups()[0])
+            kwarg = arg_match.groups()[1]
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['kwargs'][kwarg] = value
+            continue
+    
+    for fid, filter_data in sorted(filter_dict.items()):
+        arg_list = [i[1] for i in sorted(filter_data['args'].items())]
+        filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
+                           
     return filter_list
+
+def get_max_fid(request):
+    # get maximum filter number
+    filter_list = get_filter_list(request)
+    if len(filter_list) == 0:
+        max_filter_num = 0
+    else:
+        max_filter_num = max([i[0] for i in filter_list])
+    return max_filter_num
+
+########################################################################
+## Django views                                                       ##
+########################################################################
 
 def node(request, tree="", shot=0, tagname="top", nodepath=""):
     """Display MDS tree node.
@@ -88,8 +139,8 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
         
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
     mds_node = NodeWrapper(mds_tree.getNode(mds_path))
-    for fid, name, value in get_filter_list(request):
-        mds_node.data.apply_filter(fid, name, value)
+    for fid, name, args, kwargs in get_filter_list(request):
+        mds_node.data.apply_filter(fid, name, *args, **kwargs)
 
     # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
     html_metadata = {
@@ -149,28 +200,28 @@ def homepage(request):
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
 
 def apply_filter(request):
-    # name of filter function
+    # Get name of filter function
     qdict = request.GET.copy()
     filter_name = qdict.pop('filter')[-1]
+
+    # Get the actual filter function
     filter_function = getattr(df, filter_name)
 
+    # We'll append the filter to this path and redirect there.
     return_path = qdict.pop('path')[-1]
-    new_filter_values = []
-    for a in inspect.getargspec(filter_function).args[1:]:
-        aname = qdict.pop(a)[-1]
-        new_filter_values.append(aname)
-    new_filter_str = '__'.join(new_filter_values)
 
-    # get maximum filter number
-    filter_list = get_filter_list(request)
-    if len(filter_list) == 0:
-        max_filter_num = 0
-    else:
-        max_filter_num = max([i[0] for i in filter_list])
+    # Find the maximum fid in the existing query and +1
+    new_fid = get_max_fid(request)+1
+    
+    # We expect the filter arguments to be passed as key&value in the HTTP query.
+    filter_arg_names = inspect.getargspec(filter_function).args[1:]
+    filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
 
     # add new filter to query dict
-    new_filter_key = 'f%d_%s' %(max_filter_num+1, filter_name)
-    qdict.update({new_filter_key:new_filter_str})
+    qdict.update({'f%d_name' %(new_fid):filter_name})
+    for argn, arg_val in enumerate(filter_arg_values):
+        qdict.update({'f%d_arg%d' %(new_fid,argn):arg_val})
+
     return_url = '?'.join([return_path, qdict.urlencode()])
     return HttpResponseRedirect(return_url)
     

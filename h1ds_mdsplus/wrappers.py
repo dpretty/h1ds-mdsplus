@@ -376,14 +376,15 @@ class DataWrapper(object):
         # TODO... labels need to have same dimension as data... and get from introspection where possible
         self.label = ('data',)
         
-    def apply_filter(self, fid, name, value):
+    def apply_filter(self, fid, name, *args, **kwargs):
+        # TODO: kwargs not yet supported
         filter_function = getattr(df, name)
-        if value == "":
-            filter_args = []
-        else:
-            filter_args = value.split('__')
-        filter_function(self, *filter_args)
-        self.filter_history.append((fid, filter_function, value))
+        #if value == "":
+        #    filter_args = []
+        #else:
+        #    filter_args = value.split('__')
+        filter_function(self, *args)
+        self.filter_history.append((fid, filter_function, args))
         self.summary_dtype = sql_type_mapping.get(type(self.data))
         print "... ", type(self.data), self.summary_dtype
         self.available_filters = dtype_mappings[type(self.data)]['filters']
