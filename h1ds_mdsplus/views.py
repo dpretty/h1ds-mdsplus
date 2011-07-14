@@ -199,7 +199,21 @@ def homepage(request):
                                   context_instance=RequestContext(request))
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
 
-def apply_filter(request):
+def apply_filter(request, overwrite_fid=False):
+    """Read in filter info from HTTP query and apply H1DS filter syntax.
+
+    The request GET query must contain a field named 'filter' which has the filter function name as its value.
+    Separate fields for each of the filter arguments are also required, where the argument name is as it appears in the filter function code.
+
+    If overwrite_fid is False, the new filter will have an FID +1 greater than the highest existing filter.
+    If overwrite_fid is True, we expect a query field with an fid to overwrite.
+    
+    TODO: Do we really need path to be passed explicitly as a query field? or can we use session info? - largest FID is taken from the request, but we return url from path... can't be good.
+    TODO: kwargs are not yet supported for filter functions.
+    
+
+    """
+
     # Get name of filter function
     qdict = request.GET.copy()
     filter_name = qdict.pop('filter')[-1]
@@ -210,43 +224,26 @@ def apply_filter(request):
     # We'll append the filter to this path and redirect there.
     return_path = qdict.pop('path')[-1]
 
-    # Find the maximum fid in the existing query and +1
-    new_fid = get_max_fid(request)+1
+    if overwrite_fid:
+        fid = int(qdict.pop('fid')[-1])
+    else:
+        # Find the maximum fid in the existing query and +1
+        fid = get_max_fid(request)+1
     
     # We expect the filter arguments to be passed as key&value in the HTTP query.
     filter_arg_names = inspect.getargspec(filter_function).args[1:]
     filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
 
     # add new filter to query dict
-    qdict.update({'f%d_name' %(new_fid):filter_name})
+    qdict.update({'f%d_name' %(fid):filter_name})
     for argn, arg_val in enumerate(filter_arg_values):
-        qdict.update({'f%d_arg%d' %(new_fid,argn):arg_val})
+        qdict.update({'f%d_arg%d' %(fid,argn):arg_val})
 
     return_url = '?'.join([return_path, qdict.urlencode()])
     return HttpResponseRedirect(return_url)
     
-
 def update_filter(request):
-    # name of filter_class
-    qdict = request.GET.copy()
-    filter_name = qdict.pop('filter')[-1]
-    filter_function = getattr(df, filter_name)
-
-    return_path = qdict.pop('path')[-1]
-    new_filter_values = []
-    for a in inspect.getargspec(filter_function).args[1:]:
-        aname = qdict.pop(a)[-1]
-        new_filter_values.append(aname)
-    new_filter_str = '__'.join(new_filter_values)
-
-    filter_id = int(qdict.pop('fid')[-1])
-
-    # add new filter to query dict
-    filter_key = 'f%d_%s' %(filter_id, filter_name)
-
-    qdict[filter_key] = new_filter_str
-    return_url = '?'.join([return_path, qdict.urlencode()])
-    return HttpResponseRedirect(return_url)
+    return apply_filter(request, overwrite_fid=True)
 
 def remove_filter(request):
     qdict = request.GET.copy()
