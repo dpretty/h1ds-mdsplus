@@ -226,6 +226,9 @@ def apply_filter(request, overwrite_fid=False):
 
     if overwrite_fid:
         fid = int(qdict.pop('fid')[-1])
+        for k,v in qdict.items():
+            if k.startswith('f%d_' %fid):
+                qdict.pop(k)
     else:
         # Find the maximum fid in the existing query and +1
         fid = get_max_fid(request)+1
@@ -255,4 +258,3 @@ def remove_filter(request):
             qdict.pop(k)
     return_url = '?'.join([return_path, qdict.urlencode()])
     return HttpResponseRedirect(return_url)
-    
