@@ -1,12 +1,12 @@
 function formatDataForPlots(data) {
     // If we have min and max signals, then we fill the area between them.
     if (($.inArray("min", data.labels) > -1) && ($.inArray("max", data.labels) > -1) && (data.labels.length == 2)) {
-	var d = {"signalmin":{"data": Array(data.node_data[0].length)},
-		 "signalmax":{"data": Array(data.node_data[1].length)}};
+	var d = {"signalmin":{"data": Array(data.data[0].length)},
+		 "signalmax":{"data": Array(data.data[1].length)}};
 
 	for( i=0; i < d.signalmin.data.length; i++){
-            d.signalmin.data[i]=[data.node_dim[i],data.node_data[0][i]];
-            d.signalmax.data[i]=[data.node_dim[i],data.node_data[1][i]];
+            d.signalmin.data[i]=[data.dim[i],data.data[0][i]];
+            d.signalmax.data[i]=[data.dim[i],data.data[1][i]];
 	}
 	var dataset = [{id: 'sigmin', data:d.signalmin.data, lines:{show:true, lineWidth:0.3, fill:false, shadowSize:0}, color:"rgba(50,50,255,0.5)"},
 		       {id: 'sigmax', data:d.signalmax.data, lines:{show:true, lineWidth:0.3, fill:0.5, shadowSize:0}, color:"rgba(50,50,255,0.5)", fillBetween: 'sigmin'}];
@@ -14,9 +14,9 @@ function formatDataForPlots(data) {
     }
     
     else {
-	var d = Array(data.node_data.length);
+	var d = Array(data.data.length);
 	for( i=0; i < d.length; i++){
-            d[i]=[data.node_dim[i],data.node_data[i]];
+            d[i]=[data.dim[i],data.data[i]];
 	}
 	var dataset = [{data:d, color:"rgb(50,50,255)"}];
 	return dataset;

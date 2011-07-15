@@ -139,8 +139,8 @@ def clean_signal_for_serialization(data):
     view_data = {}
     view_data['data_units'] = str(data.units)
     view_data['dim_units'] = str(data.dim_units)
-    view_data['node_data'] = data.data.tolist()
-    view_data['node_dim'] = data.dim.tolist()
+    view_data['data'] = data.data.tolist()
+    view_data['dim'] = data.dim.tolist()
     view_data['labels'] = data.label
     return view_data
 
@@ -217,22 +217,22 @@ dtype_mappings = {
                    'filters':(), #TODO: length filter
                    },
     numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
-                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract),
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.first_pulse, df.exponent, df.dim_of, df.slanted_baseline),
                    },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
-                   'filters':(df.multiply, df.divide, df.subtract),
+                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
                    },
     numpy.float64:{'views':{'html':generic_data_view, 'json':float_view_json},
-                   'filters':(df.multiply, df.divide, df.subtract),
+                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
                    },
     numpy.int32:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
                  },
     numpy.int16:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
                  },
     numpy.uint8:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
                  },
     type(Blacklist()):{'views':{'html':blacklist_view_html, 'json':blacklist_view_json},
                        'filters':(),

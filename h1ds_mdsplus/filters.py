@@ -17,18 +17,46 @@ def http_arg(dwrapper, arg):
         # Now we can update the URL query string to enforce the JSON view.
         parsed_url_list[4] = '&'.join([parsed_url[4], 'view=json'])
 
-            # And here is our original URL with view=json query added
+        # And here is our original URL with view=json query added
         attr_url_json = urlunparse(parsed_url_list)
         request = urllib2.Request(attr_url_json)
         response = json.loads(urllib2.urlopen(request).read())
+
         return response['data']
     else:
         return arg
+
+def float_or_array(data):
+    """Data will probably be a string or a list, convert it to a float or np array."""
+    if isinstance(data, list):
+        return np.array(data)
+    else:
+        return float(data)
+
+
 
 
 ########################################################################
 ## signal -> scalar                                                   ##
 ########################################################################
+
+def first_pulse(dwrapper, threshold):
+    """Return first dimension (i.e. time) when the signal is greater than threshold.
+
+    threshold can be a number or 'mid'. 
+    threshold = 'mid' will use (max(signal)+min(signal))/2 
+    """
+
+    _threshold = http_arg(dwrapper, threshold)
+    if _threshold.lower() == 'mid':
+        _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
+    else:
+        _threshold = float(_threshold)
+        
+    first_element = np.where(dwrapper.data>_threshold)[0][0]
+    dwrapper.data = dwrapper.dim[first_element]
+    dwrapper.dim = None
+    dwrapper.label = ('first_pulse(%s, %s)' %(dwrapper.label[0], threshold), )
 
 def max_val(dwrapper):
     """TODO: test for 2+ dimensional arrays"""
@@ -61,6 +89,22 @@ def peak_to_peak(dwrapper):
 ########################################################################
 ## signal -> signal                                                   ##
 ########################################################################
+
+def slanted_baseline(dwrapper, window):
+    """Remove linear baseline.
+
+    window must be an integer.
+
+    endpoints are computed at the first (window) and last (window) samples.
+
+    """
+    _window = int(http_arg(dwrapper, window))
+    start = np.mean(dwrapper.data[:_window])
+    end = np.mean(dwrapper.data[-_window:])
+    
+    baseline = start + (end-start)*np.arange(dwrapper.data.shape[0], dtype=float)/(dwrapper.data.shape[0]-1)
+    dwrapper.data -= baseline
+    dwrapper.label = ('slanted_baseline(%(lab)s, %(win)s)' %{'lab':dwrapper.label[0], 'win':window},)
 
 def _do_prl_lpn(signal, dim, f0, order):
     """This  function is required  to handle  the recursion  in prl_lpn.
@@ -129,7 +173,13 @@ def dim_range(dwrapper, min_val, max_val):
 
 def multiply(dwrapper, factor):
     """Multiply data by scale factor"""
-    _factor = float(http_arg(dwrapper, factor))
+    
+    _factor = float_or_array(http_arg(dwrapper, factor))
+    
+    print "in mult"
+    print type(_factor)
+    print type(dwrapper.data)
+
 
     dwrapper.data = _factor*dwrapper.data
     dwrapper.label = ('%s*(%s)' %(factor, dwrapper.label[0]),)
@@ -143,13 +193,39 @@ def divide(dwrapper, factor):
 def subtract(dwrapper, value):
     """Subtract the value.
 
-    Value can be a URL, with shot replaced by %(shot)d
-    (only operations using the same shot are presently supported)
     """
     _value = float(http_arg(dwrapper, value))
 
     dwrapper.data = dwrapper.data - _value
     dwrapper.label = ('%s - %s' %(dwrapper.label[0], value),)
+
+def add(dwrapper, value):
+    """Add the value.
+
+    """
+    _value = float(http_arg(dwrapper, value))
+
+    dwrapper.data = dwrapper.data + _value
+    dwrapper.label = ('%s + %s' %(dwrapper.label[0], value),)
+
+def exponent(dwrapper, value):
+    """Raise data to the (value)th power."""
+
+    _value =float(http_arg(dwrapper, value))
+    dwrapper.data = dwrapper.data**_value
+    dwrapper.label = ('%s^%s' %(dwrapper.label[0], value),)
+    
+########################################################################
+## Other                                                              ##
+########################################################################
+
+def dim_of(dwrapper):
+    """Return the dim of the data as the data."""
+
+    dwrapper.data = dwrapper.dim
+    dwrapper.dim = np.arange(len(dwrapper.data))
+    dwrapper.label = ('dim_of(%s)' %(dwrapper.label[0]),)
+
 
 ########################################################################
 ## summdb filters TODO list...
@@ -168,29 +244,29 @@ def subtract(dwrapper, value):
 ## [X] la_dial /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:DIAL"
 ## [X] hxray_0 /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:HXRAY_0, 1,1))"
 ## [X] wg_bolo /home/datasys/bin/h1data_mdsvalue.py "1e3*(maxval(prl_lpn(.ech:wg_bolo,1))-prl_mean(.ech:wg_bolo,-1.1, -0.1 ))"
-## [ ] th_sec /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.LOG:THERMAL_SEC"
-## [ ] v_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_MAIN,-0.6, -0.1 )"
-## [ ] v_sec /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_SEC, -0.6, -0.1)"
-## [ ] HDB_del /home/datasys/bin/h1data_mdsvalue.py "first_pulse(.spectroscopy.line_ratio.raw_signals:pulse)"
-## [ ] im1 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I1"
-## [ ] gas3_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_FLOW"
-## [ ] is2 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I2"
-## [ ] is1 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I1"
-## [ ] mains_droop /home/datasys/bin/h1data_mdsvalue.py "(prl_mean(.OPERATIONS:V240_RMS, -0.6, -0.1) - prl_mean(.OPERATIONS:V2## 40_RMS,-4.1, -3.5))/2.35"
-## [ ] rf_drive /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.rf:rf_drive,0,.05)"
-## [ ] t_mid /home/datasys/bin/h1data_mdsvalue.py "mean(.operations:i_fault^10*dim_of(.operations:i_fault))/mean(.operations:i## _fault^10)"
-## [ ] gas1_Z /home/datasys/bin/h1data_mdsvalue.py "data(.LOG.MACHINE:GAS1_Z)[0]"
-## [ ] ech_vb /home/datasys/bin/h1data_mdsvalue.py "maxval(slanted_baseline(.ech:v_beam,200))"
-## [ ] gas3_z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_Z"
-## [ ] p_iong /home/datasys/bin/h1data_mdsvalue.py "1e6*prl_mean(.operations:iong_300t,-4.1, -3.5)"
-## [ ] rftune2 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE2"
-## [ ] i_f_sl /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 0.5,1))"
-## [ ] gas2_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_FLOW"
-## [ ] la_int /home/datasys/bin/h1data_mdsvalue.py "maxval(.SPECTROSCOPY.SURVEY:LARRY)"
-## [ ] puff_v /home/datasys/bin/h1data_mdsvalue.py "maxval(.operations:puff_135)-minval(.operations:puff_135)"
-## [ ] rf_peak /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.rf:p_fwd_top, 200,1))"
-## [ ] is3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I3"
-## [ ] t_snap /home/datasys/bin/h1data_mdsvalue.py "0.03"
+## [X] th_sec /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.LOG:THERMAL_SEC"
+## [X] v_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_MAIN,-0.6, -0.1 )"
+## [X] v_sec /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:V_SEC, -0.6, -0.1)"
+## [X] HDB_del /home/datasys/bin/h1data_mdsvalue.py "first_pulse(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [X] im1 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I1"
+## [X] gas3_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_FLOW"
+## [X] is2 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I2"
+## [X] is1 /home/datasys/bin/h1data_mdsvalue_int.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I1"
+## [X] mains_droop /home/datasys/bin/h1data_mdsvalue.py "(prl_mean(.OPERATIONS:V240_RMS, -0.6, -0.1) - prl_mean(.OPERATIONS:V2## 40_RMS,-4.1, -3.5))/2.35"
+## [X] rf_drive /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.rf:rf_drive,0,.05)"
+## [X] t_mid /home/datasys/bin/h1data_mdsvalue.py "mean(.operations:i_fault^10*dim_of(.operations:i_fault))/mean(.operations:i## _fault^10)"
+## [X] gas1_Z /home/datasys/bin/h1data_mdsvalue.py "data(.LOG.MACHINE:GAS1_Z)[0]"
+## [X] ech_vb /home/datasys/bin/h1data_mdsvalue.py "maxval(slanted_baseline(.ech:v_beam,200))"
+## [X] gas3_z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS3_Z"
+## [X] p_iong /home/datasys/bin/h1data_mdsvalue.py "1e6*prl_mean(.operations:iong_300t,-4.1, -3.5)"
+## [X] rftune2 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE2"
+## [X] i_f_sl /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 0.5,1))"
+## [X] gas2_flow /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_FLOW"
+## [X] la_int /home/datasys/bin/h1data_mdsvalue.py "maxval(.SPECTROSCOPY.SURVEY:LARRY)"
+## [X] puff_v /home/datasys/bin/h1data_mdsvalue.py "maxval(.operations:puff_135)-minval(.operations:puff_135)"
+## [X] rf_peak /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.rf:p_fwd_top, 200,1))"
+## [X] is3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I3"
+## [X] t_snap /home/datasys/bin/h1data_mdsvalue.py "0.03"
 ## [ ] dia_var /home/datasys/bin/h1data_mdsvalue.py "prl_var(.OPERATIONS:DIAMAG, -.06, -.01)"
 ## [ ] gas2_Z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_Z"
 ## [ ] ech_est /home/datasys/bin/h1data_mdsvalue.py "maxval(5*max((slanted_baseline(.ech:v_beam,200)-60),0)*(.ech:i_coll-4))"
@@ -208,6 +284,7 @@ def subtract(dwrapper, value):
 ## [ ] HDB_wid /home/datasys/bin/h1data_mdsvalue.py "pulse_width(.spectroscopy.line_ratio.raw_signals:pulse)"
 ## [ ] la_trim /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:TRIM"
 ## [ ] i_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:I_RING,-0.2, -0.1 )"
+
 ## [ ] i_sec /home/datasys/bin/mean_mdsvalue.py ".operations:i_sec"
 ## [ ] i_fault /home/datasys/bin/mean_mdsvalue.py ".operations:i_fault"
 ## [ ] i_top /home/datasys/bin/mean_mdsvalue.py ".rf:i_top"
