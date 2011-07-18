@@ -58,12 +58,73 @@ def first_pulse(dwrapper, threshold):
     dwrapper.dim = None
     dwrapper.label = ('first_pulse(%s, %s)' %(dwrapper.label[0], threshold), )
 
+def pulse_width(dwrapper, threshold):
+    """
+    pulse width...
+    
+    """
+    _threshold = http_arg(dwrapper, threshold)
+    if _threshold.lower() == 'mid':
+        _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
+    else:
+        _threshold = float(_threshold)
+        
+    t = dwrapper.dim[dwrapper.data>_threshold]
+    end1 = dwrapper.dim[(dwrapper.data[:-1]-dwrapper.data[1:])>_threshold]
+
+    use_size = min([len(t), len(end1)])
+
+    dwrapper.data = np.min(end1[:use_size]-t[:use_size])
+    dwrapper.dim = None
+    dwrapper.label = ('pulse_width(%s, %s)' %(dwrapper.label[0], threshold), )
+
+
+def pulse_number(dwrapper, threshold):
+    """
+    number of pulses...??
+    
+    """
+    _threshold = http_arg(dwrapper, threshold)
+    if _threshold.lower() == 'mid':
+        _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
+    else:
+        _threshold = float(_threshold)
+        
+    t = dwrapper.dim[dwrapper.data>_threshold]
+    end1 = dwrapper.dim[(dwrapper.data[:-1]-dwrapper.data[1:])>_threshold]
+    
+    # TODO: should no need to cast this as int32, but there is some bizarre problem 
+    # with dtype_mapping key... without casting the result of np.min, type(dwrapper.data)
+    # says it is numpy.int32, but it is somehow different to the numpy.int32 in the dtype_mapping key.
+    dwrapper.data = np.int32(np.min([t.shape[0], end1.shape[0]]))
+    dwrapper.dim = None
+    dwrapper.label = ('pulse_number(%s, %s)' %(dwrapper.label[0], threshold), )
+
+
+
+
 def max_val(dwrapper):
     """TODO: test for 2+ dimensional arrays"""
     dwrapper.data = np.max(dwrapper.data)
     dwrapper.dim = None
     dwrapper.label = ('max(%s)' %dwrapper.label[0],)
     
+
+def max_of(dwrapper, value):
+    """Returns max(data, value).
+    
+    if the data is an array, an array is returned with each element having max(data[element], value)
+    value should be a float
+    
+    """
+    _value = float(http_arg(dwrapper, value))
+    if isinstance(dwrapper.data, np.ndarray):
+        dwrapper.data[dwrapper.data<_value] = _value
+    else:
+        dwrapper.data =  np.max([dwrapper.data, _value])
+    dwrapper.label = ('max_of(%s, %s)' %(dwrapper.label[0], value),)
+
+
 def mean(dwrapper):
     """TODO: test for 2+ dimensional arrays"""
     dwrapper.data = np.mean(dwrapper.data)
@@ -176,11 +237,6 @@ def multiply(dwrapper, factor):
     
     _factor = float_or_array(http_arg(dwrapper, factor))
     
-    print "in mult"
-    print type(_factor)
-    print type(dwrapper.data)
-
-
     dwrapper.data = _factor*dwrapper.data
     dwrapper.label = ('%s*(%s)' %(factor, dwrapper.label[0]),)
 
@@ -267,31 +323,33 @@ def dim_of(dwrapper):
 ## [X] rf_peak /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.rf:p_fwd_top, 200,1))"
 ## [X] is3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_SEC:I3"
 ## [X] t_snap /home/datasys/bin/h1data_mdsvalue.py "0.03"
-## [ ] dia_var /home/datasys/bin/h1data_mdsvalue.py "prl_var(.OPERATIONS:DIAMAG, -.06, -.01)"
-## [ ] gas2_Z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_Z"
-## [ ] ech_est /home/datasys/bin/h1data_mdsvalue.py "maxval(5*max((slanted_baseline(.ech:v_beam,200)-60),0)*(.ech:i_coll-4))"
-## [ ] tt_main /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:TT"
-## [ ] ne18_bmax /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.electr_dens.ne_het:ne_centre, 1000,1))"
-## [ ] b_p6 /home/datasys/bin/h1data_mdsvalue.py "1e6*.LOG.MACHINE:BASE_PRESS"
-## [ ] ech_pulse /home/datasys/bin/h1data_mdsvalue.py "-1"
-## [ ] rftune1 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE1"
-## [ ] mag_fllf /home/datasys/bin/h1data_mdsvalue.py "prl_var(prl_lpn(.electr_dens.camac:a14_5:input_4, 15000,1),.005,.075)"
-## [ ] rftune4 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE4"
-## [ ] im3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I3"
-## [ ] im2 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I2"
-## [ ] i_f_pk /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 10,1))"
-## [ ] HDB_num /home/datasys/bin/h1data_mdsvalue.py "pulse_number(.spectroscopy.line_ratio.raw_signals:pulse)"
-## [ ] HDB_wid /home/datasys/bin/h1data_mdsvalue.py "pulse_width(.spectroscopy.line_ratio.raw_signals:pulse)"
-## [ ] la_trim /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:TRIM"
-## [ ] i_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:I_RING,-0.2, -0.1 )"
+## [X] dia_var /home/datasys/bin/h1data_mdsvalue.py "prl_var(.OPERATIONS:DIAMAG, -.06, -.01)"
+## [X] gas2_Z /home/datasys/bin/h1data_mdsvalue.py ".LOG.MACHINE:GAS2_Z"
+## [X] ech_est /home/datasys/bin/h1data_mdsvalue.py "maxval(5*max((slanted_baseline(.ech:v_beam,200)-60),0)*(.ech:i_coll-4))"
+## [X] tt_main /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:TT"
+## [X] ne18_bmax /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.electr_dens.ne_het:ne_centre, 1000,1))"
+## [X] b_p6 /home/datasys/bin/h1data_mdsvalue.py "1e6*.LOG.MACHINE:BASE_PRESS"
+## [X] ech_pulse /home/datasys/bin/h1data_mdsvalue.py "-1"
+## [X] rftune1 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE1"
+## [X] mag_fllf /home/datasys/bin/h1data_mdsvalue.py "prl_var(prl_lpn(.electr_dens.camac:a14_5:input_4, 15000,1),.005,.075)"
+## [X] rftune4 /home/datasys/bin/h1data_mdsvalue.py ".LOG.HEATING:RFTUNE4"
+## [X] im3 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I3"
+## [X] im2 /home/datasys/bin/h1data_mdsvalue.py ".OPERATIONS.MAGNETSUPPLY.LCU.SETUP_MAIN:I2"
+## [X] i_f_pk /home/datasys/bin/h1data_mdsvalue.py "maxval(prl_lpn(.operations:i_fault, 10,1))"
+## [X] HDB_num /home/datasys/bin/h1data_mdsvalue.py "pulse_number(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [X] HDB_wid /home/datasys/bin/h1data_mdsvalue.py "pulse_width(.spectroscopy.line_ratio.raw_signals:pulse)"
+## [X] la_trim /home/datasys/bin/h1data_mdsvalue.py ".SPECTROSCOPY.SURVEY:TRIM"
+## [X] i_main /home/datasys/bin/h1data_mdsvalue.py "prl_mean(.OPERATIONS:I_RING,-0.2, -0.1 )"
 
-## [ ] i_sec /home/datasys/bin/mean_mdsvalue.py ".operations:i_sec"
-## [ ] i_fault /home/datasys/bin/mean_mdsvalue.py ".operations:i_fault"
-## [ ] i_top /home/datasys/bin/mean_mdsvalue.py ".rf:i_top"
-## [ ] i_bot /home/datasys/bin/mean_mdsvalue.py ".rf:i_bot"
+## [X] i_sec /home/datasys/bin/mean_mdsvalue.py ".operations:i_sec"
+## [X] i_fault /home/datasys/bin/mean_mdsvalue.py ".operations:i_fault"
+## [X] i_top /home/datasys/bin/mean_mdsvalue.py ".rf:i_top"
+## [X] i_bot /home/datasys/bin/mean_mdsvalue.py ".rf:i_bot"
+
 ## [ ] ne18_bar /home/datasys/bin/mean_mdsvalue_check_baseline.py ".electr_dens.ne_het:ne_centre"
 ## [ ] w_dia /home/datasys/bin/mean_mdsvalue_check_baseline.py ".operations:diamag"
 ## [ ] rf_power /home/datasys/bin/mean_mdsvalue_check_baseline.py ".rf:p_rf_net"
+
 ## [ ] k_h /home/datasys/bin/kappa.py h
 ## [ ] k_v /home/datasys/bin/kappa.py v
 ## [ ] k_i /home/datasys/bin/kappa.py i

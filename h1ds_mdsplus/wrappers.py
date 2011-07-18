@@ -217,22 +217,22 @@ dtype_mappings = {
                    'filters':(), #TODO: length filter
                    },
     numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
-                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.first_pulse, df.exponent, df.dim_of, df.slanted_baseline),
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline),
                    },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
-                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
+                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                    },
     numpy.float64:{'views':{'html':generic_data_view, 'json':float_view_json},
-                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
+                   'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                    },
     numpy.int32:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                  },
     numpy.int16:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                  },
     numpy.uint8:{'views':{'html':generic_data_view, 'json':int_view_json},
-                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.exponent),
+                 'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                  },
     type(Blacklist()):{'views':{'html':blacklist_view_html, 'json':blacklist_view_json},
                        'filters':(),
@@ -386,7 +386,6 @@ class DataWrapper(object):
         filter_function(self, *args)
         self.filter_history.append((fid, filter_function, args))
         self.summary_dtype = sql_type_mapping.get(type(self.data))
-        print "... ", type(self.data), self.summary_dtype
         self.available_filters = dtype_mappings[type(self.data)]['filters']
         self.available_views = dtype_mappings[type(self.data)]['views'].keys()
 
