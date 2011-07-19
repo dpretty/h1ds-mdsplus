@@ -346,9 +346,9 @@ def dim_of(dwrapper):
 ## [X] i_top /home/datasys/bin/mean_mdsvalue.py ".rf:i_top"
 ## [X] i_bot /home/datasys/bin/mean_mdsvalue.py ".rf:i_bot"
 
-## [ ] ne18_bar /home/datasys/bin/mean_mdsvalue_check_baseline.py ".electr_dens.ne_het:ne_centre"
-## [ ] w_dia /home/datasys/bin/mean_mdsvalue_check_baseline.py ".operations:diamag"
-## [ ] rf_power /home/datasys/bin/mean_mdsvalue_check_baseline.py ".rf:p_rf_net"
+## [X] ne18_bar /home/datasys/bin/mean_mdsvalue_check_baseline.py ".electr_dens.ne_het:ne_centre"
+## [X] w_dia /home/datasys/bin/mean_mdsvalue_check_baseline.py ".operations:diamag"
+## [X] rf_power /home/datasys/bin/mean_mdsvalue_check_baseline.py ".rf:p_rf_net"
 
 ## [ ] k_h /home/datasys/bin/kappa.py h
 ## [ ] k_v /home/datasys/bin/kappa.py v
