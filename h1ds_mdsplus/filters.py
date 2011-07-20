@@ -350,10 +350,10 @@ def dim_of(dwrapper):
 ## [X] w_dia /home/datasys/bin/mean_mdsvalue_check_baseline.py ".operations:diamag"
 ## [X] rf_power /home/datasys/bin/mean_mdsvalue_check_baseline.py ".rf:p_rf_net"
 
-## [ ] k_h /home/datasys/bin/kappa.py h
-## [ ] k_v /home/datasys/bin/kappa.py v
-## [ ] k_i /home/datasys/bin/kappa.py i
-## [ ] recorded /home/datasys/bin/gettime
+## [X] k_h /home/datasys/bin/kappa.py h
+## [X] k_v /home/datasys/bin/kappa.py v
+## [X] k_i /home/datasys/bin/kappa.py i
+## [X] recorded /home/datasys/bin/gettime
 ## [ ] lcu_gas_1_flow /home/datasys/bin/gas_flow.py 1
 ## [ ] lcu_gas_2_flow /home/datasys/bin/gas_flow.py 2
 ## [ ] lcu_gas_3_flow /home/datasys/bin/gas_flow.py 3
