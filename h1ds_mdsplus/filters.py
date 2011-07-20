@@ -354,11 +354,11 @@ def dim_of(dwrapper):
 ## [X] k_v /home/datasys/bin/kappa.py v
 ## [X] k_i /home/datasys/bin/kappa.py i
 ## [X] recorded /home/datasys/bin/gettime
-## [ ] lcu_gas_1_flow /home/datasys/bin/gas_flow.py 1
-## [ ] lcu_gas_2_flow /home/datasys/bin/gas_flow.py 2
-## [ ] lcu_gas_3_flow /home/datasys/bin/gas_flow.py 3
-## [ ] lcu_gas_4_flow /home/datasys/bin/gas_flow.py 4
-## [ ] lcu_gas_5_flow /home/datasys/bin/gas_flow.py 5
+## [X] lcu_gas_1_flow /home/datasys/bin/gas_flow.py 1
+## [X] lcu_gas_2_flow /home/datasys/bin/gas_flow.py 2
+## [X] lcu_gas_3_flow /home/datasys/bin/gas_flow.py 3
+## [X] lcu_gas_4_flow /home/datasys/bin/gas_flow.py 4
+## [X] lcu_gas_5_flow /home/datasys/bin/gas_flow.py 5
 ## [ ] shunt_kh /home/datasys/bin/shunt_kh.py
 ##
 ##
