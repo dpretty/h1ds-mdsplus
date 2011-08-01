@@ -24,7 +24,7 @@ def git_sha():
     return p.communicate()[0]
 
 
-VERSION = (0, 8, 0, 'final', 0)
+VERSION = (0, 8, 1, 'beta', 0)
 
 def get_version(form='short'):
     """

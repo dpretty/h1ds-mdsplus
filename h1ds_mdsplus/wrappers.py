@@ -372,7 +372,7 @@ class DataWrapper(object):
         self.available_filters = dtype_mappings[type(self.data)]['filters']
         self.available_views = dtype_mappings[type(self.data)]['views'].keys()
         self.summary_dtype = sql_type_mapping.get(type(self.data))
-        print "... ", type(self.data), self.summary_dtype
+        #print "... ", type(self.data), self.summary_dtype
         # TODO... labels need to have same dimension as data... and get from introspection where possible
         self.label = ('data',)
         
