@@ -5,6 +5,7 @@ from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
+from django.contrib import messages
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
@@ -140,6 +141,9 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
     mds_node = NodeWrapper(mds_tree.getNode(mds_path))
     for fid, name, args, kwargs in get_filter_list(request):
+        if u'' in args:
+            messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         mds_node.data.apply_filter(fid, name, *args, **kwargs)
 
     # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)

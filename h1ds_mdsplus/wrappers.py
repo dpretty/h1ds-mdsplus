@@ -383,7 +383,8 @@ class DataWrapper(object):
         #    filter_args = []
         #else:
         #    filter_args = value.split('__')
-        filter_function(self, *args)
+        if not type(self.data) == NoneType:
+            filter_function(self, *args)
         self.filter_history.append((fid, filter_function, args))
         self.summary_dtype = sql_type_mapping.get(type(self.data))
         self.available_filters = dtype_mappings[type(self.data)]['filters']
