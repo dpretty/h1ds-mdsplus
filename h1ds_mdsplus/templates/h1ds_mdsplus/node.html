@@ -168,6 +168,7 @@ H1DS. -->
 
 <!-- If there is a summary data (SQL) dtype associated with the filtered
 data then display a form for adding the data to the summary database -->
+{% if perms.h1ds_summary.add_summaryattribute %}
 {% if mdsnode.data.summary_dtype %}
 <div class="sidebarcontent">
   <FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
@@ -177,6 +178,7 @@ data then display a form for adding the data to the summary database -->
       <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
   </FORM>
 </div>
+{% endif %}
 {% endif %}
 
 <!--  If the  data has  been filtered,  display the  applied  filters in
