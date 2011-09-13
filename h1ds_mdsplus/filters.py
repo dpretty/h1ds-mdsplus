@@ -129,7 +129,7 @@ def mean(dwrapper):
     """TODO: test for 2+ dimensional arrays"""
     if len(dwrapper.data) > 0:
         dwrapper.data = np.mean(dwrapper.data)
-    else::
+    else:
         dwrapper.data = None
     dwrapper.dim = None
     dwrapper.label = ('mean(%s)' %dwrapper.label[0],)
