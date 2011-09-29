@@ -153,26 +153,3 @@
 {% endblock mdsmeta%}
 
 
-{% block extrascript %}
-{% comment %}TODO: Move from here? this will get overridden by javascript from signal view.{% endcomment %}
-
-{% if input_tree %}
-<script>
-function updateLatestShot() {
- $.getJSON('/mdsplus/latest_shot/{{input_tree}}/', function(d){
- $(".latest_shot").text(d.latest_shot);
- }); // end getJSON
-} // end function
-
-function autoUpdate() {
-setInterval(updateLatestShot, 2000);
-}
-
-$(document).ready(function() {
-updateLatestShot();
-autoUpdate();
-});
-
-</script>
-{% endif %}
-{% endblock %}
