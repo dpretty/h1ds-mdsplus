@@ -2,7 +2,7 @@
 
 {% load templatetable %}
 {% block leftpanel %}
-
+<div class="mbox">
 <div class="sidebarcontent">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <span class="left">select shot</span>
@@ -12,7 +12,7 @@
     <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
  </FORM>
 </div>
-
+<div class="mbox">
 <h3>children</h3>
 <table width="100%" class="side-table">
   {% table item children 2 %}
@@ -36,7 +36,8 @@
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
+<div class="mbox">
 <h3>members</h3>
 <table width="100%" class="side-table">
   {% table item members 2 %}
@@ -60,7 +61,8 @@
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
+<div class="mbox">
 <h3>tags</h3>
 <table width="100%" class="side-table">
   {% table item tagnames 2 %}
@@ -84,7 +86,8 @@
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
+<div class="mbox">
 <h3>trees</h3>
 <table width="100%" class="side-table">
   {% table item treelinks 2 %}
@@ -108,11 +111,13 @@
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
+</div>
 {% endblock %}
 
 
 {% block mdscontent %}
+<div class="mbox">
 <div class="centreinfobox"><span class="right"><strong>{{path_breadcrumbs|safe}}</strong></span>
 <span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
 <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
@@ -130,9 +135,11 @@
 {% block node_error %}{% endblock %}
 {% block node_data %}
 {% endblock %}
+</div>
 {% endblock %}
 
 {% block mdsmeta %}
+<div class="mbox">
 {{dtype}}
 {{filtered_dtype}}
 {% if summary_dtype %}
@@ -150,6 +157,7 @@
 {% endif %}
 <h3>views </h3>{% for node_view_name, node_view_link in f_node_views %}<a href="{{node_view_link}}">{{node_view_name}}</a> {% endfor %}
 <h3>filters</h3>{% for fdict in f_node_filters %}{{fdict.t|safe}}{% endfor%}
+</div>
 {% endblock mdsmeta%}
 
 

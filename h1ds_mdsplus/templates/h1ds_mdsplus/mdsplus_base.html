@@ -4,12 +4,12 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/h1ds_mdsplus.js"></script>
 {% for name, content in html_metadata.items %}
 <meta name="{{name}}" content="{{content}}" />{% endfor%}{% endblock%}
-
+<div class="fixed-centre">
 {% block content %}
 {% block mdscontent%}{% endblock mdscontent %}
 
 {% endblock content %}
-
 {% block rightpanel %}
 {% block mdsmeta %}{% endblock mdsmeta %}
+</div>
 {% endblock %}
