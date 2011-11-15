@@ -23,6 +23,7 @@ tags and other mdsplus trees. -->
 
 <!--  This generates  the 'select  shot'  form in  the top  left of  the
 page. -->
+<div class="mbox">
 <div class="sidebarcontent">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <span class="left">select shot</span>
@@ -32,8 +33,9 @@ page. -->
     <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
  </FORM>
 </div>
-
+</div>
 <!-- Generate a table with links to child nodes. -->
+<div class="mbox">
 <h3>children</h3>
 <table width="100%" class="side-table">
   {% table item mdsnode.children 2 %}
@@ -57,8 +59,9 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
 <!-- Generate  a table with links to  member nodes. -->
+<div class="mbox">
 <h3>members</h3>
 <table width="100%" class="side-table">
   {% table item mdsnode.members 2 %}
@@ -82,8 +85,9 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
 <!-- Generate a table with links to mdsplus tags. -->
+<div class="mbox">
 <h3>tags</h3>
 <table width="100%" class="side-table">
   {% table item mdsnode.tagnames 2 %}
@@ -107,9 +111,10 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
-
+</div>
 <!--  Generate  a  table  with  links to  mdsplus  trees  recognised  by
 H1DS. -->
+<div class="mbox">
 <h3>trees</h3>
 <table width="100%" class="side-table">
   {% table item mdsnode.treelinks 2 %}
@@ -133,6 +138,7 @@ H1DS. -->
   {% endif %}
   {% endtable %}
 </table>
+</div>
 {% endblock leftpanel %}
 
 <!-- *************************************************************** -->
@@ -140,6 +146,7 @@ H1DS. -->
 <!-- *************************************************************** -->
 
 {% block mdscontent %}
+<div class="mbox">
 <div class="centreinfobox"><span class="right"><strong>{{mdsnode.path_breadcrumbs|safe}}</strong></span>
 <span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
 <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
@@ -154,8 +161,9 @@ H1DS. -->
 	    <INPUT title="go to shot" type="submit" value=">">
 	</FORM></span>
 </div>
-{% block node_error %}{% endblock node_error %}
-{% block node_data %}{% display_data mdsnode %}{% endblock node_data %}
+</div>
+<div class="mbox">{% block node_error %}{% endblock node_error %}</div>
+<div class="mbox">{% block node_data %}{% display_data mdsnode %}{% endblock node_data %}</div>
 {% endblock mdscontent %}
 
 
@@ -165,7 +173,7 @@ H1DS. -->
 
 
 {% block mdsmeta %}
-
+<div class="mbox">
 <!-- If there is a summary data (SQL) dtype associated with the filtered
 data then display a form for adding the data to the summary database -->
 {% if perms.h1ds_summary.add_summaryattribute %}
@@ -199,5 +207,5 @@ filtered) data -->
 
 <h3>node info</h3>
 {% show_info mdsnode %}
-
+</div>
 {% endblock mdsmeta%}

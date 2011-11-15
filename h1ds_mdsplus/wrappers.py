@@ -131,8 +131,8 @@ def int_view_json(data, **kwargs):
 
 def signal_view_html(data):
     return """
-    <div id="signal-placeholder" style="width:600px;height:300px;"></div>
-    <div id="signal-overview" style="width:600px;height:100px"></div>
+    <div id="signal-placeholder" style="width:360px;height:300px;"></div>
+    <div id="signal-overview" style="width:360px;height:100px"></div>
     """
 
 def clean_signal_for_serialization(data):

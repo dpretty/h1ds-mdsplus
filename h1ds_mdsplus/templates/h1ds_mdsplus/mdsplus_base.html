@@ -1,7 +1,6 @@
 {% extends "h1ds_core/base.html" %}
 
 {% block extrahead %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/h1ds_mdsplus.js"></script>
 {% for name, content in html_metadata.items %}
 <meta name="{{name}}" content="{{content}}" />{% endfor%}{% endblock%}
 <div class="fixed-centre">
