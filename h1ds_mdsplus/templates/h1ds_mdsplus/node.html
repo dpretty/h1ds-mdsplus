@@ -24,7 +24,7 @@ tags and other mdsplus trees. -->
 <!--  This generates  the 'select  shot'  form in  the top  left of  the
 page. -->
 <div class="portlet">
-<div class="portlet-header">navigation</div>
+<div class="portlet-header">shot</div>
 <div class="portlet-content">
 <FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
     <span class="left">select shot</span>
@@ -33,8 +33,11 @@ page. -->
     <INPUT type="text" size=5 id="requested-shot" name="go_to_shot">
     <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
  </FORM>
+</div></div>
 <!-- Generate a table with links to child nodes. -->
-<h3>children</h3>
+<div class="portlet">
+<div class="portlet-header">children</div>
+<div class="portlet-content">
 <table width="100%" class="side-table">
   {% table item mdsnode.children 2 %}
   {% if table.startrow %}
@@ -57,8 +60,12 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
+</div></div>
+
 <!-- Generate  a table with links to  member nodes. -->
-<h3>members</h3>
+<div class="portlet">
+<div class="portlet-header">members</div>
+<div class="portlet-content">
 <table width="100%" class="side-table">
   {% table item mdsnode.members 2 %}
   {% if table.startrow %}
@@ -81,8 +88,12 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
+</div></div>
+
 <!-- Generate a table with links to mdsplus tags. -->
-<h3>tags</h3>
+<div class="portlet">
+<div class="portlet-header">tags</div>
+<div class="portlet-content">
 <table width="100%" class="side-table">
   {% table item mdsnode.tagnames 2 %}
   {% if table.startrow %}
@@ -105,9 +116,12 @@ page. -->
   {% endif %}
   {% endtable %}
 </table>
+</div></div>
 <!--  Generate  a  table  with  links to  mdsplus  trees  recognised  by
 H1DS. -->
-<h3>trees</h3>
+<div class="portlet">
+<div class="portlet-header">trees</div>
+<div class="portlet-content">
 <table width="100%" class="side-table">
   {% table item mdsnode.treelinks 2 %}
   {% if table.startrow %}
@@ -142,7 +156,7 @@ H1DS. -->
 
 <div class="column-wide">
   <div class="portlet">
-    <div class="portlet-header">data</div>
+    <div class="portlet-header">path</div>
     <div class="portlet-content">
       <div class="centreinfobox"><span class="right"><strong>{{mdsnode.path_breadcrumbs|safe}}</strong></span>
 	<span class="left">	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
@@ -159,6 +173,11 @@ H1DS. -->
 	</FORM></span>
       </div>
       {% block node_error %}{% endblock node_error %}
+      </div></div>
+  <div class="portlet">
+    <div class="portlet-header">data</div>
+    <div class="portlet-content">
+  
       {% block node_data %}{% display_data mdsnode %}{% endblock node_data %}
     </div>
   </div> <!-- end portlet -->
@@ -173,43 +192,56 @@ H1DS. -->
 
 
 <div class="column-thin">
-<div class="portlet">
-<div class="portlet-header">filters</div>
-<div class="portlet-content">
 <!-- If there is a summary data (SQL) dtype associated with the filtered
 data then display a form for adding the data to the summary database -->
 {% if perms.h1ds_summary.add_summaryattribute %}
 {% if mdsnode.data.summary_dtype %}
-<div class="sidebarcontent">
+<div class="portlet">
+<div class="portlet-header">add to summary db</div>
+<div class="portlet-content">
   <FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
-    <span class="left">add to summary database</span>
+    <span class="left">add</span>
     <span class="right">
       <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
       <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
   </FORM>
-</div>
+</div></div>
 {% endif %}
 {% endif %}
 
 <!--  If the  data has  been filtered,  display the  applied  filters in
 order, with option to adjust or remove each filter -->
 {% if mdsnode.data.filter_history %}
-<h3>active filters</h3>{% show_active_filters mdsnode %}
+<div class="portlet">
+<div class="portlet-header">active filters</div>
+<div class="portlet-content">
+{% show_active_filters mdsnode %}
+</div></div>
 {% endif %}
 
 <!-- List the views (H1DS views such as html, json, etc, not django view
 functions) available for the node data type -->
-<h3>views </h3>{% for view_name in mdsnode.data.available_views %}{% show_view view_name %} {% endfor %}
+<div class="portlet">
+<div class="portlet-header">views</div>
+<div class="portlet-content">
+{% for view_name in mdsnode.data.available_views %}{% show_view view_name %} {% endfor %}
+</div></div>
 
 <!--  List the filters  which can  be applied  to the  (possibly already
 filtered) data -->
 
-<h3>filters</h3>
+<div class="portlet">
+<div class="portlet-header">filters</div>
+<div class="portlet-content">
 {% show_filters mdsnode %}
+</div></div>
 
-<h3>node info</h3>
+<div class="portlet">
+<div class="portlet-header">node info</div>
+<div class="portlet-content">
 {% show_info mdsnode %}
 </div>
 </div>
+
 </div>
 {% endblock mdscontent %}
