@@ -6,26 +6,9 @@ import MDSplus
 from MDSplus._treeshr import TreeException
 from django.db.utils import DatabaseError
 from django.conf import settings
-from h1ds_mdsplus.models import MDSPlusTree, MDSEventListener
+from h1ds_mdsplus.models import MDSEventListener
 
 MODULE_DOC_NAME = "MDSPlus"
-
-
-
-"""
-# load all mdsplus trees into os environment
-try:
-    for tree in MDSPlusTree.objects.all():
-        os.environ['%s_path' %tree.name] = tree.path
-except DatabaseError:
-    # A DatabaseError is raised when we try to syncdb,  or migrate the database
-    # when no database exists. This appears to be because syncdb/migrate import
-    # the module, and the module tries to read the (non-existant) database when
-    # we call MDSPlusTree.objects.all(). 
-    #
-    # TODO: Find a better solution.
-    pass
-"""
 
 for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]
@@ -55,6 +38,8 @@ except DatabaseError:
     # we call MDSPlusTree.objects.all(). 
     #
     # TODO: Find a better solution.
+    # 
+    # TODO: we have now removed MDSPlusTree - is this still a problem?
     pass
 
 

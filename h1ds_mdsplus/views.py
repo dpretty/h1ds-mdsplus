@@ -10,7 +10,6 @@ from django.conf import settings
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
-from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
 import h1ds_mdsplus.filters as df
@@ -104,7 +103,7 @@ def node(request, tree=settings.DEFAULT_MDS_TREE, shot=0, tagname="top", nodepat
     request -- a HttpRequest instance
 
     Keyword arguments:
-    tree -- name on an MDSPlusTree instance TODO: should this be a non-keyword argument (no default)?
+    tree -- name on an MDSPlus tree
     shot -- shot number (default 0)
     tagname -- MDSplus tag name (default 'top')
     nodepath -- MDSplus node path, with dot (.) and colon (:) replaced with URL path slashes (/) (default "")
@@ -197,15 +196,6 @@ def latest_shot(request, tree_name=None):
 
 def homepage(request):
     """Show latest shot from default tree."""
-    # Tree objects are ordered by the display_order field, so if we grab 
-    # a single object it should be the one with the lowest display_order
-    # value, which is what we use as the default tree.
-    #try:
-    #    default_tree = MDSPlusTree.objects.all()[0]
-    #except IndexError:
-    #    # This occurs if there are no MDSPlusTree instances
-    #    return render_to_response('h1ds_mdsplus/no_trees_found.html', 
-    #                              context_instance=RequestContext(request))
     return HttpResponseRedirect(reverse('mds-tree-overview', args=[settings.DEFAULT_MDS_TREE]))
 
 def apply_filter(request, overwrite_fid=False):

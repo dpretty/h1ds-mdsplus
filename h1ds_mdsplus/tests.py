@@ -1,7 +1,6 @@
 from django.utils import unittest
 from django.test.client import Client
 
-from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_mdsplus.wrappers import mds_to_url
 
 import MDSplus
@@ -17,6 +16,7 @@ def get_nodes(node):
 
 ########################################################################
 ## disabled test as it has a hardlink to /home/dave/data.             ##
+## ... and MDSPlusTree no longer exists....                           ##
 ########################################################################
 
 #

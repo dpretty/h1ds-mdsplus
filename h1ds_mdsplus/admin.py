@@ -1,10 +1,5 @@
 from django.contrib import admin
-from models import MDSPlusTree, MDSEventListener, ListenerSignals
-
-class MDSPlusTreeAdmin(admin.ModelAdmin):
-    pass
-
-admin.site.register(MDSPlusTree, MDSPlusTreeAdmin)
+from models import MDSEventListener, ListenerSignals
 
 class ListenerSignalsInline(admin.TabularInline):
     model = ListenerSignals

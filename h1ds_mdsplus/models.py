@@ -9,38 +9,6 @@ from h1ds_core.models import H1DSSignal
 from h1ds_mdsplus.tasks import mds_event_listener
 
 
-class MDSPlusTree(models.Model):
-    """Stores path information for an MDSPlus tree."""
-    name = models.CharField(max_length=100, help_text="Tree name to be used with name_path (without _path). e.g. mydata")
-    path = models.CharField(max_length=100, help_text="A local path with the MDSplus data files. e.g. /data/mydata")
-    description = models.CharField(max_length=500, help_text="You are free to write what you like here (max length is 500 characters).")
-    display_order = models.IntegerField(default=10, help_text="When listed, tress will be ordered by this value. The tree with the lowest value is the default tree.")
-    def __unicode__(self):
-        return unicode(self.name)
-
-    class Meta:
-        ordering = ('display_order',)
-
-    def save(self, *args, **kwargs):
-        super(MDSPlusTree, self).save(*args, **kwargs)
-        import os
-        os.environ['%s_path' %self.name] = self.path
-
-    def get_tree(self, shot, mode='READONLY'):
-        """Get MDSPlus tree for shot. 
-        
-        For now, we only allow read-only mode.
-        """
-        mode = 'READONLY'
-        try:
-            tree =  MDSplus.Tree(self.name, int(shot), mode)
-            return tree
-        except TreeException:
-            return None
-        
-    def get_url(self):
-        return reverse("mds-tree-overview", kwargs={'tree':self.name})
-
 class MDSEventListener(models.Model):
     """Listens for an MDSplus event from a specified server."""
     event_name = models.CharField(max_length=50)

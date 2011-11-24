@@ -33,7 +33,6 @@ except:
 
     from numpy import savez
 
-from h1ds_mdsplus.models import MDSPlusTree
 from django.conf import settings
 import MDSplus
 
