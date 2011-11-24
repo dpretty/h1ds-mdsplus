@@ -14,11 +14,10 @@ from MDSplus._treeshr import TreeException
 from MDSplus import _mdsdtypes
 import MDSplus
 
-from h1ds_mdsplus.models import MDSPlusTree
-from h1ds_mdsplus.utils import discretise_array
+from h1ds_mdsplus.utils import discretise_array, get_tree_url
 #df -> dtype filters
 import h1ds_mdsplus.filters as df
-from h1ds_mdsplus import sql_type_mapping
+from h1ds_mdsplus import sql_type_mapping, get_trees_from_env
 
 try:
     NODE_BLACKLIST = settings.H1DS_MDSPLUS_NODE_BLACKLIST
@@ -272,7 +271,7 @@ def get_trees():
         return cached_data
     else:
         output_data = []
-        for t in MDSPlusTree.objects.all():
+        for t in get_trees_from_env():
             output_data.append((t.name, t.get_url()))
         cache.set(cache_name, output_data)
         return output_data

@@ -33,6 +33,7 @@ except:
     from numpy import savez
 
 from h1ds_mdsplus.models import MDSPlusTree
+from django.conf import settings
 import MDSplus
 
 def get_latest_shot(tree_name = None):
@@ -42,14 +43,17 @@ def get_latest_shot(tree_name = None):
 
     if tree_name == None:
         # Get default tree.
-        default_tree = MDSPlusTree.objects.all()[0]
-        tree_name = default_tree.name
+        tree_name = settings.DEFAULT_MDS_TREE
     try:
         t = MDSplus.Tree(tree_name, 0, 'READONLY')
         latest_shot = t.shot
     except:
         latest_shot=-1
     return latest_shot
+
+
+def get_tree_url(tree_name):
+    return reverse("mds-tree-overview", kwargs={'tree':tree_name})
 
 
 def url_path_components_to_mds_path(tree, tagname, nodepath):
@@ -355,3 +359,5 @@ def test_compress(file=None, verbose=0, eps=0, debug=False, maxcount=0):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+

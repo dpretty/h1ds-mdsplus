@@ -123,15 +123,19 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     # Default to HTML if view type is not specified by user.
     view = request.GET.get('view','html').lower()
     try:
-        mds_tree_model_instance = MDSPlusTree.objects.get(name__iexact=tree)
-    except ObjectDoesNotExist:
+        # try and get latest shot so we can distinguish between TreeException
+        # raised by missing tree or missing shot
+        mds_tree = Tree(name, 0, 'READONLY')
+    except TreeException:
         # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_tree.html', 
                                   {'shot':shot,
                                    'input_tree':tree},
                                   context_instance=RequestContext(request))        
-    mds_tree = mds_tree_model_instance.get_tree(shot)
-    if mds_tree == None:
+    #mds_tree = mds_tree_model_instance.get_tree(shot)
+    try:
+        mds_tree = Tree(name, shot, 'READONLY')
+    except TreeException:
         # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
                                   {'shot':shot,

@@ -2,14 +2,18 @@
 
 import os
 import numpy
+import MDSplus
+from MDSplus._treeshr import TreeException
 from django.db.utils import DatabaseError
 
 from h1ds_mdsplus.models import MDSPlusTree, MDSEventListener
 
 MODULE_DOC_NAME = "MDSPlus"
 
-# load all mdsplus trees into os environment
 
+
+"""
+# load all mdsplus trees into os environment
 try:
     for tree in MDSPlusTree.objects.all():
         os.environ['%s_path' %tree.name] = tree.path
@@ -21,7 +25,19 @@ except DatabaseError:
     #
     # TODO: Find a better solution.
     pass
+"""
 
+def get_trees_from_env():
+    trees = []
+    env_paths = [i for i in os.environ.keys() if i.lower().endswith('_path')]
+    for path in env_paths:
+        tree_name = path[:-5]
+        try:
+            tree =  MDSplus.Tree(tree_name, 0, 'READONLY')
+            trees.append(tree_name)
+        except TreeException:
+            pass
+    return trees
 
 
 # Start MDSEvent listener tasks
