@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
+from django.conf import settings
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
@@ -96,7 +97,7 @@ def get_max_fid(request):
 ## Django views                                                       ##
 ########################################################################
 
-def node(request, tree="", shot=0, tagname="top", nodepath=""):
+def node(request, tree=settings.DEFAULT_MDS_TREE, shot=0, tagname="top", nodepath=""):
     """Display MDS tree node.
 
     Arguments:
@@ -125,7 +126,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
     try:
         # try and get latest shot so we can distinguish between TreeException
         # raised by missing tree or missing shot
-        mds_tree = Tree(name, 0, 'READONLY')
+        mds_tree = Tree(tree, 0, 'READONLY')
     except TreeException:
         # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_tree.html', 
@@ -134,7 +135,7 @@ def node(request, tree="", shot=0, tagname="top", nodepath=""):
                                   context_instance=RequestContext(request))        
     #mds_tree = mds_tree_model_instance.get_tree(shot)
     try:
-        mds_tree = Tree(name, shot, 'READONLY')
+        mds_tree = Tree(tree, int(shot), 'READONLY')
     except TreeException:
         # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
         return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
@@ -199,13 +200,13 @@ def homepage(request):
     # Tree objects are ordered by the display_order field, so if we grab 
     # a single object it should be the one with the lowest display_order
     # value, which is what we use as the default tree.
-    try:
-        default_tree = MDSPlusTree.objects.all()[0]
-    except IndexError:
-        # This occurs if there are no MDSPlusTree instances
-        return render_to_response('h1ds_mdsplus/no_trees_found.html', 
-                                  context_instance=RequestContext(request))
-    return HttpResponseRedirect(reverse('mds-tree-overview', args=[default_tree.name]))
+    #try:
+    #    default_tree = MDSPlusTree.objects.all()[0]
+    #except IndexError:
+    #    # This occurs if there are no MDSPlusTree instances
+    #    return render_to_response('h1ds_mdsplus/no_trees_found.html', 
+    #                              context_instance=RequestContext(request))
+    return HttpResponseRedirect(reverse('mds-tree-overview', args=[settings.DEFAULT_MDS_TREE]))
 
 def apply_filter(request, overwrite_fid=False):
     """Read in filter info from HTTP query and apply H1DS filter syntax.

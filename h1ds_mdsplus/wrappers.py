@@ -272,7 +272,7 @@ def get_trees():
     else:
         output_data = []
         for t in get_trees_from_env():
-            output_data.append((t.name, t.get_url()))
+            output_data.append((t, get_tree_url(t)))
         cache.set(cache_name, output_data)
         return output_data
 

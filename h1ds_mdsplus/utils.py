@@ -13,6 +13,7 @@ July 2009 - long-standing error in delta_encode_signal fixed (had not been
 usable before)
 
 """
+from django.core.urlresolvers import reverse
 from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
     log10, int16, int8, uint16, uint8
 try: 
