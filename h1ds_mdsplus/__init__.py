@@ -5,7 +5,7 @@ import numpy
 import MDSplus
 from MDSplus._treeshr import TreeException
 from django.db.utils import DatabaseError
-
+from django.conf import settings
 from h1ds_mdsplus.models import MDSPlusTree, MDSEventListener
 
 MODULE_DOC_NAME = "MDSPlus"
@@ -26,6 +26,9 @@ except DatabaseError:
     # TODO: Find a better solution.
     pass
 """
+
+for config_tree in settings.EXTRA_MDS_TREES:
+    os.environ[config_tree[0]+"_path"] = config_tree[1]
 
 def get_trees_from_env():
     trees = []
