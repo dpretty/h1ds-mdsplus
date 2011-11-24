@@ -28,11 +28,8 @@ tags and other mdsplus trees. -->
     <div class="portlet-content">
       <div class="sidebarcontent">
 	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
-	  <span class="left">select shot</span>
-	  <span class="right">
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	    <INPUT type="text" size=5 id="requested-shot" name="go_to_shot">
-	    <INPUT title="go to shot" type="submit" value="&#x21b5;"></span>
+	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="Shot number...">
 	</FORM>
       </div>
       <div class="sidebarcontent">
