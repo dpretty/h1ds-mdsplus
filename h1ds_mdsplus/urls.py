@@ -1,7 +1,8 @@
 from django.conf.urls.defaults import *
 
-from h1ds_mdsplus.views import latest_shot, homepage, apply_filter, update_filter, remove_filter
-from h1ds_mdsplus.views import NodeView, AJAXNodeNavigationView, TreeOverviewView, RequestShotView
+from h1ds_mdsplus.views import homepage, apply_filter, update_filter, remove_filter
+from h1ds_mdsplus.views import NodeView, TreeOverviewView, RequestShotView
+from h1ds_mdsplus.views import AJAXLatestShotView, AJAXNodeNavigationView
 
 # special urls ()
 urlpatterns = patterns('',
@@ -10,8 +11,8 @@ urlpatterns = patterns('',
                        url(r'^_/update_filter$', update_filter, name="update-filter"),
                        url(r'^_/remove_filter$', remove_filter, name="remove-filter"),
                        url(r'^_/request_shot$', RequestShotView.as_view(), name="mds-request-shot"),
-                       url(r'^_/latest_shot/$', latest_shot, name="mds-latest-shot-for-default-tree"),
-                       url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', latest_shot, name="mds-latest-shot"),
+                       url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="mds-latest-shot-for-default-tree"),
+                       url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="mds-latest-shot"),
                        )
 
 urlpatterns += patterns('',

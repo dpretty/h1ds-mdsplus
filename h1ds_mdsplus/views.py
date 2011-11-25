@@ -270,19 +270,18 @@ class AJAXNodeNavigationView(View):
                             content_type='application/json')
 
 
+class AJAXLatestShotView(View):
+    """Return latest shot."""
+    
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        latest_shot = get_latest_shot(tree_name)
+        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+
 ########################################################################
 ## Old views                                                          ##
 ########################################################################
-
-def latest_shot(request, tree_name=None):
-    """Return latest shot (AJAX only for now...)."""
-    if not request.is_ajax():
-        return HttpResponseRedirect('/')
-
-    latest_shot = get_latest_shot(tree_name)
-        
-    return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
-        
 
 def homepage(request):
     """Show latest shot from default tree."""
