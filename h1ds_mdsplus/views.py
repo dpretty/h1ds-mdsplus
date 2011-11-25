@@ -231,8 +231,21 @@ class NodeView(MultiNodeResponseMixin, View):
 
 class TreeOverviewView(RedirectView):   
     # TODO: currently HTML only.
+    http_method_names = ['get']
     def get_redirect_url(self, **kwargs):
         return reverse('mds-root-node', kwargs={'tree':kwargs['tree'], 'shot':0})
+
+
+class RequestShotView(RedirectView):
+    """Redirect to shot, as requested by HTTP post."""
+
+    http_method_names = ['post']
+
+    def get_redirect_url(self, **kwargs):
+        shot = self.request.POST['go_to_shot']
+        input_path = self.request.POST['reqpath']
+        input_shot = shot_regex.findall(input_path)[0]
+        return input_path.replace(input_shot, shot)
 
 
 ########################################################################
@@ -260,16 +273,6 @@ class AJAXNodeNavigationView(View):
 ########################################################################
 ## Old views                                                          ##
 ########################################################################
-
-def request_shot(request):
-    """Redirect to shot, as requested by HTTP post."""
-    if not request.method == 'POST':
-        return HttpResponseRedirect("/")        
-    shot = request.POST['go_to_shot']
-    input_path = request.POST['reqpath']
-    input_shot = shot_regex.findall(input_path)[0]
-    new_path = input_path.replace(input_shot, shot)
-    return HttpResponseRedirect(new_path)
 
 def latest_shot(request, tree_name=None):
     """Return latest shot (AJAX only for now...)."""
