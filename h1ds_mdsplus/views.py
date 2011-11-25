@@ -7,12 +7,18 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
 from django.conf import settings
+from django.core.cache import cache
+
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
 import h1ds_mdsplus.filters as df
+
+DEFAULT_TAGNAME = "top"
+DEFAULT_NODEPATH = ""
+
 
 ########################################################################
 ## Helper functions                                                   ##
@@ -92,9 +98,167 @@ def get_max_fid(request):
         max_filter_num = max([i[0] for i in filter_list])
     return max_filter_num
 
+def get_subtree(mds_node):
+
+    try:
+        desc = map(get_subtree, mds_node.getDescendants())
+    except TypeError:
+        desc = []
+
+    tree = {
+        "id":unicode(mds_node.nid),
+        "name":unicode(mds_node.getNodeName()),
+        "data":{"$dim":0.5*len(desc)+1, "$area":0.5*len(desc)+1, "$color":"#888"},
+        "children":desc,
+        }
+    return tree
+
+def get_nav_for_shot(tree, shot):
+    mds_tree = Tree(tree, shot, 'READONLY')
+    root_node = mds_tree.getNode(0)
+    return get_subtree(root_node)
+    
+
 ########################################################################
 ## Django views                                                       ##
 ########################################################################
+
+########################################################################
+## New Class views                                                    ##
+########################################################################
+
+
+from django.views.generic import View
+
+class NodeMixin(object):
+
+    def get_node(self):
+        tagname = self.kwargs.get('tagname', DEFAULT_TAGNAME)
+        nodepath = self.kwargs.get('nodepath', DEFAULT_NODEPATH)
+        mds_tree = Tree(self.kwargs['tree'], int(self.kwargs['shot']), 'READONLY')
+        mds_path = url_path_components_to_mds_path(self.kwargs['tree'], tagname, nodepath)
+        return NodeWrapper(mds_tree.getNode(mds_path))
+
+    def get_filtered_node(self, request):
+        mds_node = self.get_node()
+        for fid, name, args, kwargs in get_filter_list(request):
+            if u'' in args:
+                messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+            mds_node.data.apply_filter(fid, name, *args, **kwargs)
+        return mds_node
+
+class JSONNodeResponseMixin(NodeMixin):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        mds_node = self.get_filtered_node(request)
+        data_dict = mds_node.get_view('json', dict_only=True)
+        html_metadata = {
+            'mds_tree':mds_node.mds_object.tree.name,
+            'mds_shot':mds_node.mds_object.tree.shot,
+            'mds_node_id':mds_node.mds_object.nid,
+            }
+        # add metadata...
+        data_dict.update({'meta':html_metadata})
+        return HttpResponse(json.dumps(data_dict), mimetype='application/json')
+
+    
+class HTMLNodeResponseMixin(NodeMixin):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        mds_node = self.get_filtered_node(request)
+        html_metadata = {
+            'mds_tree':mds_node.mds_object.tree.name,
+            'mds_shot':mds_node.mds_object.tree.shot,
+            'mds_node_id':mds_node.mds_object.nid,
+            }
+
+        return render_to_response('h1ds_mdsplus/node.html', 
+                                  {'node_content':mds_node.get_view('html'),
+                                   'html_metadata':html_metadata,
+                                   'mdsnode':mds_node,
+                                   'request_fullpath':request.get_full_path()},
+                                  context_instance=RequestContext(request))
+
+class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin):
+    """Dispatch to requested representation."""
+
+    representations = {
+        "html":HTMLNodeResponseMixin,
+        "json":JSONNodeResponseMixin,
+        }
+
+    def dispatch(self, request, *args, **kwargs):
+        # Try to dispatch to the right method for requested representation; 
+        # if a method doesn't exist, defer to the error handler. 
+        # Also defer to the error handler if the request method isn't on the approved list.
+        
+        # TODO: for now, we only support GET and POST, as we are using the query string to 
+        # determing which representation should be used, and the querydict is only available
+        # for GET and POST. Need to bone up on whether query strings even make sense on other
+        # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
+        # returned - also, we might be able to support both URI and header based content type selection.
+        # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
+        # http://www.xml.com/pub/a/2004/08/11/rest.html
+
+        if request.method == 'GET':
+            requested_representation = request.GET.get('view', 'html').lower()
+        elif request.method == 'POST':
+            requested_representation = request.GET.get('view', 'html')
+        else:
+            # until we figure out how to determine appropriate content type
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
+        if not requested_representation in self.representations:
+            # TODO: should handle this and let user know? rather than ignore?
+            requested_representation = 'html'
+            
+        rep_class = self.representations[requested_representation]
+
+        if request.method.lower() in rep_class.http_method_names:
+            handler = getattr(rep_class, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        return handler(self, request, *args, **kwargs)
+
+
+class NodeView(MultiNodeResponseMixin, View):
+    pass
+
+
+########################################################################
+#### AJAX Only Views                                                ####
+########################################################################
+
+class AJAXNodeNavigationView(View):
+    """Return tree navigation data for shot"""
+    
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        tree = kwargs['tree']
+        shot = int(kwargs['shot'])
+        cache_name = "nav_%s_%d" %(tree, shot)
+        nav_data = cache.get(cache_name, 'no_cache')
+        if nav_data == 'no_cache':
+            nav_data = get_nav_for_shot(tree, shot)
+            cache.set(cache_name, nav_data, 60 * 20)
+        json_nav_data = json.dumps(nav_data)
+        return HttpResponse(json_nav_data,
+                            content_type='application/json')
+
+
+########################################################################
+## Old views                                                          ##
+########################################################################
+
 
 def node(request, tree=settings.DEFAULT_MDS_TREE, shot=0, tagname="top", nodepath=""):
     """Display MDS tree node.
@@ -132,7 +296,6 @@ def node(request, tree=settings.DEFAULT_MDS_TREE, shot=0, tagname="top", nodepat
                                   {'shot':shot,
                                    'input_tree':tree},
                                   context_instance=RequestContext(request))        
-    #mds_tree = mds_tree_model_instance.get_tree(shot)
     try:
         mds_tree = Tree(tree, int(shot), 'READONLY')
     except TreeException:
