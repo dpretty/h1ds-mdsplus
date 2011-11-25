@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 
-from h1ds_mdsplus.views import tree_overview, node, request_shot, latest_shot, homepage, apply_filter, update_filter, remove_filter
+from h1ds_mdsplus.views import tree_overview, request_shot, latest_shot, homepage, apply_filter, update_filter, remove_filter
 from h1ds_mdsplus.views import NodeView, AJAXNodeNavigationView
 
 # special urls ()

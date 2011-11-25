@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
+from django.views.generic import View
 
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
@@ -128,7 +129,6 @@ def get_nav_for_shot(tree, shot):
 ########################################################################
 
 
-from django.views.generic import View
 
 class NodeMixin(object):
 
@@ -258,80 +258,6 @@ class AJAXNodeNavigationView(View):
 ########################################################################
 ## Old views                                                          ##
 ########################################################################
-
-
-def node(request, tree=settings.DEFAULT_MDS_TREE, shot=0, tagname="top", nodepath=""):
-    """Display MDS tree node.
-
-    Arguments:
-    request -- a HttpRequest instance
-
-    Keyword arguments:
-    tree -- name on an MDSPlus tree
-    shot -- shot number (default 0)
-    tagname -- MDSplus tag name (default 'top')
-    nodepath -- MDSplus node path, with dot (.) and colon (:) replaced with URL path slashes (/) (default "")
-    
-    An instance of NodeWrapper  is created for the requested node
-    which handles filters and returns an appropriate HttpResponse.
-    
-    """
-
-    if request.GET.has_key('go_to_shot'):
-        new_get = request.GET.copy()
-        new_shot = int(new_get.pop('go_to_shot')[-1])
-        request.GET = new_get
-        new_url = reverse('mds-node', kwargs={'tree':tree, 'shot':new_shot, 'tagname':tagname, 'nodepath':nodepath})
-        new_url += '?%s' %(new_get.urlencode())
-        return HttpResponseRedirect(new_url)
-    # Default to HTML if view type is not specified by user.
-    view = request.GET.get('view','html').lower()
-    try:
-        # try and get latest shot so we can distinguish between TreeException
-        # raised by missing tree or missing shot
-        mds_tree = Tree(tree, 0, 'READONLY')
-    except TreeException:
-        # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
-        return render_to_response('h1ds_mdsplus/cannot_find_tree.html', 
-                                  {'shot':shot,
-                                   'input_tree':tree},
-                                  context_instance=RequestContext(request))        
-    try:
-        mds_tree = Tree(tree, int(shot), 'READONLY')
-    except TreeException:
-        # TODO: return relevant view type (here we return HTML even if request is json, xml, etc)
-        return render_to_response('h1ds_mdsplus/cannot_find_latest_shot.html', 
-                                  {'shot':shot,
-                                   'input_tree':tree},
-                                  context_instance=RequestContext(request))
-        
-    mds_path = url_path_components_to_mds_path(tree, tagname, nodepath)
-    mds_node = NodeWrapper(mds_tree.getNode(mds_path))
-    for fid, name, args, kwargs in get_filter_list(request):
-        if u'' in args:
-            messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-        mds_node.data.apply_filter(fid, name, *args, **kwargs)
-
-    # get metadata for HTML (in HTML <head> (not HTTP header) to be parsed by javascript, or saved with HTML source etc)
-    html_metadata = {
-        'mds_path':mds_path,
-        'shot':shot,
-        }
-
-    if view == 'json':
-        data_dict = mds_node.get_view('json', dict_only=True)
-        # add metadata...
-        data_dict.update({'meta':html_metadata})
-        return HttpResponse(json.dumps(data_dict), mimetype='application/json')
-    
-    return render_to_response('h1ds_mdsplus/node.html', 
-                              {'mdsnode':mds_node, 'html_metadata':html_metadata,
-                               'request_fullpath':request.get_full_path()},
-                              context_instance=RequestContext(request))
-
-    #return mds_node.get_view(request, view)
-
 
 def tree_overview(request, tree):
     """Display tree at latest shot."""
