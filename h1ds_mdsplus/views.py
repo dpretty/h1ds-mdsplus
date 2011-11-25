@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
-from django.views.generic import View
+from django.views.generic import View, RedirectView
 
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
@@ -128,10 +128,7 @@ def get_nav_for_shot(tree, shot):
 ## New Class views                                                    ##
 ########################################################################
 
-
-
 class NodeMixin(object):
-
     def get_node(self):
         tagname = self.kwargs.get('tagname', DEFAULT_TAGNAME)
         nodepath = self.kwargs.get('nodepath', DEFAULT_NODEPATH)
@@ -232,6 +229,11 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin):
 class NodeView(MultiNodeResponseMixin, View):
     pass
 
+class TreeOverviewView(RedirectView):   
+    # TODO: currently HTML only.
+    def get_redirect_url(self, **kwargs):
+        return reverse('mds-root-node', kwargs={'tree':kwargs['tree'], 'shot':0})
+
 
 ########################################################################
 #### AJAX Only Views                                                ####
@@ -258,10 +260,6 @@ class AJAXNodeNavigationView(View):
 ########################################################################
 ## Old views                                                          ##
 ########################################################################
-
-def tree_overview(request, tree):
-    """Display tree at latest shot."""
-    return HttpResponseRedirect(reverse('mds-root-node', kwargs={'tree':tree, 'shot':0}))
 
 def request_shot(request):
     """Redirect to shot, as requested by HTTP post."""

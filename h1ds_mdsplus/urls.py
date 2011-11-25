@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
-from h1ds_mdsplus.views import tree_overview, request_shot, latest_shot, homepage, apply_filter, update_filter, remove_filter
-from h1ds_mdsplus.views import NodeView, AJAXNodeNavigationView
+from h1ds_mdsplus.views import request_shot, latest_shot, homepage, apply_filter, update_filter, remove_filter
+from h1ds_mdsplus.views import NodeView, AJAXNodeNavigationView, TreeOverviewView
 
 # special urls ()
 urlpatterns = patterns('',
@@ -16,7 +16,7 @@ urlpatterns = patterns('',
 
 urlpatterns += patterns('',
                        url(r'^$', homepage, name="h1ds-mdsplus-homepage"),
-                       url(r'^(?P<tree>[^/]+)/$', tree_overview, name="mds-tree-overview"),
+                       url(r'^(?P<tree>[^/]+)/$', TreeOverviewView.as_view(), name="mds-tree-overview"),
                        url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/$', NodeView.as_view(), name="mds-root-node"),
                        url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/(?P<tagname>[^/]+)/$', NodeView.as_view(), name="mds-tag"),
                        url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/(?P<tagname>[^/]+)/(?P<nodepath>.*)/$', NodeView.as_view(), name="mds-node"),
