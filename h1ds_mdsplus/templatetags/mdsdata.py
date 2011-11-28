@@ -68,7 +68,6 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
                 filter_data = []
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")
-
             input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':filter_data[i]} for i,j in enumerate(arg_list)])
 
             return_string = active_filter_html %{
@@ -86,7 +85,7 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
 
         else:
             submit_url = reverse("apply-filter")
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s">' %{'name':j} for j in arg_list])
+            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" placeholder="%(name)s">' %{'name':j} for j in arg_list])
             return_string =  filter_html %{'text':docstring,
                                            'input_str':input_str,
                                            'clsname':filter_instance.__name__,

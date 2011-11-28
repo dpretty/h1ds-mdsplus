@@ -119,10 +119,14 @@ def get_nav_for_shot(tree, shot):
     root_node = mds_tree.getNode(0)
     return get_subtree(root_node)
     
+####def get_tree_exception_response()
+
 
 ########################################################################
 ## Django views                                                       ##
 ########################################################################
+
+
 
 class NodeMixin(object):
     def get_node(self):
