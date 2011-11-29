@@ -237,6 +237,14 @@ def dim_range(dwrapper, min_val, max_val):
     dwrapper.dim = dwrapper.dim[min_e:max_e]
     dwrapper.label = ('dim_range(%s, %s, %s)' %(dwrapper.label[0], min_val, max_val),)
 
+def power_spectrum(dwrapper):
+    """power spectrum of signal."""
+    dwrapper.data = np.abs(np.fft.fft(dwrapper.data))
+    length = len(dwrapper.data)
+    sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
+    dwrapper.dim = (1./sample_rate)*np.arange(length)/(length-1)
+    dwrapper.label = ('power_spectrum(%s)' %(dwrapper.label[0]),)
+
 ########################################################################
 ## scalar or vector -> same                                           ##
 ########################################################################

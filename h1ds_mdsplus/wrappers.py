@@ -241,7 +241,7 @@ dtype_mappings = {
                    'filters':(), #TODO: length filter
                    },
     'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
-                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.power_spectrum),
                    },
     'signal_2d':{'views':{'html':signal_2d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':[df.shape, df.transpose, df.flip_vertical, df.flip_horizontal],
