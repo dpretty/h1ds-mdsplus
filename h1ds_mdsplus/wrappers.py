@@ -223,9 +223,16 @@ dtype_mappings = {
     numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
-    numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+    'signal_1d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
                    },
+    'signal_2d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
+                   },
+    'signal_3d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+                   'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
+                   },
+
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
                    'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                    },
@@ -245,6 +252,19 @@ dtype_mappings = {
                        'filters':(),
                        }
     }
+
+def get_dtype_mappings(data):
+    if dtype_mappings.has_key(type(data)):
+        return dtype_mappings[type(data)]
+    else:
+        # assume we have a signal. 
+        # we treat signals differently depending on their dimension.
+        print data.ndim
+        return dtype_mappings['signal_%dd' %data.ndim]
+
+            
+
+
 
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
@@ -376,8 +396,8 @@ class DataWrapper(object):
                 self.dim_units = None
 
         self.filter_history = []
-        self.available_filters = dtype_mappings[type(self.data)]['filters']
-        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
+        self.available_filters = get_dtype_mappings(self.data)['filters']
+        self.available_views = get_dtype_mappings(self.data)['views'].keys()
         self.summary_dtype = sql_type_mapping.get(type(self.data))
         #print "... ", type(self.data), self.summary_dtype
         # TODO... labels need to have same dimension as data... and get from introspection where possible
@@ -394,12 +414,12 @@ class DataWrapper(object):
             filter_function(self, *args)
         self.filter_history.append((fid, filter_function, args))
         self.summary_dtype = sql_type_mapping.get(type(self.data))
-        self.available_filters = dtype_mappings[type(self.data)]['filters']
-        self.available_views = dtype_mappings[type(self.data)]['views'].keys()
+        self.available_filters = get_dtype_mappings(self.data)['filters']
+        self.available_views = get_dtype_mappings(self.data)['views'].keys()
 
     def get_view(self, view_name):
         # TODO: is there a need for more detailed logic than the simple datatype key, value mapping?
-        return dtype_mappings[type(self.data)]['views'].get(view_name, unsupported_view(view_name))
+        return get_dtype_mappings(self.data)['views'].get(view_name, unsupported_view(view_name))
         
 
 ########################################################################
