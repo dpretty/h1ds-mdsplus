@@ -150,6 +150,12 @@ def peak_to_peak(dwrapper):
     dwrapper.dim = None
     dwrapper.label = ('max(%(lab)s)-min(%(lab)s)' %{'lab':dwrapper.label[0]},)
 
+def n_signals(dwrapper):
+    """Single trace returns 1, images return > 1"""
+    dwrapper.data = np.int16(dwrapper.data.ndim)
+    dwrapper.dim = None
+    dwrapper.label = ('n_signals(%(lab)s)' %{'lab':dwrapper.label[0]},)
+
 ########################################################################
 ## signal -> signal                                                   ##
 ########################################################################
