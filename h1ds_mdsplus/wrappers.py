@@ -134,6 +134,10 @@ def signal_view_html(data):
     <div id="signal-overview" style="width:100%;height:100px"></div>
     """
 
+def signal_view_png(data):
+    """TODO: is this needed?"""
+    return data
+
 def clean_signal_for_serialization(data):
     view_data = {}
     view_data['data_units'] = str(data.units)
@@ -215,7 +219,7 @@ dtype_mappings = {
     numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
-    numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json},
+    numpy.ndarray:{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
                    },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},

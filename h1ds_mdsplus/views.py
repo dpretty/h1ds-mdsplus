@@ -161,6 +161,17 @@ class JSONNodeResponseMixin(NodeMixin):
         data_dict.update({'meta':html_metadata})
         return HttpResponse(json.dumps(data_dict), mimetype='application/json')
 
+class PNGNodeResponseMixin(NodeMixin):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        # TODO. 
+        mds_node = self.get_filtered_node(request)
+        data_dict = mds_node.get_view('png')
+        
+        return HttpResponse({}, mimetype='application/json')
+
     
 class HTMLNodeResponseMixin(NodeMixin):
 
