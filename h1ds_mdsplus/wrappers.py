@@ -128,10 +128,21 @@ def int_view_json(data, **kwargs):
     return int_view_serialized(data, mode='json', **kwargs)
 
 
-def signal_view_html(data):
+def signal_1d_view_html(data):
     return """
-    <div id="signal-placeholder" style="width:100%;height:300px;"></div>
-    <div id="signal-overview" style="width:100%;height:100px"></div>
+    <div id="signal-1d-placeholder" style="width:100%;height:300px;"></div>
+    <div id="signal-1d-overview" style="width:100%;height:100px"></div>
+    """
+
+def signal_2d_view_html(data):
+    return """
+    <div id="signal-2d-placeholder" style="width:100%;height:300px;"></div>
+    """
+
+def signal_3d_view_html(data):
+    return """
+    <div id="signal-3d-placeholder" style="width:100%;height:300px;"></div>
+    <div id="signal-3d-overview" style="width:100%;height:100px"></div>
     """
 
 def signal_view_png(data):
@@ -229,13 +240,13 @@ dtype_mappings = {
     numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
-    'signal_1d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+    'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
                    },
-    'signal_2d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
-                   'filters':[df.shape],
+    'signal_2d':{'views':{'html':signal_2d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+                   'filters':[df.shape, df.transpose, df.flip_vertical, df.flip_horizontal],
                    },
-    'signal_3d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+    'signal_3d':{'views':{'html':signal_3d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':[],
                    },
 
@@ -269,11 +280,6 @@ def get_dtype_mappings(data):
         # assume we have a signal. 
         # we treat signals differently depending on their dimension.
         return dtype_mappings['signal_%dd' %data.ndim]
-
-            
-
-
-
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.

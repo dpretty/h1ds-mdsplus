@@ -290,7 +290,31 @@ def shape(dwrapper):
                     "columns":dwrapper.data.shape[1]}
     dwrapper.dim = None
     dwrapper.label = ('shape(%s)' %(dwrapper.label[0]),)
+
+def transpose(dwrapper):
+    """Transpose a 2d array"""
+    dwrapper.data = np.transpose(dwrapper.data)
+    #TODO: how to treat dim?
+    dwrapper.label = ('transpose(%s)' %(dwrapper.label[0]),)
     
+def flip_vertical(dwrapper):
+    """Flip array vertically"""
+    tmp_data = dwrapper.data.copy()
+    for r in xrange(tmp_data.shape[0]/2):
+        dwrapper.data[r,:] = tmp_data[-(r+1),:]
+        dwrapper.data[-(r+1),:] = tmp_data[r,:]
+    #TODO: how to treat dim?
+    dwrapper.label = ('vertical_flip(%s)' %(dwrapper.label[0]),)
+
+def flip_horizontal(dwrapper):
+    """Flip array vertically"""
+    tmp_data = dwrapper.data.copy()
+    for c in xrange(tmp_data.shape[1]/2):
+        dwrapper.data[:,c] = tmp_data[:,-(c+1)]
+        dwrapper.data[:,-(c+1)] = tmp_data[:,c]
+    #TODO: how to treat dim?
+    dwrapper.label = ('horizontal_flip(%s)' %(dwrapper.label[0]),)
+
 
 ########################################################################
 ## Other                                                              ##
