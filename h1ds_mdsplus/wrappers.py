@@ -135,7 +135,11 @@ def signal_view_html(data):
     """
 
 def signal_view_png(data):
-    """TODO: is this needed?"""
+    """Make sure we return 2-d array"""
+    while data.data.ndim > 2:
+        data.data = data.data[0,:]
+    if data.data.ndim == 1:
+        data.data = numpy.array([data.data])
     return data
 
 def clean_signal_for_serialization(data):

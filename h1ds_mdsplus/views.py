@@ -1,5 +1,5 @@
-import re, json, inspect
-
+import re, json, inspect, StringIO
+import pylab
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
@@ -166,11 +166,11 @@ class PNGNodeResponseMixin(NodeMixin):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        # TODO. 
         mds_node = self.get_filtered_node(request)
-        data_dict = mds_node.get_view('png')
-        
-        return HttpResponse({}, mimetype='application/json')
+        data = mds_node.get_view('png')
+        img_buffer = StringIO.StringIO()
+        pylab.imsave(img_buffer, data.data, format='png')
+        return HttpResponse(img_buffer.getvalue(), mimetype='image/png')
 
     
 class HTMLNodeResponseMixin(NodeMixin):
@@ -192,12 +192,13 @@ class HTMLNodeResponseMixin(NodeMixin):
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
-class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin):
+class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNodeResponseMixin):
     """Dispatch to requested representation."""
 
     representations = {
         "html":HTMLNodeResponseMixin,
         "json":JSONNodeResponseMixin,
+        "png":PNGNodeResponseMixin,
         }
 
     def dispatch(self, request, *args, **kwargs):
