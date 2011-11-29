@@ -281,6 +281,18 @@ def exponent(dwrapper, value):
     dwrapper.label = ('%s^%s' %(dwrapper.label[0], value),)
     
 ########################################################################
+## 2d signals                                                         ##
+########################################################################
+
+def shape(dwrapper):
+    """Shape of image"""
+    dwrapper.data = {"rows":dwrapper.data.shape[0], 
+                    "columns":dwrapper.data.shape[1]}
+    dwrapper.dim = None
+    dwrapper.label = ('shape(%s)' %(dwrapper.label[0]),)
+    
+
+########################################################################
 ## Other                                                              ##
 ########################################################################
 

@@ -177,7 +177,9 @@ def dictionary_view_serialized(data, mode='xml', dict_only=False):
         # TODO: what's the proper way of getting dtype from MDS object?
         # some seem to have obj.dtype, some have obj.getDtype, some have
         # obj.mdsdype. And the signal create from filter is obj._dtype...
-        if value._dtype == _mdsdtypes.DTYPE_SIGNAL:
+        if not hasattr(value, '_dtype'): # TODO: this is a hack. clean it up.
+            view_data[key] = value
+        elif value._dtype == _mdsdtypes.DTYPE_SIGNAL:
             view_data[key] = clean_signal_for_serialization(value)
         else:
             # TODO: support other dtypes in signal
@@ -196,6 +198,10 @@ def signal_view_json(data, **kwargs):
 
 def dictionary_view_json(data, **kwargs):
     return dictionary_view_serialized(data, mode='json', **kwargs)
+
+def dictionary_view_html(data, **kwargs):
+    html_str = "<ul>"+"".join("<li><strong>%s</strong>: %s</li>" %(str(i[0]), str(i[1])) for i in data.data.items())+"</ul>"
+    return html_str
 
 
 def signal_view_bin(request, data):
@@ -227,7 +233,7 @@ dtype_mappings = {
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.mean, df.max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.n_signals),
                    },
     'signal_2d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
-                   'filters':[],
+                   'filters':[df.shape],
                    },
     'signal_3d':{'views':{'html':signal_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':[],
@@ -248,6 +254,9 @@ dtype_mappings = {
     numpy.uint8:{'views':{'html':generic_data_view, 'json':int_view_json},
                  'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                  },
+    dict:{'views':{'html':dictionary_view_html, 'json':dictionary_view_json},
+          'filters':[],},
+    
     type(Blacklist()):{'views':{'html':blacklist_view_html, 'json':blacklist_view_json},
                        'filters':(),
                        }
@@ -259,7 +268,6 @@ def get_dtype_mappings(data):
     else:
         # assume we have a signal. 
         # we treat signals differently depending on their dimension.
-        print data.ndim
         return dtype_mappings['signal_%dd' %data.ndim]
 
             
@@ -394,6 +402,13 @@ class DataWrapper(object):
                 self.dim_units = mds_object.dim_of().units
             except TdiException:
                 self.dim_units = None
+
+        # Hack. If we have a 3d signal with an empty dimension, reduce it to a 2d signal
+        # TODO: this is a hack. Should this really be default behaviour?
+        if hasattr(self.data, 'ndim'):
+            if self.data.ndim == 3:
+                if self.data.shape[0] == 1:
+                    self.data = self.data[0,:]
 
         self.filter_history = []
         self.available_filters = get_dtype_mappings(self.data)['filters']
