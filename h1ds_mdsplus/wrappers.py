@@ -131,7 +131,6 @@ def int_view_json(data, **kwargs):
 def signal_1d_view_html(data):
     return """
     <div id="signal-1d-placeholder" style="width:100%;height:300px;"></div>
-    <div id="signal-1d-overview" style="width:100%;height:100px"></div>
     """
 
 def signal_2d_view_html(data):
