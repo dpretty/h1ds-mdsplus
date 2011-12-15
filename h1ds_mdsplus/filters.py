@@ -228,6 +228,15 @@ def resample_minmax(dwrapper, n_bins):
         dwrapper.label = ('min', 'max',)
         dwrapper.data = np.array([min_data, max_data])
 
+def norm_dim_range(dwrapper, min_val, max_val):
+    """Reduce range of signal."""
+    _min_val = float(http_arg(dwrapper, min_val))
+    _max_val = float(http_arg(dwrapper, max_val))
+    min_e, max_e = int(_min_val*len(dwrapper.dim)), int(_max_val*len(dwrapper.dim))
+    dwrapper.data = dwrapper.data[min_e:max_e]
+    dwrapper.dim = dwrapper.dim[min_e:max_e]
+    dwrapper.label = ('normdim_range(%s, %s, %s)' %(dwrapper.label[0], min_val, max_val),)
+
 def dim_range(dwrapper, min_val, max_val):
     """Reduce range of signal."""
     _min_val = float(http_arg(dwrapper, min_val))
