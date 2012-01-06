@@ -4,7 +4,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
@@ -132,7 +132,14 @@ class NodeMixin(object):
     def get_node(self):
         tagname = self.kwargs.get('tagname', DEFAULT_TAGNAME)
         nodepath = self.kwargs.get('nodepath', DEFAULT_NODEPATH)
-        mds_tree = Tree(self.kwargs['tree'], int(self.kwargs['shot']), 'READONLY')
+        try:
+            mds_tree = Tree(self.kwargs['tree'], int(self.kwargs['shot']), 'READONLY')
+        except TreeException:
+            # If the  data cannot be  found, raise HTTP 404  error. HTTP
+            # 404 is  appropriate, as  the requested resource  cannot be
+            # found,  but may be  available in  the future  (i.e. future
+            # shot number)
+            raise Http404
         mds_path = url_path_components_to_mds_path(self.kwargs['tree'], tagname, nodepath)
         return NodeWrapper(mds_tree.getNode(mds_path))
 
