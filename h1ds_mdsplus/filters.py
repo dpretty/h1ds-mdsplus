@@ -101,8 +101,6 @@ def pulse_number(dwrapper, threshold):
     dwrapper.label = ('pulse_number(%s, %s)' %(dwrapper.label[0], threshold), )
 
 
-
-
 def max_val(dwrapper):
     """TODO: test for 2+ dimensional arrays"""
     dwrapper.data = np.max(dwrapper.data)
@@ -123,6 +121,15 @@ def max_of(dwrapper, value):
     else:
         dwrapper.data =  np.max([dwrapper.data, _value])
     dwrapper.label = ('max_of(%s, %s)' %(dwrapper.label[0], value),)
+
+def dim_of_max_val(dwrapper):
+    """Returns dim at signal peak.
+    
+    """
+    
+    dwrapper.data = dwrapper.dim[np.argmax(dwrapper.data)]
+    dwrapper.dim = None
+    dwrapper.label = ('dim_of_max_val(%s)' %dwrapper.label[0],)
 
 
 def mean(dwrapper):
