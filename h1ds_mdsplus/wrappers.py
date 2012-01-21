@@ -1,5 +1,6 @@
 import re, json
 from types import NoneType
+import xml.etree.ElementTree as etree
 import numpy
 
 from django.shortcuts import render_to_response
@@ -34,6 +35,31 @@ class Blacklist:
 
 tagname_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>.+)')
 mds_path_regex = re.compile('^\\\\(?P<tree>\w+?)::(?P<tagname>\w+?)[.|:](?P<nodepath>[\w.:]+)')
+
+def base_xml(shot, mds_node, node_info):
+    """Return simple XML tree without data.
+
+    This can be used as a base tree for XML responses
+    """
+    data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    # add shot info
+    shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
+    shot_time.text = str(mds_node.getTimeInserted().date)
+    
+
+    # add mds info
+    mds_tree = etree.SubElement(data_xml, 'mds_tree', attrib={})
+    mds_tree.text = node_info['input_tree']
+    mds_path = etree.SubElement(data_xml, 'mds_path', attrib={})
+    mds_path.text = repr(mds_node)
+
+    return data_xml
+
+
 
 def mds_to_url(mds_data_object):
     # I haven't figured out how to do a single regex which would get the
@@ -175,7 +201,7 @@ def signal_view_serialized(data, mode='xml', dict_only=False):
         return view_data
 
     if mode == 'xml':
-        pass
+        xml_data = base_xml()
     elif mode == 'json':
         return json.dumps(view_data)
     else:
@@ -206,31 +232,23 @@ def dictionary_view_serialized(data, mode='xml', dict_only=False):
 def signal_view_json(data, **kwargs):
     return signal_view_serialized(data, mode='json', **kwargs)
 
+def signal_view_xml(data, **kwargs):
+    return signal_view_serialized(data, mode='xml', **kwargs)
+
 def dictionary_view_json(data, **kwargs):
     return dictionary_view_serialized(data, mode='json', **kwargs)
+
+def dictionary_view_xml(data, **kwargs):
+    return dictionary_view_serialized(data, mode='xml', **kwargs)
 
 def dictionary_view_html(data, **kwargs):
     html_str = "<ul>"+"".join("<li><strong>%s</strong>: %s</li>" %(str(i[0]), str(i[1])) for i in data.data.items())+"</ul>"
     return html_str
 
 
-def signal_view_bin(request, data):
+def signal_view_bin(data):
     """Use Boyd's quantised compression to return binary data."""
-    discretised_data = discretise_array(data.mds_object.data())
-    dim = data.mds_object.dim_of().data()
-
-    signal = discretised_data['iarr'].tostring()
-    response = HttpResponse(signal, mimetype='application/octet-stream')
-    response['X-H1DS-signal-min'] = discretised_data['minarr']
-    response['X-H1DS-signal-delta'] = discretised_data['deltar']
-    response['X-H1DS-dim-t0'] = dim[0]
-    response['X-H1DS-dim-delta'] = dim[1]-dim[0]
-    response['X-H1DS-dim-length'] = len(dim)
-    response['X-H1DS-signal-units'] = data.mds_object.units
-    response['X-H1DS-signal-dtype'] = str(discretised_data['iarr'].dtype)
-    response['X-H1DS-dim-units'] = data.mds_object.dim_of().units
-    return response
-
+    return discretise_array(data.data)
 
 dtype_mappings = {
     NoneType:{'views':{'html':no_data_view_html, 'json':no_data_view_json}, 
@@ -239,7 +257,7 @@ dtype_mappings = {
     numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
-    'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
+    'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png, 'xml':signal_view_xml},
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.norm_dim_range, df.mean, df.max_val, df.dim_of_max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.power_spectrum),
                    },
     'signal_2d':{'views':{'html':signal_2d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},

@@ -1,5 +1,7 @@
 import re, json, inspect, StringIO
 import pylab
+import xml.etree.ElementTree as etree
+
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
@@ -168,6 +170,50 @@ class JSONNodeResponseMixin(NodeMixin):
         data_dict.update({'meta':html_metadata})
         return HttpResponse(json.dumps(data_dict), mimetype='application/json')
 
+class XMLNodeResponseMixin(NodeMixin):
+    """TODO: Generalise this for all datatypes"""
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        mds_node = self.get_filtered_node(request)
+        # TODO: this should be handled by wrappers
+        # however, at present mds_node.get_view
+        # calls get_view on the data object which
+        # doesn't ?? know about shot info, etc
+        # the proper fix might be to have wrappers
+        # take as args wrappers rather than data objects?
+        
+        data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
+                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+
+        # add shot info
+        shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+        shot_number.text = str(mds_node.mds_object.tree.shot)
+        shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
+        shot_time.text = str(mds_node.mds_object.getTimeInserted().date)
+        
+
+        # add mds info
+        mds_tree = etree.SubElement(data_xml, 'mds_tree', attrib={})
+        mds_tree.text = mds_node.mds_object.tree.name
+        mds_path = etree.SubElement(data_xml, 'mds_path', attrib={})
+        mds_path.text = repr(mds_node.mds_object)
+
+        signal = etree.SubElement(data_xml, 'data', attrib={'type':'signal'})
+
+        ## make xlink ? to signal binary 
+        ## for now, just text link
+        #### should use proper url joining rather than string hacking...
+        signal.text = request.build_absolute_uri()
+        if '?' in signal.text:
+            # it doesn't matter if we have multiple 'view' get queries - only the last one is used
+            signal.text += '&view=bin' 
+        else:
+            signal.text += '?view=bin'
+
+        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+
 class PNGNodeResponseMixin(NodeMixin):
 
     http_method_names = ['get']
@@ -178,6 +224,24 @@ class PNGNodeResponseMixin(NodeMixin):
         img_buffer = StringIO.StringIO()
         pylab.imsave(img_buffer, data.data, format='png')
         return HttpResponse(img_buffer.getvalue(), mimetype='image/png')
+
+class BinaryNodeResponseMixin(NodeMixin):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        mds_node = self.get_filtered_node(request)
+        disc_data = mds_node.get_view('bin')
+        response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream')
+        response['X-H1DS-signal-min'] = disc_data['minarr']
+        response['X-H1DS-signal-delta'] = disc_data['deltar']
+        response['X-H1DS-dim-t0'] = mds_node.data.dim[0]
+        response['X-H1DS-dim-delta'] = mds_node.data.dim[1]-mds_node.data.dim[0]
+        response['X-H1DS-dim-length'] = len(mds_node.data.dim)
+        response['X-H1DS-signal-units'] = mds_node.data.units
+        response['X-H1DS-signal-dtype'] = str(disc_data['iarr'].dtype)
+        response['X-H1DS-dim-units'] = mds_node.data.dim_units
+        return response
 
     
 class HTMLNodeResponseMixin(NodeMixin):
@@ -199,13 +263,15 @@ class HTMLNodeResponseMixin(NodeMixin):
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
-class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNodeResponseMixin):
+class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNodeResponseMixin, XMLNodeResponseMixin, BinaryNodeResponseMixin):
     """Dispatch to requested representation."""
 
     representations = {
         "html":HTMLNodeResponseMixin,
         "json":JSONNodeResponseMixin,
         "png":PNGNodeResponseMixin,
+        "xml":XMLNodeResponseMixin,
+        "bin":BinaryNodeResponseMixin,
         }
 
     def dispatch(self, request, *args, **kwargs):
