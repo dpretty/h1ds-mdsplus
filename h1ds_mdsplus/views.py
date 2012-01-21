@@ -436,3 +436,31 @@ class AJAXLatestShotView(View):
         latest_shot = get_latest_shot(tree_name)
         return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
 
+
+def request_url(request):
+    """Return the URL for the requested MDS parameters."""
+
+    shot = request.GET['shot']
+    path = request.GET['mds-path']
+    tree = request.GET['mds-tree']
+
+    
+    url_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    # add mds info
+    shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    mds_path = etree.SubElement(url_xml, 'mds_path', attrib={})
+    mds_path.text = path
+    mds_tree = etree.SubElement(url_xml, 'mds_tree', attrib={})
+    mds_tree.text = tree
+
+    
+    url_pre_path = '/mdsplus/%s/%d/TOP/' %(tree, int(shot)) 
+    url = url_pre_path + path.strip('.').strip(':').replace('.','/').replace(':','/')
+    
+    url_el = etree.SubElement(url_xml, 'mds_url', attrib={})
+    url_el.text = url
+
+    return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')

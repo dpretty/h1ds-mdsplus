@@ -3,6 +3,7 @@ from django.conf.urls.defaults import *
 from h1ds_mdsplus.views import NodeView, TreeOverviewView, RequestShotView, HomepageView
 from h1ds_mdsplus.views import AJAXLatestShotView, AJAXNodeNavigationView
 from h1ds_mdsplus.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
+from h1ds_mdsplus.views import request_url
 
 # special urls
 urlpatterns = patterns('',
@@ -11,6 +12,7 @@ urlpatterns = patterns('',
                        url(r'^_/update_filter$', UpdateFilterView.as_view(), name="update-filter"),
                        url(r'^_/remove_filter$', RemoveFilterView.as_view(), name="remove-filter"),
                        url(r'^_/request_shot$', RequestShotView.as_view(), name="mds-request-shot"),
+                       url(r'^_/request_url$', request_url, name="mds-request-url"),
                        url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="mds-latest-shot-for-default-tree"),
                        url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="mds-latest-shot"),
                        )
