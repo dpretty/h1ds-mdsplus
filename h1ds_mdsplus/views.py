@@ -1,4 +1,4 @@
-import re, json, inspect, StringIO
+import re, json, inspect, StringIO, csv
 import pylab
 import xml.etree.ElementTree as etree
 
@@ -170,6 +170,23 @@ class JSONNodeResponseMixin(NodeMixin):
         data_dict.update({'meta':html_metadata})
         return HttpResponse(json.dumps(data_dict), mimetype='application/json')
 
+class CSVNodeResponseMixin(NodeMixin):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        mds_node = self.get_filtered_node(request)
+        data = mds_node.get_view('csv')
+        
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=data.csv'
+
+        writer = csv.writer(response)
+        for i in data:
+            writer.writerow(map(str, i))
+        return response
+
+
 class XMLNodeResponseMixin(NodeMixin):
     """TODO: Generalise this for all datatypes"""
 
@@ -263,7 +280,7 @@ class HTMLNodeResponseMixin(NodeMixin):
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
-class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNodeResponseMixin, XMLNodeResponseMixin, BinaryNodeResponseMixin):
+class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNodeResponseMixin, XMLNodeResponseMixin, BinaryNodeResponseMixin, CSVNodeResponseMixin):
     """Dispatch to requested representation."""
 
     representations = {
@@ -272,6 +289,7 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin, PNGNo
         "png":PNGNodeResponseMixin,
         "xml":XMLNodeResponseMixin,
         "bin":BinaryNodeResponseMixin,
+        "csv":CSVNodeResponseMixin,
         }
 
     def dispatch(self, request, *args, **kwargs):
