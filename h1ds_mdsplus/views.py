@@ -162,6 +162,7 @@ class JSONNodeResponseMixin(NodeMixin):
         mds_node = self.get_filtered_node(request)
         data_dict = mds_node.get_view('json', dict_only=True)
         html_metadata = {
+            'mds_path':unicode(mds_node.mds_object.getFullPath()),
             'mds_tree':mds_node.mds_object.tree.name,
             'mds_shot':mds_node.mds_object.tree.shot,
             'mds_node_id':mds_node.mds_object.nid,
