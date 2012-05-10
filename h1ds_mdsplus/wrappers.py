@@ -204,6 +204,17 @@ def signal_view_serialized(data, mode='xml', dict_only=False):
         xml_data = base_xml()
     elif mode == 'json':
         return json.dumps(view_data)
+    elif mode == 'csv':
+        #output_text  = ""
+        #for line_i, dim in enumerate(view_data['dim']):
+        #    output_text += str(dim)+","+str(view_data["data"][line_i])+"\n"
+        #return output_text
+        # TODO: need better way of handingling response objects from here, rather than
+        # returning half baked data to views.py
+        output_data = []
+        for line_i, dim in enumerate(view_data['dim']):
+            output_data.append([dim, view_data['data'][line_i]])
+        return output_data
     else:
         raise Exception
 
@@ -235,6 +246,9 @@ def signal_view_json(data, **kwargs):
 def signal_view_xml(data, **kwargs):
     return signal_view_serialized(data, mode='xml', **kwargs)
 
+def signal_view_csv(data, **kwargs):
+    return signal_view_serialized(data, mode='csv', **kwargs)
+
 def dictionary_view_json(data, **kwargs):
     return dictionary_view_serialized(data, mode='json', **kwargs)
 
@@ -257,7 +271,7 @@ dtype_mappings = {
     numpy.string_:{'views':{'html':generic_data_view, 'json':string_view_json}, 
                    'filters':(), #TODO: length filter
                    },
-    'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png, 'xml':signal_view_xml},
+    'signal_1d':{'views':{'html':signal_1d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png, 'xml':signal_view_xml, 'csv':signal_view_csv},
                    'filters':(df.resample, df.resample_minmax, df.dim_range, df.norm_dim_range, df.mean, df.max_val, df.dim_of_max_val, df.element, df.multiply, df.divide, df.peak_to_peak, df.prl_lpn, df.subtract, df.add, df.max_of, df.first_pulse, df.pulse_number, df.pulse_width, df.exponent, df.dim_of, df.slanted_baseline, df.power_spectrum),
                    },
     'signal_2d':{'views':{'html':signal_2d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
