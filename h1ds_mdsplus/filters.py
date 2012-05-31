@@ -304,6 +304,30 @@ def exponent(dwrapper, value):
     dwrapper.data = dwrapper.data**_value
     dwrapper.label = ('%s^%s' %(dwrapper.label[0], value),)
     
+
+########################################################################
+## 1d signals -> 2d                                                   ##
+########################################################################
+
+def spectrogram(dwrapper, bin_size):
+    """spectrogram of signal."""
+    _bin_size =int(http_arg(dwrapper, bin_size))
+    sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
+
+    new_x_dim = dwrapper.dim[::_bin_size]
+    new_y_dim = (1./sample_rate)*np.arange(_bin_size,dtype=float)/(_bin_size-1)
+
+    new_data = []
+    for t_el in np.arange(len(dwrapper.data))[::_bin_size]:
+        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size])).tolist())
+
+    dwrapper.data = np.array(new_data)
+
+    dwrapper.dim = np.array([new_x_dim.tolist(), new_y_dim.tolist()])
+    dwrapper.label = ('spectrogram(%s,%d)' %(dwrapper.label[0],_bin_size),)
+
+
+
 ########################################################################
 ## 2d signals                                                         ##
 ########################################################################
