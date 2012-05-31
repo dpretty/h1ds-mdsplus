@@ -317,9 +317,11 @@ def spectrogram(dwrapper, bin_size):
     new_x_dim = dwrapper.dim[::_bin_size]
     new_y_dim = (1./sample_rate)*np.arange(_bin_size,dtype=float)/(_bin_size-1)
 
+    new_y_dim = new_y_dim[:_bin_size/2]
+
     new_data = []
     for t_el in np.arange(len(dwrapper.data))[::_bin_size]:
-        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)).tolist())
+        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size/2]).tolist())
 
     dwrapper.data = np.array(new_data)
 
