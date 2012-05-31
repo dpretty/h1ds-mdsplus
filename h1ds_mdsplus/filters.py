@@ -319,7 +319,7 @@ def spectrogram(dwrapper, bin_size):
 
     new_data = []
     for t_el in np.arange(len(dwrapper.data))[::_bin_size]:
-        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size])).tolist())
+        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)).tolist())
 
     dwrapper.data = np.array(new_data)
 
