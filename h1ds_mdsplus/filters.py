@@ -261,6 +261,32 @@ def power_spectrum(dwrapper):
     dwrapper.dim = (1./sample_rate)*np.arange(length)/(length-1)
     dwrapper.label = ('power_spectrum(%s)' %(dwrapper.label[0]),)
 
+# TODO: generalise energy limits between 1d and 2d signals.
+def x_axis_energy_limit(dwrapper, threshold):
+    """for 1d signal, limit range to include fraction of total energy"""
+    _threshold = float(http_arg(dwrapper, threshold))
+
+    ## TODO: need to get x,y dimensions standardised for matrix
+    ## which dimension should be which??
+
+    total_power = np.sum(dwrapper.data.ravel()**2)
+
+    removed_power = 0
+    while removed_power < (1-_threshold)*total_power:
+        lower = dwrapper.data[0]**2
+        upper = dwrapper.data[-1]**2
+        if (min(lower, upper) + removed_power) > _threshold*total_power:
+            break
+        if lower < upper:
+            dwrapper.data = dwrapper.data[1:]
+            dwrapper.dim = dwrapper.dim[1:]
+            removed_power += lower
+        else:
+            dwrapper.data = dwrapper.data[:-1]
+            dwrapper.dim = dwrapper.dim[:-1]
+            removed_power += upper
+    
+
 ########################################################################
 ## scalar or vector -> same                                           ##
 ########################################################################
@@ -317,11 +343,12 @@ def spectrogram(dwrapper, bin_size):
     new_x_dim = dwrapper.dim[::_bin_size]
     new_y_dim = (1./sample_rate)*np.arange(_bin_size,dtype=float)/(_bin_size-1)
 
-    new_y_dim = new_y_dim[:_bin_size/2]
+    #new_y_dim = new_y_dim[:_bin_size/2]
 
     new_data = []
     for t_el in np.arange(len(dwrapper.data))[::_bin_size]:
-        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size/2]).tolist())
+        #new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size/2]).tolist())
+        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size]).tolist())
 
     dwrapper.data = np.array(new_data)
 
@@ -365,6 +392,45 @@ def flip_horizontal(dwrapper):
     #TODO: how to treat dim?
     dwrapper.label = ('horizontal_flip(%s)' %(dwrapper.label[0]),)
 
+def norm_dim_range_2d(dwrapper, min_x_val, max_x_val, min_y_val, max_y_val):
+    """Reduce range of signal."""
+    _min_x_val = float(http_arg(dwrapper, min_x_val))
+    _max_x_val = float(http_arg(dwrapper, max_x_val))
+    _min_y_val = float(http_arg(dwrapper, min_y_val))
+    _max_y_val = float(http_arg(dwrapper, max_y_val))
+
+    min_xe, max_xe = int(_min_x_val*len(dwrapper.dim[0])), int(_max_x_val*len(dwrapper.dim[0]))
+    min_ye, max_ye = int(_min_y_val*len(dwrapper.dim[1])), int(_max_y_val*len(dwrapper.dim[1]))
+
+    dwrapper.data = dwrapper.data[min_xe:max_xe,min_ye:max_ye]
+    dwrapper.dim[0] = dwrapper.dim[0][min_xe:max_xe]
+    dwrapper.dim[1] = dwrapper.dim[1][min_ye:max_ye]
+    dwrapper.label = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(dwrapper.label[0], min_x_val, max_x_val,min_y_val,max_y_val),)
+
+def y_axis_energy_limit(dwrapper, threshold):
+    "2D reduce y-axis range to threshold*100% of total signal energy"
+    _threshold = float(http_arg(dwrapper, threshold))
+    
+    ## TODO: need to get x,y dimensions standardised for matrix
+    ## which dimension should be which??
+
+    total_power = np.sum(dwrapper.data.ravel()**2)
+
+    removed_power = 0
+    while removed_power < (1-_threshold)*total_power:
+        lower = np.sum(dwrapper.data[:,0]**2)
+        upper = np.sum(dwrapper.data[:,-1]**2)
+        if (min(lower, upper) + removed_power) > _threshold*total_power:
+            break
+        if lower < upper:
+            dwrapper.data = dwrapper.data[:,1:]
+            dwrapper.dim[1] = dwrapper.dim[1][1:]
+            removed_power += lower
+        else:
+            dwrapper.data = dwrapper.data[:,:-1]
+            dwrapper.dim[1] = dwrapper.dim[1][:-1]
+            removed_power += upper
+        
 
 ########################################################################
 ## Other                                                              ##

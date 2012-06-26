@@ -148,9 +148,9 @@ class NodeMixin(object):
     def get_filtered_node(self, request):
         mds_node = self.get_node()
         for fid, name, args, kwargs in get_filter_list(request):
-            if u'' in args:
-                messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+            #if u'' in args:
+            #    messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
+            #    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
             mds_node.data.apply_filter(fid, name, *args, **kwargs)
         return mds_node
 
