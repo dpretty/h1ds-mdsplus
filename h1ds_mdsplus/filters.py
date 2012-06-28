@@ -342,7 +342,6 @@ def spectrogram(dwrapper, bin_size):
         # have a guess...
         approx_bin_size = np.sqrt(len(dwrapper.dim))
         _bin_size=2**np.searchsorted(binary_powers, approx_bin_size)
-    print _bin_size
     sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
 
     new_x_dim = dwrapper.dim[::_bin_size]
