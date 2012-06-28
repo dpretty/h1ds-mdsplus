@@ -34,7 +34,7 @@ def float_or_array(data):
         return float(data)
 
 
-
+binary_powers = 2**np.arange(30)
 
 ########################################################################
 ## signal -> scalar                                                   ##
@@ -336,8 +336,13 @@ def exponent(dwrapper, value):
 ########################################################################
 
 def spectrogram(dwrapper, bin_size):
-    """spectrogram of signal."""
+    """spectrogram of signal. use bin_size=-1 for auto"""
     _bin_size =int(http_arg(dwrapper, bin_size))
+    if _bin_size < 0:
+        # have a guess...
+        approx_bin_size = np.sqrt(len(dwrapper.dim))
+        _bin_size=2**np.searchsorted(binary_powers, approx_bin_size)
+    print _bin_size
     sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
 
     new_x_dim = dwrapper.dim[::_bin_size]
@@ -416,21 +421,26 @@ def y_axis_energy_limit(dwrapper, threshold):
 
     total_power = np.sum(dwrapper.data.ravel()**2)
 
+    # if the result is going to be less than min_y_resolution then don't do it.
+    min_y_resolution = 10
+
+    low_counter = 0
+    high_counter = -1
     removed_power = 0
     while removed_power < (1-_threshold)*total_power:
-        lower = np.sum(dwrapper.data[:,0]**2)
-        upper = np.sum(dwrapper.data[:,-1]**2)
+        lower = np.sum(dwrapper.data[:,low_counter]**2)
+        upper = np.sum(dwrapper.data[:,high_counter]**2)        
         if (min(lower, upper) + removed_power) > _threshold*total_power:
             break
         if lower < upper:
-            dwrapper.data = dwrapper.data[:,1:]
-            dwrapper.dim[1] = dwrapper.dim[1][1:]
             removed_power += lower
+            low_counter += 1
         else:
-            dwrapper.data = dwrapper.data[:,:-1]
-            dwrapper.dim[1] = dwrapper.dim[1][:-1]
             removed_power += upper
-        
+            high_counter -= 1
+    if len(dwrapper.dim[1][low_counter:high_counter]) > min_y_resolution:
+        dwrapper.data = dwrapper.data[:,low_counter:high_counter]
+        dwrapper.dim[1] = dwrapper.dim[1][low_counter:high_counter]
 
 ########################################################################
 ## Other                                                              ##

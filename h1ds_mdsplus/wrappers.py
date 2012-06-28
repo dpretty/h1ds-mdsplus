@@ -83,6 +83,34 @@ def mds_to_url(mds_data_object):
                                            'shot':mds_data_object.tree.shot,
                                            'tagname':components.group('tagname')})
 
+#def signal_should_display_reduced_freq_range(data):
+#    """Don't display reduced freq range on very coherent signals.
+#
+#    (e.g. all power in only a small number of frequency bins.)
+#    """
+#    percentile = 0.995
+#    min_bins = 100
+#    print len(data)
+#
+#    if data.ndim == 1:
+#        fft = numpy.fft.fft(data)
+#        # up to nyq
+#        fft = fft[:len(fft)/2]
+#        # power 
+#        ps = (fft*fft.conjugate()).real
+#        # normalise
+#        ps /= numpy.sum(ps)
+#        ps.sort()
+#        # cumulatve, biggest fisrt
+#        ps = numpy.cumsum(ps[::-1])
+#        percentile_arg = numpy.searchsorted(ps, percentile)
+#        print "XXXX", percentile_arg
+#        if percentile_arg >= min_bins:
+#            return True
+#
+#    return False
+
+
 def generic_data_view(data):
     return unicode(data.data)
 
@@ -304,13 +332,16 @@ dtype_mappings = {
                        }
     }
 
+def is_signal(data):
+    # TODO: do a proper check..
+    return not dtype_mappings.has_key(type(data))
+
 def get_dtype_mappings(data):
-    if dtype_mappings.has_key(type(data)):
-        return dtype_mappings[type(data)]
-    else:
-        # assume we have a signal. 
-        # we treat signals differently depending on their dimension.
+    if is_signal(data):
         return dtype_mappings['signal_%dd' %data.ndim]
+    else:
+        return dtype_mappings[type(data)]
+
 
 def get_tree_tagnames(mds_data_object, cache_timeout = 10):
     ## TODO: increase default timeout after debugging.
@@ -506,6 +537,20 @@ class NodeWrapper(object):
 
         self.tagnames = get_tree_tagnames(self.mds_object)
         self.treelinks = get_trees()
+
+    #def get_display_info(self):
+    #    """
+    #    Infomation useful for displaying data, but perhaps not interesting for end user.
+    #    """
+    #    display_info = {
+    #        'reduce_signal_freq':False,
+    #        }
+    #
+    #    # If we have a signal, should we show spectral info?
+    #    if is_signal(self.data.data) and signal_should_display_reduced_freq_range(self.data.data):
+    #        display_info['reduce_signal_freq'] = True
+    #    return display_info
+
 
     def get_view(self, view_name, **kwargs):
         view_function = self.data.get_view(view_name)

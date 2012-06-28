@@ -147,6 +147,7 @@ class NodeMixin(object):
 
     def get_filtered_node(self, request):
         mds_node = self.get_node()
+        
         for fid, name, args, kwargs in get_filter_list(request):
             #if u'' in args:
             #    messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
@@ -272,6 +273,7 @@ class HTMLNodeResponseMixin(NodeMixin):
             'mds_tree':mds_node.mds_object.tree.name,
             'mds_shot':mds_node.mds_object.tree.shot,
             'mds_node_id':mds_node.mds_object.nid,
+            #'node_display_info':mds_node.get_display_info(),
             }
 
         return render_to_response('h1ds_mdsplus/node.html', 
