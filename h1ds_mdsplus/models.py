@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from celery.task.control import inspect
 from django.core.urlresolvers import reverse
@@ -47,3 +48,11 @@ class ListenerSignals(models.Model):
     def save(self, *args, **kwargs):
         super(ListenerSignals, self).save(*args, **kwargs)
         self.listener.start_listener()
+
+class UserSignals(models.Model):
+    """Save data URLs for user."""
+
+    user = models.ForeignKey(User)
+    url = models.URLField(max_length=2048)
+    name = models.CharField(max_length=1024)
+    ordering = models.IntegerField(blank=True)
