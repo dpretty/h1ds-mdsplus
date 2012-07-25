@@ -11,12 +11,14 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
 from django.views.generic import View, RedirectView
+from django.views.generic.edit import CreateView, DeleteView
 
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
 from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
+from h1ds_mdsplus.models import UserSignal, UserSignalForm
 import h1ds_mdsplus.filters as df
 
 DEFAULT_TAGNAME = "top"
@@ -108,7 +110,7 @@ def get_subtree(mds_node):
     except TypeError:
         desc = []
 
-    tree = {
+        tree = {
         "id":unicode(mds_node.nid),
         "name":unicode(mds_node.getNodeName()),
         "data":{"$dim":0.5*len(desc)+1, "$area":0.5*len(desc)+1, "$color":"#888"},
@@ -128,7 +130,26 @@ def get_nav_for_shot(tree, shot):
 ## Django views                                                       ##
 ########################################################################
 
+class UserSignalCreateView(CreateView):
 
+    form_class = UserSignalForm
+
+    def get_success_url(self):
+        return self.request.POST.get('url', "/")
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.user = self.request.user
+        self.object.ordering = 1 # TODO
+        self.object.url = self.request.POST.get('url', "/")
+        self.object.save()
+        return super(UserSignalCreateView, self).form_valid(form)
+
+class UserSignalDeleteView(DeleteView):
+    model = UserSignal
+
+    def get_success_url(self):
+        return self.request.POST.get('url', "/")
 
 class NodeMixin(object):
     def get_node(self):
@@ -269,16 +290,27 @@ class HTMLNodeResponseMixin(NodeMixin):
 
     def get(self, request, *args, **kwargs):
         mds_node = self.get_filtered_node(request)
+
+        # get any saved signals for the user
+        if request.user.is_authenticated():
+            user_signals = UserSignal.objects.filter(user=request.user)
+            user_signal_form = UserSignalForm()
+        else:
+            user_signals = []
+            user_signal_form = None            
         html_metadata = {
             'mds_tree':mds_node.mds_object.tree.name,
-            'mds_shot':mds_node.mds_object.tree.shot,
+            'mds_shot':mds_node.mds_object.tree.shot, 
             'mds_node_id':mds_node.mds_object.nid,
+            #'user_signals':user_signals,
             #'node_display_info':mds_node.get_display_info(),
             }
 
         return render_to_response('h1ds_mdsplus/node.html', 
                                   {'node_content':mds_node.get_view('html'),
                                    'html_metadata':html_metadata,
+                                   'user_signals':user_signals,
+                                   'user_signal_form':user_signal_form,
                                    'mdsnode':mds_node,
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))

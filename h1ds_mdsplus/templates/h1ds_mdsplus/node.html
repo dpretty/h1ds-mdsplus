@@ -235,9 +235,35 @@ tags and other mdsplus trees. -->
     </div>
   </div>
 
+  <div class="portlet" id="mds-portlet-savedsignals">
+    <div class="portlet-header">my signals</div>
+    <div class="portlet-content">
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url mds-add-user-signal %}">{% csrf_token %}
+	{{ user_signal_form.name }}	
+	<INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	<INPUT title="add" type="submit" value="+">
+      </form>
+      <div class="sidebar-section">
+      {% for sig in user_signals %}
+      <div class="sidebar-section-item"><a href="{{sig.url}}">{{sig}}</a>
+	<div class="sidebar-section-item-delete">
+	<FORM action="{% url mds-delete-user-signal sig.pk %}" method="post">{% csrf_token %}
+	  <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	  <INPUT title="go to shot" type="submit" value="-">
+	</FORM>
+	</div>
+      </div>
+      {% endfor %}
+      </div>
+      {% else %}
+      Log in to save and restore signals.
+      {% endif %}
+    </div>
+  </div>
+
   <!--  List the filters  which can  be applied  to the  (possibly already
 	filtered) data -->
-
   <div class="portlet" id="mds-portlet-filters">
     <div class="portlet-header">filters</div>
     <div class="portlet-content">

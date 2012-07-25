@@ -1,5 +1,5 @@
 from django.contrib import admin
-from models import MDSEventListener, ListenerSignals
+from models import MDSEventListener, ListenerSignals, UserSignal
 
 class ListenerSignalsInline(admin.TabularInline):
     model = ListenerSignals
@@ -11,4 +11,9 @@ class MDSEventListenerAdmin(admin.ModelAdmin):
 
 admin.site.register(MDSEventListener, MDSEventListenerAdmin)
 
+
+class UserSignalAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(UserSignal, UserSignalAdmin)
 

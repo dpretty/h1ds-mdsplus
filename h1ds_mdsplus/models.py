@@ -1,13 +1,16 @@
 from django.contrib.auth.models import User
 from django.db import models
-from celery.task.control import inspect
 from django.core.urlresolvers import reverse
+from django.forms import ModelForm
+from celery.task.control import inspect
 
 import MDSplus
 from MDSplus._treeshr import TreeException
 
 from h1ds_core.models import H1DSSignal
 from h1ds_mdsplus.tasks import mds_event_listener
+
+
 
 
 class MDSEventListener(models.Model):
@@ -49,10 +52,21 @@ class ListenerSignals(models.Model):
         super(ListenerSignals, self).save(*args, **kwargs)
         self.listener.start_listener()
 
-class UserSignals(models.Model):
+class UserSignal(models.Model):
     """Save data URLs for user."""
 
-    user = models.ForeignKey(User)
+    # TODO: unique together user, name
+
+    user = models.ForeignKey(User, editable=False)
     url = models.URLField(max_length=2048)
     name = models.CharField(max_length=1024)
     ordering = models.IntegerField(blank=True)
+
+    def __unicode__(self):
+        return unicode("%s" %(self.name))
+
+
+class UserSignalForm(ModelForm):
+    class Meta:
+        model = UserSignal
+        fields = ('name',)
