@@ -498,7 +498,8 @@ class AJAXLatestShotView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        latest_shot = get_latest_shot(tree_name)
+        #latest_shot = get_latest_shot(tree_name)
+        latest_shot = get_latest_shot()
         return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
 
 
