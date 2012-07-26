@@ -2,6 +2,9 @@ import inspect
 from django import template
 from django.core.urlresolvers import reverse
 from django.utils.html import escape
+
+from h1ds_mdsplus.views import shot_regex
+
 register = template.Library()
 
 class MDSDataTemplateNode(template.Node):
@@ -110,6 +113,10 @@ def show_active_filters(context, mdsnode):
 def show_info(context, mdsnode):
     return "TODO... dtype: %s" % escape(str(type(mdsnode.data.data)))
 
+@register.simple_tag(takes_context=True)
+def get_url_for_shot(context, url, new_shot):
+    input_shot = shot_regex.findall(url)[0]
+    return url.replace(str(input_shot), str(new_shot))
 
 
 class H1DSViewNode(template.Node):

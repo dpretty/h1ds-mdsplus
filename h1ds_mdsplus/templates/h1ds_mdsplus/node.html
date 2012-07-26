@@ -247,18 +247,20 @@ tags and other mdsplus trees. -->
       <div class="sidebar-section">
       {% for sig in user_signals %}
       <div class="sidebar-section-item">
-	<a href="{{sig.url}}">{{sig}}</a>
-
 	{% if sig.is_fixed_to_shot %}
-	[{{sig.shot}}]
+	<a href="{% get_url_for_shot sig.url sig.shot %}">{{sig}}</a>[{{sig.shot}}]
+	{% else %}
+	<a href="{% get_url_for_shot sig.url mdsnode.shot %}">{{sig}}</a>
 	{% endif %}
 
-	<a href="{% url mds-update-user-signal sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
 	<div class="sidebar-section-item-delete">
 	  <FORM action="{% url mds-delete-user-signal sig.pk %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	    <INPUT title="go to shot" type="submit" value="-">
 	  </FORM>
+	</div>
+	<div class="sidebar-section-item-edit">
+	  <a href="{% url mds-update-user-signal sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
 	</div>
 
       </div>
