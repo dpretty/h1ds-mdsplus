@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
 from django.views.generic import View, RedirectView
-from django.views.generic.edit import CreateView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
@@ -144,6 +144,18 @@ class UserSignalCreateView(CreateView):
         self.object.url = self.request.POST.get('url', "/")
         self.object.save()
         return super(UserSignalCreateView, self).form_valid(form)
+
+
+class UserSignalUpdateView(UpdateView):
+    model = UserSignal
+
+    def get_success_url(self):
+        return self.request.POST.get('redirect_url', "/")
+
+    def get_context_data(self, **kwargs):
+        context = super(UserSignalUpdateView, self).get_context_data(**kwargs)
+        context['redirect_url'] = self.request.GET.get('redirect_url', "/")
+        return context
 
 class UserSignalDeleteView(DeleteView):
     model = UserSignal

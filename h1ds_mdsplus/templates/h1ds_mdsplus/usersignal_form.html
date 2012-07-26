@@ -1,3 +1,9 @@
 {% extends "h1ds_mdsplus/mdsplus_base.html" %}
-{% block mdscontent %}{{form}}{% endblock %}
+{% block mdscontent %}
+<form action="{% url mds-update-user-signal object.pk %}" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="hidden" id="redirect_url" name="redirect_url" value="{{ redirect_url }}">
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}
 

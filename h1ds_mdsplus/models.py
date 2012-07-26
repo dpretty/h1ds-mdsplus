@@ -61,6 +61,8 @@ class UserSignal(models.Model):
     url = models.URLField(max_length=2048)
     name = models.CharField(max_length=1024)
     ordering = models.IntegerField(blank=True)
+    is_fixed_to_shot = models.BooleanField(default=True)
+    shot = models.IntegerField(blank=True, null=True)
 
     def __unicode__(self):
         return unicode("%s" %(self.name))
@@ -69,4 +71,4 @@ class UserSignal(models.Model):
 class UserSignalForm(ModelForm):
     class Meta:
         model = UserSignal
-        fields = ('name',)
+        fields = ('name','is_fixed_to_shot',)

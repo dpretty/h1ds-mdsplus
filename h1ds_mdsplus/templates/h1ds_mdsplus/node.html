@@ -240,19 +240,27 @@ tags and other mdsplus trees. -->
     <div class="portlet-content">
       {% if user.is_authenticated %}
       <form method="post" action="{% url mds-add-user-signal %}">{% csrf_token %}
-	{{ user_signal_form.name }}	
+	{{ user_signal_form.name }}
 	<INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	<INPUT title="add" type="submit" value="+">
       </form>
       <div class="sidebar-section">
       {% for sig in user_signals %}
-      <div class="sidebar-section-item"><a href="{{sig.url}}">{{sig}}</a>
+      <div class="sidebar-section-item">
+	<a href="{{sig.url}}">{{sig}}</a>
+
+	{% if sig.is_fixed_to_shot %}
+	[{{sig.shot}}]
+	{% endif %}
+
+	<a href="{% url mds-update-user-signal sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
 	<div class="sidebar-section-item-delete">
-	<FORM action="{% url mds-delete-user-signal sig.pk %}" method="post">{% csrf_token %}
-	  <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
-	  <INPUT title="go to shot" type="submit" value="-">
-	</FORM>
+	  <FORM action="{% url mds-delete-user-signal sig.pk %}" method="post">{% csrf_token %}
+	    <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	    <INPUT title="go to shot" type="submit" value="-">
+	  </FORM>
 	</div>
+
       </div>
       {% endfor %}
       </div>
