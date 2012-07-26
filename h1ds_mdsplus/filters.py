@@ -356,7 +356,21 @@ def spectrogram(dwrapper, bin_size):
 
     dwrapper.data = np.array(new_data)
 
-    dwrapper.dim = np.array([new_x_dim.tolist(), new_y_dim.tolist()])
+    # TODO: this is a hack because I don't properly understand how numpy
+    # determines dtypes - if new x and y dims are the same then it will have
+    # dtype of float, etc. if different length it will be object dtype
+    # object dtype is what we are using, as we can get different lengths for
+    # different dimensions. (Should we even use a numpy array? How does MDSplus
+    # perfer to deal with higher dim signals? - we should use the same format as 
+    # MDSplus). Anyway - it seems that even if we assert dtype to be object
+    # >>> q=np.array([[1,2,3],[2,3,4]], dtype=np.object)
+    # >>> q[1] = q[1][:2] ** fails
+    # it fails when we later try and have different shaped elements.
+    # So, let's create dwrapper.dim as something we know we can resizt
+    dwrapper.dim = np.array([[None],[None, None]])
+    dwrapper.dim[0] = new_x_dim.tolist()
+    dwrapper.dim[1] = new_y_dim.tolist()
+
     dwrapper.label = ('spectrogram(%s,%d)' %(dwrapper.label[0],_bin_size),)
 
 

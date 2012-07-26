@@ -3,6 +3,8 @@ import os, sys
 import MDSplus
 import numpy
 
+SIGNAL_LENGTH = 2**16
+
 def create_tree(tree_path):
     if not os.path.exists(tree_path):
         os.mkdir(tree_path)
@@ -19,8 +21,8 @@ def create_tree(tree_path):
         node_a.addNode('node_AA')
         node_a.addNode('node_AB')
 
-        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=1024)), 
-                             None, MDSplus.makeArray(0.1*numpy.arange(1024)))
+        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)), 
+                             None, MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH)))
         node_a.putData(sig)
 
         node_aa = t.getNode('\\test::top.node_A.node_AA')
