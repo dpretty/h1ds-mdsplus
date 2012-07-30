@@ -34,7 +34,7 @@ def create_tree(tree_path):
 
 class Command(BaseCommand):
     args = '<treepath>'
-    help = 'Creates a test mds tree at trepath'
+    help = 'Creates a test mds tree at treepath'
 
     def handle(self, *args, **options):
         create_tree(args[0])
