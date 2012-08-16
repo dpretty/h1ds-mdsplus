@@ -10,7 +10,7 @@ def http_arg(dwrapper, arg):
         # make sure we get the JSON view, in case the user didn't add view=json
         # Split URL into [scheme, netloc, path, params, query, fragments]
         parsed_url = urlparse(url)
-        
+
         # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
         parsed_url_list = [i for i in parsed_url]
 
@@ -43,8 +43,8 @@ binary_powers = 2**np.arange(30)
 def first_pulse(dwrapper, threshold):
     """Return first dimension (i.e. time) when the signal is greater than threshold.
 
-    threshold can be a number or 'mid'. 
-    threshold = 'mid' will use (max(signal)+min(signal))/2 
+    threshold can be a number or 'mid'.
+    threshold = 'mid' will use (max(signal)+min(signal))/2
     """
 
     _threshold = http_arg(dwrapper, threshold)
@@ -52,7 +52,7 @@ def first_pulse(dwrapper, threshold):
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
         _threshold = float(_threshold)
-        
+
     first_element = np.where(dwrapper.data>_threshold)[0][0]
     dwrapper.data = dwrapper.dim[first_element]
     dwrapper.dim = None
@@ -61,14 +61,14 @@ def first_pulse(dwrapper, threshold):
 def pulse_width(dwrapper, threshold):
     """
     pulse width...
-    
+
     """
     _threshold = http_arg(dwrapper, threshold)
     if _threshold.lower() == 'mid':
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
         _threshold = float(_threshold)
-        
+
     t = dwrapper.dim[dwrapper.data>_threshold]
     end1 = dwrapper.dim[(dwrapper.data[:-1]-dwrapper.data[1:])>_threshold]
 
@@ -82,18 +82,18 @@ def pulse_width(dwrapper, threshold):
 def pulse_number(dwrapper, threshold):
     """
     number of pulses...??
-    
+
     """
     _threshold = http_arg(dwrapper, threshold)
     if _threshold.lower() == 'mid':
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
         _threshold = float(_threshold)
-        
+
     t = dwrapper.dim[dwrapper.data>_threshold]
     end1 = dwrapper.dim[(dwrapper.data[:-1]-dwrapper.data[1:])>_threshold]
-    
-    # TODO: should no need to cast this as int32, but there is some bizarre problem 
+
+    # TODO: should no need to cast this as int32, but there is some bizarre problem
     # with dtype_mapping key... without casting the result of np.min, type(dwrapper.data)
     # says it is numpy.int32, but it is somehow different to the numpy.int32 in the dtype_mapping key.
     dwrapper.data = np.int32(np.min([t.shape[0], end1.shape[0]]))
@@ -106,14 +106,14 @@ def max_val(dwrapper):
     dwrapper.data = np.max(dwrapper.data)
     dwrapper.dim = None
     dwrapper.label = ('max(%s)' %dwrapper.label[0],)
-    
+
 
 def max_of(dwrapper, value):
     """Returns max(data, value).
-    
+
     if the data is an array, an array is returned with each element having max(data[element], value)
     value should be a float
-    
+
     """
     _value = float(http_arg(dwrapper, value))
     if isinstance(dwrapper.data, np.ndarray):
@@ -124,9 +124,9 @@ def max_of(dwrapper, value):
 
 def dim_of_max_val(dwrapper):
     """Returns dim at signal peak.
-    
+
     """
-    
+
     dwrapper.data = dwrapper.dim[np.argmax(dwrapper.data)]
     dwrapper.dim = None
     dwrapper.label = ('dim_of_max_val(%s)' %dwrapper.label[0],)
@@ -178,7 +178,7 @@ def slanted_baseline(dwrapper, window):
     _window = int(http_arg(dwrapper, window))
     start = np.mean(dwrapper.data[:_window])
     end = np.mean(dwrapper.data[-_window:])
-    
+
     baseline = start + (end-start)*np.arange(dwrapper.data.shape[0], dtype=float)/(dwrapper.data.shape[0]-1)
     dwrapper.data -= baseline
     dwrapper.label = ('slanted_baseline(%(lab)s, %(win)s)' %{'lab':dwrapper.label[0], 'win':window},)
@@ -198,7 +198,7 @@ def _do_prl_lpn(signal, dim, f0, order):
 
 def prl_lpn(dwrapper, f0, order):
     """prl_lpn
-    
+
     TODO: only working for order = 1
     """
     _f0 = float(http_arg(dwrapper, f0))
@@ -210,12 +210,12 @@ def resample(dwrapper, max_samples):
     _max_samples = int(http_arg(dwrapper, max_samples))
     signal_length = dwrapper.data.T.shape[0]
     delta_sample = signal_length/_max_samples
-        
+
     # put trailing [:max_samples] in case we get an extra one at the end
     dwrapper.data = dwrapper.data[::delta_sample][:_max_samples]
     dwrapper.dim = dwrapper.dim[::delta_sample][:_max_samples]
     dwrapper.label = ('resample(%s, %s)' %(dwrapper.label[0], max_samples),)
-    
+
 
 def resample_minmax(dwrapper, n_bins):
     """TODO: only works for 1D array..."""
@@ -255,7 +255,8 @@ def dim_range(dwrapper, min_val, max_val):
 
 def power_spectrum(dwrapper):
     """power spectrum of signal."""
-    dwrapper.data = np.abs(np.fft.fft(dwrapper.data))
+    output_size = 2**np.searchsorted(binary_powers, dwrapper.data.shape[0])
+    dwrapper.data = np.abs(np.fft.fft(dwrapper.data, n=output_size))
     length = len(dwrapper.data)
     sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
     dwrapper.dim = (1./sample_rate)*np.arange(length)/(length-1)
@@ -285,7 +286,7 @@ def x_axis_energy_limit(dwrapper, threshold):
             dwrapper.data = dwrapper.data[:-1]
             dwrapper.dim = dwrapper.dim[:-1]
             removed_power += upper
-    
+
 
 ########################################################################
 ## scalar or vector -> same                                           ##
@@ -293,9 +294,9 @@ def x_axis_energy_limit(dwrapper, threshold):
 
 def multiply(dwrapper, factor):
     """Multiply data by scale factor"""
-    
+
     _factor = float_or_array(http_arg(dwrapper, factor))
-    
+
     dwrapper.data = _factor*dwrapper.data
     dwrapper.label = ('%s*(%s)' %(factor, dwrapper.label[0]),)
 
@@ -329,7 +330,7 @@ def exponent(dwrapper, value):
     _value =float(http_arg(dwrapper, value))
     dwrapper.data = dwrapper.data**_value
     dwrapper.label = ('%s^%s' %(dwrapper.label[0], value),)
-    
+
 
 ########################################################################
 ## 1d signals -> 2d                                                   ##
@@ -361,7 +362,7 @@ def spectrogram(dwrapper, bin_size):
     # dtype of float, etc. if different length it will be object dtype
     # object dtype is what we are using, as we can get different lengths for
     # different dimensions. (Should we even use a numpy array? How does MDSplus
-    # perfer to deal with higher dim signals? - we should use the same format as 
+    # perfer to deal with higher dim signals? - we should use the same format as
     # MDSplus). Anyway - it seems that even if we assert dtype to be object
     # >>> q=np.array([[1,2,3],[2,3,4]], dtype=np.object)
     # >>> q[1] = q[1][:2] ** fails
@@ -381,7 +382,7 @@ def spectrogram(dwrapper, bin_size):
 
 def shape(dwrapper):
     """Shape of image"""
-    dwrapper.data = {"rows":dwrapper.data.shape[0], 
+    dwrapper.data = {"rows":dwrapper.data.shape[0],
                     "columns":dwrapper.data.shape[1]}
     dwrapper.dim = None
     dwrapper.label = ('shape(%s)' %(dwrapper.label[0]),)
@@ -391,7 +392,7 @@ def transpose(dwrapper):
     dwrapper.data = np.transpose(dwrapper.data)
     #TODO: how to treat dim?
     dwrapper.label = ('transpose(%s)' %(dwrapper.label[0]),)
-    
+
 def flip_vertical(dwrapper):
     """Flip array vertically"""
     tmp_data = dwrapper.data.copy()
@@ -428,7 +429,7 @@ def norm_dim_range_2d(dwrapper, min_x_val, max_x_val, min_y_val, max_y_val):
 def y_axis_energy_limit(dwrapper, threshold):
     "2D reduce y-axis range to threshold*100% of total signal energy"
     _threshold = float(http_arg(dwrapper, threshold))
-    
+
     ## TODO: need to get x,y dimensions standardised for matrix
     ## which dimension should be which??
 
@@ -442,7 +443,7 @@ def y_axis_energy_limit(dwrapper, threshold):
     removed_power = 0
     while removed_power < (1-_threshold)*total_power:
         lower = np.sum(dwrapper.data[:,low_counter]**2)
-        upper = np.sum(dwrapper.data[:,high_counter]**2)        
+        upper = np.sum(dwrapper.data[:,high_counter]**2)
         if (min(lower, upper) + removed_power) > _threshold*total_power:
             break
         if lower < upper:
