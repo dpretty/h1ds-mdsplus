@@ -29,7 +29,7 @@ tags and other mdsplus trees. -->
       <div class="sidebarcontent">
 	<FORM action="{% url mds-request-shot %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="Shot number...">
+	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="Shot #" size="8">
 	</FORM>
       </div>
       <div class="sidebarcontent">
