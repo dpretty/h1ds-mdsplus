@@ -9,6 +9,7 @@ from django.conf import settings
 from h1ds_mdsplus.models import MDSEventListener
 
 MODULE_DOC_NAME = "MDSPlus"
+TEST_TREE_NAME = "test"
 
 for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]

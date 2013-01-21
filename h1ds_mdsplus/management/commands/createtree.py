@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 import os, sys
 import MDSplus
 import numpy
+from h1ds_mdsplus.management.commands._utils import create_shot
 
 SIGNAL_LENGTH = 2**16
 
