@@ -308,7 +308,9 @@ dtype_mappings = {
     'signal_3d':{'views':{'html':signal_3d_view_html, 'bin':signal_view_bin, 'json':signal_view_json, 'png':signal_view_png},
                    'filters':[],
                    },
-
+    'string_array_1d':{'views':{'html':generic_data_view, 'json':string_view_json}, 
+                   'filters':(), #TODO: length filter
+                   },
     numpy.float32:{'views':{'html':generic_data_view, 'json':float_view_json},
                    'filters':(df.multiply, df.divide, df.subtract, df.add, df.max_of, df.exponent),
                    },
@@ -338,6 +340,16 @@ def is_signal(data):
 
 def get_dtype_mappings(data):
     if is_signal(data):
+        try:
+            if 'string' in data.dtype.name:
+                # is string array
+                # TODO: yuk. do better check.
+                return dtype_mappings['string_array_%dd' %data.ndim]
+        except:
+            # in case data.dtype.name doesn't exist?
+            # TODO. can we be sure or make sure it exists?
+            # TODO. are there other non-numeric arrays to check for?
+            pass
         return dtype_mappings['signal_%dd' %data.ndim]
     else:
         return dtype_mappings[type(data)]
