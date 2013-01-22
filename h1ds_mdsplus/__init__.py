@@ -5,6 +5,7 @@ import numpy
 import MDSplus
 from MDSplus._treeshr import TreeException
 from django.db.utils import DatabaseError
+from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 from h1ds_mdsplus.models import MDSEventListener
 
@@ -32,11 +33,17 @@ try:
     for event_listener in MDSEventListener.objects.all():
         event_listener.start_listener()
 
-except DatabaseError:
-    # A DatabaseError is raised when we try to syncdb,  or migrate the database
-    # when no database exists. This appears to be because syncdb/migrate import
-    # the module, and the module tries to read the (non-existant) database when
-    # we call MDSPlusTree.objects.all(). 
+except (DatabaseError, ImproperlyConfigured):
+    # A DatabaseError is raised when we  try to syncdb, or migrate the
+    # database when  no database  exists. This  appears to  be because
+    # syncdb/migrate import the  module, and the module  tries to read
+    # the      (non-existant)      database     when      we      call
+    # MDSPlusTree.objects.all().
+    #
+    # ImproperlyConfigured is  raised when no  database is set  in the
+    # settings.    e.g.  if   we   import   h1ds_mdsplus  for   sphinx
+    # documentation we use the basic  settings.py which doesn't have a
+    # database specified which raises this exception.
     #
     # TODO: Find a better solution.
     # 

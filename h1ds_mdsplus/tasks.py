@@ -12,3 +12,8 @@ def mds_event_listener(server, event_name, h1ds_signal_instance):
     event_instance = LocalMDSEvent(event_name)    
     while True:
         time.sleep(10)
+
+
+@task(track_started=True)
+def track_latest_shot():
+    pass
