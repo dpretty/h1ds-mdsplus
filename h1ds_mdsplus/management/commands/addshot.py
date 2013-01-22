@@ -14,4 +14,3 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         latest_shot = get_latest_shot(TEST_TREE_NAME)
         create_test_shot(latest_shot+1, TEST_TREE_NAME)
-
