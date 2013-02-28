@@ -15,9 +15,12 @@ TEST_TREE_NAME = "test"
 for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]
 
-def get_trees_from_env():
+def get_trees_from_env(use_config_trees_only=True):
     trees = []
-    env_paths = [i for i in os.environ.keys() if i.lower().endswith('_path')]
+    if use_config_trees_only:
+        env_paths = [i+"_path" for i in settings.EXTRA_MDS_TREES]
+    else:
+        env_paths = [i for i in os.environ.keys() if i.lower().endswith('_path')]
     for path in env_paths:
         tree_name = path[:-5]
         try:
