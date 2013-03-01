@@ -10,6 +10,10 @@ from django.conf import settings
 from h1ds_mdsplus.models import MDSEventListener
 
 MODULE_DOC_NAME = "MDSPlus"
+if hasattr(settings, "H1DS_MDSPLUS_ROOT_URL"):
+    MODULE_ROOT_URL = settings.H1DS_MDSPLUS_ROOT_URL
+else:
+    MODULE_ROOT_URL = "mdsplus" 
 TEST_TREE_NAME = "test"
 
 for config_tree in settings.EXTRA_MDS_TREES:
