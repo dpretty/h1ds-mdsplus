@@ -26,7 +26,7 @@ def do_ping_shot_tracker():
         def __init__(self, shot_number):
             self.shot_number = shot_number
         def send_event(self):
-            h1ds_signal(sender=self, h1ds_signal="new_shot", value=self.shot_number)
+            h1ds_signal.send(sender=self, h1ds_signal="new_shot", value=self.shot_number)
     while True:
         time.sleep(settings.SHOT_TRACKER_PING_INTERVAL)
         new_shot_number = t.getCurrent(settings.DEFAULT_MDS_TREE)
