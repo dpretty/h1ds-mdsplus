@@ -8,6 +8,7 @@ from django.db.utils import DatabaseError
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 from h1ds_mdsplus.models import MDSEventListener
+from h1ds_mdsplus.tasks import track_latest_shot
 
 MODULE_DOC_NAME = "MDSPlus"
 if hasattr(settings, "H1DS_MDSPLUS_ROOT_URL"):
@@ -56,6 +57,9 @@ except (DatabaseError, ImproperlyConfigured):
     # 
     # TODO: we have now removed MDSPlusTree - is this still a problem?
     pass
+
+#start latest shot tracker
+track_latest_shot.delay()
 
 
 sql_type_mapping = {

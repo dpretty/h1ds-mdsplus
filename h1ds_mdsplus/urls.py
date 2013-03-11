@@ -21,7 +21,7 @@ urlpatterns = patterns('',
                        url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="mds-latest-shot-for-default-tree"),
                        url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="mds-latest-shot"),
                        ## testing:
-                       #url(r'^_/test_stream/$', TestStreamView.as_view(), name="mds-test-stream"),
+                       url(r'^_/test_stream/$', TestStreamView.as_view(), name="mds-test-stream"),
                        )
 
 urlpatterns += patterns('',

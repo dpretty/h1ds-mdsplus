@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, StreamingHttpResponse
 from django.contrib import messages
 from django.conf import settings
 from django.core.cache import cache
@@ -133,9 +133,21 @@ def get_nav_for_shot(tree, shot):
 ########################################################################
 ## Testing
 ########################################################################
+import time
+def test_stream():
+    for x in xrange(100):
+        yield "%s\n" %x
+        time.sleep(1)
 
-class TestStreamView():
-    pass
+
+        
+class TestStreamView(View):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        return StreamingHttpResponse(test_stream())
+
 
 
 ########################################################################
