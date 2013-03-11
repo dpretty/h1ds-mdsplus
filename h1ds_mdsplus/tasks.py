@@ -5,6 +5,7 @@ from django.conf import settings
 import MDSplus
 from celery.decorators import task
 from h1ds_core.signals import h1ds_signal
+from h1ds_core.models import H1DSSignal
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +20,14 @@ def mds_event_listener(server, event_name, h1ds_signal_instance):
         time.sleep(10)
 
 
-def do_ping_shot_tracker():
+def do_ping_shot_tracker(new_shot_signal):
     t =  MDSplus.Tree()
     current_shot = t.getCurrent(settings.DEFAULT_MDS_TREE)
     class NewShotEvent(object):
         def __init__(self, shot_number):
             self.shot_number = shot_number
         def send_event(self):
-            h1ds_signal.send(sender=self, h1ds_sig="new_shot", value=self.shot_number)
+            h1ds_signal.send(sender=self, h1ds_sig=new_shot_signal, value=self.shot_number)
     while True:
         time.sleep(settings.SHOT_TRACKER_PING_INTERVAL)
         new_shot_number = t.getCurrent(settings.DEFAULT_MDS_TREE)
@@ -42,5 +43,8 @@ def do_ping_shot_tracker():
 def track_latest_shot():
     if not hasattr(settings, "SHOT_TRACKER"):
         return
+    # if there is no new_shot instance of H1DSSignal, create it.
+    new_shot_instance, created = H1DSSignal.objects.get_or_create(name="new_shot", description="New Shot")
+
     if settings.SHOT_TRACKER == "ping":
-        do_ping_shot_tracker()
+        do_ping_shot_tracker(new_shot_instance)
