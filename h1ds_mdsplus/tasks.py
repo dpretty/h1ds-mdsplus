@@ -1,8 +1,12 @@
 import time, os
+import logging
+
 from django.conf import settings
 import MDSplus
 from celery.decorators import task
 from h1ds_core.signals import h1ds_signal
+
+logger = logging.getLogger(__name__)
 
 @task(track_started=True)
 def mds_event_listener(server, event_name, h1ds_signal_instance):
@@ -30,6 +34,8 @@ def do_ping_shot_tracker():
             new_shot_event = NewShotEvent(new_shot_number)
             new_shot_event.send_event()
             current_shot = new_shot_number
+            logger.debug("NEW SHOT: {}".format(current_shot))
+            
 
 
 @task(track_started=True)
