@@ -148,14 +148,14 @@ def test_stream():
         logger.debug("received signal")
         latest_shot = int(kwargs['value'])
 
-    yield latest_shot
+    yield "{}\n".format(latest_shot)
     tmp = latest_shot
     while True:
         time.sleep(1)
         if tmp != latest_shot:
             logger.debug("changed shot")
             tmp = latest_shot
-            yield latest_shot
+            yield "{}\n".format(latest_shot)
         
 
 #
