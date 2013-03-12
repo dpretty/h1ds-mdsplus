@@ -22,7 +22,7 @@ def mds_event_listener(server, event_name, h1ds_signal_instance):
 
 
 def do_ping_shot_tracker():
-    t =  MDSplus.Tree()
+    t =  MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
     current_shot = t.getCurrent(settings.DEFAULT_MDS_TREE)
     #class NewShotEvent(object):
     #    def __init__(self, shot_number):
