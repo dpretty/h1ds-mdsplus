@@ -41,10 +41,13 @@ def do_ping_shot_tracker(new_shot_signal):
 
 @task(track_started=True)
 def track_latest_shot():
+    logger.debug("started track_latest_shot")
     if not hasattr(settings, "SHOT_TRACKER"):
         return
+    logger.debug("settings.SHOT_TRACKER: {}".format(settings.SHOT_TRACKER))
     # if there is no new_shot instance of H1DSSignal, create it.
     new_shot_instance, created = H1DSSignal.objects.get_or_create(name="new_shot", description="New Shot")
+    logger.debug("new_shot_instance: {}".format(str(new_shot_instance)))
 
     if settings.SHOT_TRACKER == "ping":
         do_ping_shot_tracker(new_shot_instance)
