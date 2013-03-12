@@ -37,7 +37,7 @@ class NewShotGenerator(object):
         while self.last_value == self.current_shot:
             time.sleep(1)
         self.last_value = self.current_shot
-        yield self.current_value
+        return self.current_value
 
 def _new_shot_generator():
     _latest_shot = None
