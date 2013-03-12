@@ -134,20 +134,26 @@ def get_nav_for_shot(tree, shot):
 ## Testing
 ########################################################################
 import time
+import logging
 from h1ds_core.signals import h1ds_signal, NewShotEvent
 from django.dispatch import receiver
 
+logger = logging.getLogger("default")
+
 def test_stream():
-    latest_shot = None
+    latest_shot = get_latest_shot
     
     @receiver(h1ds_signal, sender=NewShotEvent)
     def update_shot(self, sender, **kwargs):
+        logger.debug("received signal")
         latest_shot = int(kwargs['value'])
 
+    yield latest_shot
     tmp = latest_shot
     while True:
         time.sleep(1)
         if tmp != latest_shot:
+            logger.debug("changed shot")
             tmp = latest_shot
             yield latest_shot
         
