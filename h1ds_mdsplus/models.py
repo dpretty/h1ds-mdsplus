@@ -18,11 +18,11 @@ logger = logging.getLogger("default")
 from django.dispatch import receiver
 
 
-class NewShotGenerator(object):
+class _NewShotGenerator(object):
     def __init__(self):
         logger.debug("inside NewShotGenerator.__init__")
         self.current_shot = None
-        self.last_value = self.current_shot
+        self.last_value = None
         
     @receiver(h1ds_signal, sender=NewShotEvent)
     def update_shot(sender, **kwargs):

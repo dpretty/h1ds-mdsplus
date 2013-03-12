@@ -137,18 +137,19 @@ import time
 import logging
 from h1ds_core.signals import h1ds_signal, NewShotEvent
 from django.dispatch import receiver
-from h1ds_mdsplus.models import NewShotGenerator
+#from h1ds_mdsplus.models import NewShotGenerator
+from h1ds_mdsplus.utils import new_shot_generator
 logger = logging.getLogger("default")
 
-_latest_shot = get_latest_shot()
+#_latest_shot = get_latest_shot()
 #logger.debug("latest shot: {}".format(_latest_shot))
 
 #@receiver(h1ds_signal)
-def update_shot(sender, **kwargs):
-    logger.debug("received signal")
-    _latest_shot = int(kwargs['value'])
+#def update_shot(sender, **kwargs):
+#    logger.debug("received signal")
+#    _latest_shot = int(kwargs['value'])
 
-h1ds_signal.connect(update_shot)
+#h1ds_signal.connect(update_shot)
     
 def test_stream():
     logger.debug("inside test_stream()")
@@ -186,7 +187,7 @@ class TestStreamView(View):
 
     def get(self, request, *args, **kwargs):
         #return StreamingHttpResponse(test_stream())
-        return StreamingHttpResponse(NewShotGenerator())
+        return StreamingHttpResponse(new_shot_generator())
 
 
 

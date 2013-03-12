@@ -13,6 +13,7 @@ July 2009 - long-standing error in delta_encode_signal fixed (had not been
 usable before)
 
 """
+import time
 from django.core.urlresolvers import reverse
 from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
     log10, int16, int8, uint16, uint8
@@ -67,6 +68,16 @@ def url_path_components_to_mds_path(tree, tagname, nodepath):
                                                       'nodepath':formatted_nodepath}
 
 
+def new_shot_generator():
+    latest_shot = get_latest_shot()
+    while True:
+        time.sleep(2)
+        tmp = get_latest_shot()
+        if tmp != latest_shot:
+            latest_shot = tmp
+            yield latest_shot
+
+    
 def discretise_array(arr, eps=0, bits=0, maxcount=0, verbose=0, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 
