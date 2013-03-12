@@ -143,11 +143,13 @@ logger = logging.getLogger("default")
 _latest_shot = get_latest_shot()
 #logger.debug("latest shot: {}".format(_latest_shot))
 
-@receiver(h1ds_signal)
+#@receiver(h1ds_signal)
 def update_shot(self, sender, **kwargs):
     logger.debug("received signal")
     _latest_shot = int(kwargs['value'])
 
+h1ds_signal.connect(update_shot)
+    
 def test_stream():
     yield "{}\n".format(_latest_shot)
     tmp = _latest_shot
