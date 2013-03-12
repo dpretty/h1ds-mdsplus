@@ -8,17 +8,34 @@ import MDSplus
 from MDSplus._treeshr import TreeException
 
 from h1ds_core.models import H1DSSignal
-from h1ds_core.signals import h1ds_signal
+from h1ds_core.signals import h1ds_signal, NewShotEvent
 from h1ds_mdsplus.tasks import mds_event_listener
 
 ## test
 import logging
+import time
 logger = logging.getLogger("default")
-def update_shot(sender, **kwargs):
-    logger.debug("received signal from models.py")
-    _latest_shot = int(kwargs['value'])
+from django.dispatch import receiver
 
-h1ds_signal.connect(update_shot)
+def new_shot_generator():
+    _latest_shot = None
+    
+    @receiver(h1ds_signal, sender=NewShotEvent)
+    def update_shot(sender, **kwargs):
+        logger.debug("received signal from models.py")
+        _latest_shot = int(kwargs['value'])
+            
+    tmp = _latest_shot
+    while True:
+        time.sleep(1)
+        if tmp != _latest_shot:
+            logger.debug("changed shot")
+            tmp = _latest_shot
+            yield "{}\n".format(_latest_shot)
+
+
+        
+#h1ds_signal.connect(update_shot)
 ## end test
 
 
