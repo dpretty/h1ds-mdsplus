@@ -12,6 +12,8 @@ from h1ds_core.signals import h1ds_signal
 from h1ds_mdsplus.tasks import mds_event_listener
 
 ## test
+import logging
+logger = logging.getLogger("default")
 def update_shot(self, sender, **kwargs):
     logger.debug("received signal from models.py")
     _latest_shot = int(kwargs['value'])
