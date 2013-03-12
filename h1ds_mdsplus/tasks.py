@@ -7,7 +7,7 @@ from celery.decorators import task
 from h1ds_core.signals import h1ds_signal
 from h1ds_core.models import H1DSSignal
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("default")
 
 @task(track_started=True)
 def mds_event_listener(server, event_name, h1ds_signal_instance):
