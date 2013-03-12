@@ -141,7 +141,7 @@ from django.dispatch import receiver
 logger = logging.getLogger("default")
 
 def test_stream():
-    latest_shot = get_latest_shot
+    latest_shot = get_latest_shot()
     
     @receiver(h1ds_signal, sender=NewShotEvent)
     def update_shot(self, sender, **kwargs):
