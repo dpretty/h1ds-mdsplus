@@ -17,10 +17,32 @@ import time
 logger = logging.getLogger("default")
 from django.dispatch import receiver
 
-def new_shot_generator():
+
+class NewShotGenerator(object):
+    def __init__(self):
+        logger.debug("inside NewShotGenerator.__init__")
+        self.current_shot = None
+        self.last_value = self.current_shot
+        
+    @receiver(h1ds_signal, sender=NewShotEvent)
+    def update_shot(sender, **kwargs):
+        logger.debug("received signal from NewShotGenerator")
+        self.current_shot = int(kwargs['value'])
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        logger.debug("inside NewShotGenerator.next")
+        while self.last_value == self.current_shot:
+            time.sleep(1)
+        self.last_value = self.current_shot
+        yield self.current_value
+
+def _new_shot_generator():
     _latest_shot = None
     
-    @receiver(h1ds_signal, sender=NewShotEvent)
+    #@receiver(h1ds_signal, sender=NewShotEvent)
     def update_shot(sender, **kwargs):
         logger.debug("received signal from models.py")
         _latest_shot = int(kwargs['value'])
