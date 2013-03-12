@@ -52,4 +52,4 @@ def track_latest_shot():
 
     if settings.SHOT_TRACKER == "ping":
         #do_ping_shot_tracker(new_shot_inst)
-        do_ping_shot_tracker(new_shot_inst)
+        do_ping_shot_tracker()
