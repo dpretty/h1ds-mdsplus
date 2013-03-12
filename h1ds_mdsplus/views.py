@@ -134,11 +134,39 @@ def get_nav_for_shot(tree, shot):
 ## Testing
 ########################################################################
 import time
-def test_stream():
-    for x in xrange(100):
-        yield "%s\n" %x
-        time.sleep(1)
+from h1ds_core.signals import h1ds_signal, NewShotEvent
+from django.dispatch import receiver
 
+def test_stream():
+    latest_shot = None
+    
+    @receiver(h1ds_signal, sender=NewShotEvent)
+    def update_shot(self, sender, **kwargs):
+        latest_shot = int(kwargs['value'])
+
+    tmp = latest_shot
+    while True:
+        time.sleep(1)
+        if tmp != latest_shot:
+            tmp = latest_shot
+            yield latest_shot
+        
+
+#
+#class TestStream(object):
+#    def __init__(self):
+#        self.latest_shot = None
+#    
+#    @receiver(h1ds_signal, sender=NewShotEvent)
+#    def update_shot(self, sender, **kwargs):
+#        self.latest_shot = int(kwargs['value'])
+#        
+#    def __iter__(self):
+#        return self
+#
+#    def next(self):
+#        pass
+        
 
         
 class TestStreamView(View):
