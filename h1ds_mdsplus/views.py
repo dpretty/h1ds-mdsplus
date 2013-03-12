@@ -144,7 +144,7 @@ _latest_shot = get_latest_shot()
 #logger.debug("latest shot: {}".format(_latest_shot))
 
 #@receiver(h1ds_signal)
-def update_shot(self, sender, **kwargs):
+def update_shot(sender, **kwargs):
     logger.debug("received signal")
     _latest_shot = int(kwargs['value'])
 
