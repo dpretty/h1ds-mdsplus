@@ -151,6 +151,7 @@ def update_shot(self, sender, **kwargs):
 h1ds_signal.connect(update_shot)
     
 def test_stream():
+    logger.debug("inside test_stream()")
     yield "{}\n".format(_latest_shot)
     tmp = _latest_shot
     while True:
@@ -159,6 +160,7 @@ def test_stream():
             logger.debug("changed shot")
             tmp = _latest_shot
             yield "{}\n".format(_latest_shot)
+            
         
 
 #

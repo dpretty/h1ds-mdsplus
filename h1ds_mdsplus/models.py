@@ -8,9 +8,16 @@ import MDSplus
 from MDSplus._treeshr import TreeException
 
 from h1ds_core.models import H1DSSignal
+from h1ds_core.signals import h1ds_signal
 from h1ds_mdsplus.tasks import mds_event_listener
 
+## test
+def update_shot(self, sender, **kwargs):
+    logger.debug("received signal from models.py")
+    _latest_shot = int(kwargs['value'])
 
+h1ds_signal.connect(update_shot)
+## end test
 
 
 class MDSEventListener(models.Model):
