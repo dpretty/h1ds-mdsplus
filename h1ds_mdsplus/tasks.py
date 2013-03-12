@@ -47,7 +47,7 @@ def track_latest_shot():
         return
     # if there is no new_shot instance of H1DSSignal, create it.
     #new_shot_inst, c = H1DSSignal.objects.get_or_create(name="new_shot",
-                                                        description="New Shot")
+    # description="New Shot")
     #logger.debug("new_shot_instance: {}".format(str(new_shot_inst)))
 
     if settings.SHOT_TRACKER == "ping":
