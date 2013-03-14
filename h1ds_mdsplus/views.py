@@ -133,63 +133,15 @@ def get_nav_for_shot(tree, shot):
 ########################################################################
 ## Testing
 ########################################################################
-import time
-import logging
-from h1ds_core.signals import h1ds_signal, NewShotEvent
-from django.dispatch import receiver
-#from h1ds_mdsplus.models import NewShotGenerator
+
 from h1ds_mdsplus.utils import new_shot_generator
-logger = logging.getLogger("default")
-
-#_latest_shot = get_latest_shot()
-#logger.debug("latest shot: {}".format(_latest_shot))
-
-#@receiver(h1ds_signal)
-#def update_shot(sender, **kwargs):
-#    logger.debug("received signal")
-#    _latest_shot = int(kwargs['value'])
-
-#h1ds_signal.connect(update_shot)
-    
-def test_stream():
-    logger.debug("inside test_stream()")
-    yield "{}\n".format(_latest_shot)
-    tmp = _latest_shot
-    while True:
-        time.sleep(1)
-        if tmp != _latest_shot:
-            logger.debug("changed shot")
-            tmp = _latest_shot
-            yield "{}\n".format(_latest_shot)
-            
-        
-
-#
-#class TestStream(object):
-#    def __init__(self):
-#        self.latest_shot = None
-#    
-#    @receiver(h1ds_signal, sender=NewShotEvent)
-#    def update_shot(self, sender, **kwargs):
-#        self.latest_shot = int(kwargs['value'])
-#        
-#    def __iter__(self):
-#        return self
-#
-#    def next(self):
-#        pass
-        
-
         
 class TestStreamView(View):
 
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        #return StreamingHttpResponse(test_stream())
         return StreamingHttpResponse(new_shot_generator())
-
-
 
 ########################################################################
 ## End Testing

@@ -11,56 +11,6 @@ from h1ds_core.models import H1DSSignal
 from h1ds_core.signals import h1ds_signal, NewShotEvent
 from h1ds_mdsplus.tasks import mds_event_listener
 
-## test
-import logging
-import time
-logger = logging.getLogger("default")
-from django.dispatch import receiver
-
-
-class _NewShotGenerator(object):
-    def __init__(self):
-        logger.debug("inside NewShotGenerator.__init__")
-        self.current_shot = None
-        self.last_value = None
-        
-    @receiver(h1ds_signal, sender=NewShotEvent)
-    def update_shot(sender, **kwargs):
-        logger.debug("received signal from NewShotGenerator")
-        self.current_shot = int(kwargs['value'])
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        logger.debug("inside NewShotGenerator.next")
-        while self.last_value == self.current_shot:
-            time.sleep(1)
-        self.last_value = self.current_shot
-        return self.current_value
-
-def _new_shot_generator():
-    _latest_shot = None
-    
-    #@receiver(h1ds_signal, sender=NewShotEvent)
-    def update_shot(sender, **kwargs):
-        logger.debug("received signal from models.py")
-        _latest_shot = int(kwargs['value'])
-            
-    tmp = _latest_shot
-    while True:
-        time.sleep(1)
-        if tmp != _latest_shot:
-            logger.debug("changed shot")
-            tmp = _latest_shot
-            yield "{}\n".format(_latest_shot)
-
-
-        
-#h1ds_signal.connect(update_shot)
-## end test
-
-
 class MDSEventListener(models.Model):
     """Listens for an MDSplus event from a specified server."""
     event_name = models.CharField(max_length=50)

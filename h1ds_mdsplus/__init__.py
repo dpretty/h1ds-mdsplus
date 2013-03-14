@@ -7,6 +7,12 @@ from MDSplus._treeshr import TreeException
 from django.db.utils import DatabaseError
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
+
+# populate environ  before other h1ds_mdsplus imports  to avoid circular
+# import problem where trees are undefined.
+for config_tree in settings.EXTRA_MDS_TREES:
+    os.environ[config_tree[0]+"_path"] = config_tree[1]
+
 from h1ds_mdsplus.models import MDSEventListener
 from h1ds_mdsplus.tasks import track_latest_shot
 
@@ -16,9 +22,6 @@ if hasattr(settings, "H1DS_MDSPLUS_ROOT_URL"):
 else:
     MODULE_ROOT_URL = "mdsplus" 
 TEST_TREE_NAME = "test"
-
-for config_tree in settings.EXTRA_MDS_TREES:
-    os.environ[config_tree[0]+"_path"] = config_tree[1]
 
 def get_trees_from_env(use_config_trees_only=True):
     trees = []

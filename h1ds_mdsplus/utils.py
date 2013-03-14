@@ -13,7 +13,7 @@ July 2009 - long-standing error in delta_encode_signal fixed (had not been
 usable before)
 
 """
-import time, logging
+import time
 from django.core.urlresolvers import reverse
 from numpy import max, std, array, min, sort, diff, unique, size, mean, mod,\
     log10, int16, int8, uint16, uint8
@@ -37,18 +37,17 @@ except:
 from django.conf import settings
 import MDSplus
 
+mds_tree = MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
 
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
 
     If tree_name is not provided, use the default tree."""
-
     if tree_name == None:
         # Get default tree.
         tree_name = settings.DEFAULT_MDS_TREE
     try:
-        t = MDSplus.Tree(tree_name, 0, 'READONLY')
-        latest_shot = t.shot
+        latest_shot = mds_tree.getCurrent(tree_name)
     except:
         latest_shot=-1
     return latest_shot
@@ -68,15 +67,12 @@ def url_path_components_to_mds_path(tree, tagname, nodepath):
                                                       'tagname':tagname,
                                                       'nodepath':formatted_nodepath}
 
-## testing
-logger = logging.getLogger('default')
 def new_shot_generator():
     latest_shot = get_latest_shot()
     while True:
         time.sleep(1)
         tmp = get_latest_shot()
         if tmp != latest_shot:
-            logger.debug("found new shot")
             latest_shot = tmp
             yield "{}\n".format(latest_shot)
 
