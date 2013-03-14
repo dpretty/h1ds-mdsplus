@@ -20,6 +20,7 @@ from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
 from h1ds_mdsplus.models import UserSignal, UserSignalForm
 import h1ds_mdsplus.filters as df
+from h1ds_mdsplus.utils import new_shot_generator
 
 DEFAULT_TAGNAME = "top"
 DEFAULT_NODEPATH = ""
@@ -130,24 +131,13 @@ def get_nav_for_shot(tree, shot):
 ## Django views                                                       ##
 ########################################################################
 
-########################################################################
-## Testing
-########################################################################
-
-from h1ds_mdsplus.utils import new_shot_generator
         
-class TestStreamView(View):
+class ShotStreamView(View):
 
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
         return StreamingHttpResponse(new_shot_generator())
-
-########################################################################
-## End Testing
-########################################################################
-
-
 
 class UserSignalCreateView(CreateView):
 
