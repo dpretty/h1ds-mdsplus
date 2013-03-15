@@ -4,7 +4,7 @@ from h1ds_mdsplus.views import NodeView, TreeOverviewView, RequestShotView, Home
 from h1ds_mdsplus.views import AJAXLatestShotView, AJAXNodeNavigationView
 from h1ds_mdsplus.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
 from h1ds_mdsplus.views import UserSignalCreateView, UserSignalDeleteView, UserSignalUpdateView
-from h1ds_mdsplus.views import ShotStreamView
+from h1ds_mdsplus.views import ShotStreamView, AJAXShotRequestURL
 from h1ds_mdsplus.views import request_url
 
 # special urls
@@ -20,7 +20,7 @@ urlpatterns = patterns('',
                        url(r'^_/user_signal_toggle_shot_lock/(?P<pk>\d+)$', UserSignalUpdateView.as_view(), name="mds-update-user-signal"),
                        url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="mds-latest-shot-for-default-tree"),
                        url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="mds-latest-shot"),
-                       ## testing:
+                       url(r'^_/url_for_shot$', AJAXShotRequestURL.as_view(), name="mds-shot-request-url"),
                        url(r'^_/shot_stream/$', ShotStreamView.as_view(), name="mds-shot-stream"),
                        )
 

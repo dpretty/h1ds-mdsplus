@@ -500,6 +500,18 @@ class AJAXNodeNavigationView(View):
         return HttpResponse(json_nav_data,
                             content_type='application/json')
 
+class AJAXShotRequestURL(View):
+    """Return URL modified for requested shot"""
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        input_path = request.GET.get('input_path')
+        shot = int(request.GET.get('shot'))
+        input_shot = shot_regex.findall(input_path)[0]
+        new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
+        output_json = '{"new_url":"%s"}' %new_url
+        return HttpResponse(output_json, 'application/javascript')
 
 class AJAXLatestShotView(View):
     """Return latest shot."""
