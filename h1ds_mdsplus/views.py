@@ -544,7 +544,7 @@ def request_url(request):
     mds_tree.text = tree
 
     
-    url_pre_path = '/mdsplus/%s/%d/TOP/' %(tree, int(shot)) 
+    url_pre_path = '/mdsplus/_/%s/%d/TOP/' %(tree, int(shot)) 
     url = url_pre_path + path.strip('.').strip(':').replace('.','/').replace(':','/')
     
     url_el = etree.SubElement(url_xml, 'mds_url', attrib={})
