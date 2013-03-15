@@ -519,11 +519,24 @@ class AJAXLatestShotView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        #latest_shot = get_latest_shot(tree_name)
+        view = request.GET.get('view', 'json')
+        if view.lower() == 'xml':
+            return xml_latest_shot(request)
         latest_shot = get_latest_shot()
         return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
 
+def xml_latest_shot(request):
+    """Hack to get IDL client working again - this should be merged with other latest shot view"""
+    
+    shot = str(get_latest_shot())
+    response_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    return HttpResponse(etree.tostring(response_xml), mimetype='text/xml; charset=utf-8')
 
+    
 def request_url(request):
     """Return the URL for the requested MDS parameters."""
 
