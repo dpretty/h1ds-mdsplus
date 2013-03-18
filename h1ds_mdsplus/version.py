@@ -24,7 +24,7 @@ def git_sha():
     return p.communicate()[0]
 
 
-VERSION = (0, 9, 0, 'final', 0)
+VERSION = (1, 0, 0, 'alpha', 0)
 
 def get_module_urls():
     return ("https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus", "https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus/issues/new", )
