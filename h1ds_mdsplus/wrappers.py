@@ -183,8 +183,13 @@ def int_view_json(data, **kwargs):
 
 
 def signal_1d_view_html(data):
+    #return """
+    #<div id="signal-1d-placeholder" style="width:100%;height:300px;"></div>
+    #"""
+
+    # TODO: hardwired float as dtype until we mds to numpy dtypes cleaned up.
     return """
-    <div id="signal-1d-placeholder" style="width:100%;height:300px;"></div>
+    <div class="h1ds-pagelet" data-dtype="float" data-ndim="1"></div>
     """
 
 def signal_2d_view_html(data):
