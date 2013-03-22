@@ -28,13 +28,13 @@ tags and other mdsplus trees. -->
     <div class="portlet-content">
       <div id="mds-shot-controller">
 	<div class="sidebarcontent">
-	  <FORM class="inline-form" action="{% url "mds-request-shot" %}" method="post">{% csrf_token %}
+	  <FORM class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
 	  </FORM>
 	</div>
 	<div class="sidebarcontent">
-	  <div id="mds-shot-previous">	<FORM action="{% url "mds-request-shot" %}" method="post">{% csrf_token %}
+	  <div id="mds-shot-previous">	<FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	      <INPUT type="hidden" name="go_to_shot" value="{{mdsnode.shot|add:'-1'}}">
 	      <INPUT title="go to shot" type="submit" value="<">
@@ -42,7 +42,7 @@ tags and other mdsplus trees. -->
 	  </div>
 	  <div id="mds-shot-current"><strong> {{mdsnode.shot}} </strong></div>
 	  <div id="mds-shot-next">	
-	    <FORM action="{% url "mds-request-shot" %}" method="post">{% csrf_token %}
+	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	      <INPUT type="hidden" name="go_to_shot" value="{{mdsnode.shot|add:'1'}}">
 	      <INPUT title="go to shot" type="submit" value=">">
@@ -243,7 +243,7 @@ tags and other mdsplus trees. -->
     <div class="portlet-header">my signals</div>
     <div class="portlet-content">
       {% if user.is_authenticated %}
-      <form method="post" action="{% url "mds-add-user-signal" %}">{% csrf_token %}
+      <form method="post" action="{% url "h1ds-add-user-signal" %}">{% csrf_token %}
 	{{ user_signal_form.name }}
 	<INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	<INPUT title="add" type="submit" value="+">
@@ -258,13 +258,13 @@ tags and other mdsplus trees. -->
 	{% endif %}
 
 	<div class="sidebar-section-item-delete">
-	  <FORM action="{% url "mds-delete-user-signal" sig.pk %}" method="post">{% csrf_token %}
+	  <FORM action="{% url "h1ds-delete-user-signal" sig.pk %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	    <INPUT title="go to shot" type="submit" value="-">
 	  </FORM>
 	</div>
 	<div class="sidebar-section-item-edit">
-	  <a href="{% url "mds-update-user-signal" sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
+	  <a href="{% url "h1ds-update-user-signal" sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
 	</div>
 
       </div>

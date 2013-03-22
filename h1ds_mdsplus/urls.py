@@ -1,13 +1,16 @@
 from django.conf.urls.defaults import *
 
-from h1ds_mdsplus.views import NodeView, TreeOverviewView, RequestShotView, HomepageView
-from h1ds_mdsplus.views import AJAXLatestShotView, AJAXNodeNavigationView
-from h1ds_mdsplus.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
-from h1ds_mdsplus.views import UserSignalCreateView, UserSignalDeleteView, UserSignalUpdateView
-from h1ds_mdsplus.views import ShotStreamView, AJAXShotRequestURL
-from h1ds_mdsplus.views import request_url
+#from h1ds_mdsplus.views import NodeView, TreeOverviewView, RequestShotView, HomepageView
+#from h1ds_mdsplus.views import AJAXLatestShotView, AJAXNodeNavigationView
+#from h1ds_mdsplus.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
+#from h1ds_mdsplus.views import UserSignalCreateView, UserSignalDeleteView, UserSignalUpdateView
+#from h1ds_mdsplus.views import ShotStreamView, AJAXShotRequestURL
+#from h1ds_mdsplus.views import request_url
+
+from h1ds_mdsplus.views import HomepageView, TreeOverviewView, NodeView
 
 # special urls
+"""
 urlpatterns = patterns('',
                        url(r'^_/get_navigation/(?P<tree>[^/]+)/(?P<shot>-?\d+)/$', AJAXNodeNavigationView.as_view(), name="get-navigation"),
                        url(r'^_/apply_filter$', ApplyFilterView.as_view(), name="apply-filter"),
@@ -23,8 +26,8 @@ urlpatterns = patterns('',
                        url(r'^_/url_for_shot$', AJAXShotRequestURL.as_view(), name="mds-shot-request-url"),
                        url(r'^_/shot_stream/$', ShotStreamView.as_view(), name="mds-shot-stream"),
                        )
-
-urlpatterns += patterns('',
+"""
+urlpatterns = patterns('',
                        url(r'^$', HomepageView.as_view(), name="h1ds-mdsplus-homepage"),
                        url(r'^(?P<tree>[^/]+)/$', TreeOverviewView.as_view(), name="mds-tree-overview"),
                        url(r'^(?P<tree>[^/]+)/(?P<shot>-?\d+)/$', NodeView.as_view(), name="mds-root-node"),

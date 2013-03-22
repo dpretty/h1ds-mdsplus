@@ -189,7 +189,7 @@ def signal_1d_view_html(data):
 
     # TODO: hardwired float as dtype until we mds to numpy dtypes cleaned up.
     return """
-    <div class="h1ds-pagelet" data-dtype="float" data-ndim="1"></div>
+    <div id="testing-id" class="h1ds-pagelet" data-dtype="float" data-ndim="1"></div>
     """
 
 def signal_2d_view_html(data):
