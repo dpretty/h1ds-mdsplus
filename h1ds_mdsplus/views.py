@@ -1,11 +1,10 @@
-import re, json, inspect, StringIO, csv
+import re, json, StringIO, csv
 import pylab
 import xml.etree.ElementTree as etree
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse, Http404, StreamingHttpResponse
 from django.contrib import messages
 from django.conf import settings
@@ -15,7 +14,7 @@ from django.views.generic import View, RedirectView
 from MDSplus import Tree
 from MDSplus._treeshr import TreeException
 
-from h1ds_mdsplus.utils import get_latest_shot, url_path_components_to_mds_path
+from h1ds_mdsplus.utils import url_path_components_to_mds_path
 from h1ds_mdsplus.wrappers import NodeWrapper
 import h1ds_mdsplus.filters as df
 from h1ds_mdsplus.utils import new_shot_generator
@@ -26,7 +25,6 @@ from h1ds_core.models import UserSignal, UserSignalForm
 DEFAULT_TAGNAME = "top"
 DEFAULT_NODEPATH = ""
 
-
 ########################################################################
 ## Helper functions                                                   ##
 ########################################################################
@@ -34,9 +32,6 @@ DEFAULT_NODEPATH = ""
 # Match any URL path component comprising only digits.
 # e.g. "foo/bar/12345/stuff" -> 12345
 shot_regex = re.compile(r".*?\/(\d+?)\/.*?")
-
-
-
 
 def get_subtree(mds_node):
 
@@ -289,104 +284,8 @@ class TreeOverviewView(RedirectView):
         return reverse('mds-root-node', kwargs={'tree':kwargs['tree'], 'shot':0})
 
 
-class RequestShotView(RedirectView):
-    """Redirect to shot, as requested by HTTP post."""
-
-    http_method_names = ['post']
-
-    def get_redirect_url(self, **kwargs):
-        shot = self.request.POST['go_to_shot']
-        input_path = self.request.POST['reqpath']
-        input_shot = shot_regex.findall(input_path)[0]
-        return input_path.replace(input_shot, shot)
-
 class HomepageView(RedirectView):    
 
     def get_redirect_url(self, **kwargs):
         return reverse('mds-tree-overview', args=[settings.DEFAULT_MDS_TREE])
 
-########################################################################
-#### AJAX Only Views                                                ####
-########################################################################
-
-class AJAXNodeNavigationView(View):
-    """Return tree navigation data for shot"""
-    
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        tree = kwargs['tree']
-        shot = int(kwargs['shot'])
-        cache_name = "nav_%s_%d" %(tree, shot)
-        nav_data = cache.get(cache_name, 'no_cache')
-        if nav_data == 'no_cache':
-            nav_data = get_nav_for_shot(tree, shot)
-            cache.set(cache_name, nav_data, 60 * 20)
-        json_nav_data = json.dumps(nav_data)
-        return HttpResponse(json_nav_data,
-                            content_type='application/json')
-
-class AJAXShotRequestURL(View):
-    """Return URL modified for requested shot"""
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        input_path = request.GET.get('input_path')
-        shot = int(request.GET.get('shot'))
-        input_shot = shot_regex.findall(input_path)[0]
-        new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
-        output_json = '{"new_url":"%s"}' %new_url
-        return HttpResponse(output_json, 'application/javascript')
-
-class AJAXLatestShotView(View):
-    """Return latest shot."""
-    
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        view = request.GET.get('view', 'json')
-        if view.lower() == 'xml':
-            return xml_latest_shot(request)
-        latest_shot = get_latest_shot()
-        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
-
-def xml_latest_shot(request):
-    """Hack to get IDL client working again - this should be merged with other latest shot view"""
-    
-    shot = str(get_latest_shot())
-    response_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
-                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
-    
-    shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
-    shot_number.text = shot
-    return HttpResponse(etree.tostring(response_xml), mimetype='text/xml; charset=utf-8')
-
-    
-def request_url(request):
-    """Return the URL for the requested MDS parameters."""
-
-    shot = request.GET['shot']
-    path = request.GET['mds-path']
-    tree = request.GET['mds-tree']
-
-    
-    url_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
-                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
-    
-    # add mds info
-    shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
-    shot_number.text = shot
-    mds_path = etree.SubElement(url_xml, 'mds_path', attrib={})
-    mds_path.text = path
-    mds_tree = etree.SubElement(url_xml, 'mds_tree', attrib={})
-    mds_tree.text = tree
-
-    
-    url_pre_path = '/mdsplus/%s/%d/TOP/' %(tree, int(shot)) 
-    url = url_pre_path + path.strip('.').strip(':').replace('.','/').replace(':','/')
-    
-    url_el = etree.SubElement(url_xml, 'mds_url', attrib={})
-    url_el.text = url
-
-    return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')

@@ -35,10 +35,22 @@ except:
     from numpy import savez
 
 from django.conf import settings
+from h1ds_core.utils import BaseURLProcessor
 import MDSplus
 
 mds_tree = MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
 
+class URLProcessor(BaseURLProcessor):
+
+    def urlize_path(self):
+        url_path = path.strip('.:').replace('.','/').replace(':','/')
+        return url_path
+    
+    def deurlize_path(self, url_path):
+        path = url_path.strip(':/').replace('/','.')
+        return path
+
+    
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
 
