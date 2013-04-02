@@ -15,7 +15,7 @@ for config_tree in settings.EXTRA_MDS_TREES:
 
 from h1ds_mdsplus.models import MDSEventListener
 from h1ds_mdsplus.tasks import track_latest_shot
-from h1ds_mdsplus.utils import URLProcessor
+from h1ds_mdsplus.utils import URLProcessor, Node
 
 MODULE_DOC_NAME = "MDSPlus"
 if hasattr(settings, "H1DS_MDSPLUS_ROOT_URL"):

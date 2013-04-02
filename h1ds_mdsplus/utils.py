@@ -35,8 +35,9 @@ except:
     from numpy import savez
 
 from django.conf import settings
-from h1ds_core.utils import BaseURLProcessor
+from h1ds_core.base import BaseURLProcessor, BaseNode
 import MDSplus
+from MDSplus._treeshr import TreeException, TreeNoDataException
 
 mds_tree = MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
 
@@ -50,6 +51,74 @@ class URLProcessor(BaseURLProcessor):
         path = url_path.strip(':/').replace('/','.')
         return path
 
+class Node(BaseNode):
+
+    def __init__(self, *args, **kwargs):
+        if hasattr(kwargs, 'mds_node'):
+            self.mds_node = kwargs.pop('mds_node')
+            kwargs['url_processor'] = self.get_url_processor_for_mds_node(self.mds_node)
+        else:
+            self.mds_node = None
+        super(Node, self).__init__(*args, **kwargs)
+            
+    def get_url_processor_for_mds_node(self, mds_node):
+        url_processor = URLProcessor(tree=mds_node.getLocalTree(),
+                                     shot=mds_node.tree.shot,
+                                     path=mds_node.getLocalPath())
+        return url_processor
+    
+
+    def get_data(self):
+        if not hasattr(self, 'data'):
+            mds_node = self.get_mds_node()
+            try:
+                self.data = mds_node.getData().data()
+            except TreeNoDataException:
+                self.data = None
+        return self.data
+    
+    def get_mds_node(self):
+        if self.mds_node == None:
+            mds_tree = MDSplus.Tree(self.url_processor.tree, self.url_processor.shot)
+            if self.url_processor.path == "":
+                self.mds_node = mds_tree.getNode("\\{}::TOP".format(self.url_processor.tree))
+            else:
+                self.mds_node = mds_tree.getNode(self.url_processor.path)
+        return self.mds_node
+    
+    def get_parent(self):
+        pass
+        
+    def get_children(self):
+        pass
+"""
+class DataInterface(BaseDataInterface):
+
+    node_class = MDSNode
+    
+    def get_data(self):
+        try:
+            mds_tree = MDSplus.Tree(self.url_processor.tree,
+                                    self.url_processor.shot, 'READONLY')
+        except TreeException:
+            # If the  data cannot be  found, raise HTTP 404  error. HTTP
+            # 404 is  appropriate, as  the requested resource  cannot be
+            # found,  but may be  available in  the future  (i.e. future
+            # shot number)
+            raise Http404
+
+        if self.url_processor.path == "":
+            mds_node = mds_tree.getNode("\\{}::TOP".format(self.url_processor.tree))
+        else:
+            mds_node = mds_tree.getNode(self.url_processor.path)
+
+        try:
+            node_data = mds_node.getData().data()
+        except TreeNoDataException:
+            node_data = None
+        
+        return node_data
+"""
     
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
