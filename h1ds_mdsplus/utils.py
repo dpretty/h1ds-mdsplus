@@ -43,8 +43,8 @@ mds_tree = MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
 
 class URLProcessor(BaseURLProcessor):
 
-    def urlize_path(self):
-        url_path = path.strip('.:').replace('.','/').replace(':','/')
+    def urlized_path(self): 
+        url_path = self.path.strip('.:').replace('.','/').replace(':','/')
         return url_path
     
     def deurlize_path(self, url_path):
@@ -54,11 +54,12 @@ class URLProcessor(BaseURLProcessor):
 class Node(BaseNode):
 
     def __init__(self, *args, **kwargs):
-        if hasattr(kwargs, 'mds_node'):
+        try:
             self.mds_node = kwargs.pop('mds_node')
-            kwargs['url_processor'] = self.get_url_processor_for_mds_node(self.mds_node)
-        else:
+        except KeyError:
             self.mds_node = None
+        if type(self.mds_node) != type(None):
+            kwargs['url_processor'] = self.get_url_processor_for_mds_node(self.mds_node)
         super(Node, self).__init__(*args, **kwargs)
             
     def get_url_processor_for_mds_node(self, mds_node):
@@ -68,17 +69,25 @@ class Node(BaseNode):
         return url_processor
     
 
-    def get_data(self):
-        if not hasattr(self, 'data'):
-            mds_node = self.get_mds_node()
-            try:
-                self.data = mds_node.getData().data()
-            except TreeNoDataException:
-                self.data = None
-        return self.data
+    def get_raw_data(self):
+        mds_node = self.get_mds_node()
+        try:
+            raw_data = mds_node.getData().data()
+        except TreeNoDataException:
+            raw_data = None
+        return raw_data
+
+    def get_raw_dim(self):
+        mds_node = self.get_mds_node()
+        try:
+            # TODO - fix for higher dimension
+            raw_dim = mds_node.getDimensionAt().data()
+        except TdiException:
+            raw_dim = None
+        return raw_dim
     
     def get_mds_node(self):
-        if self.mds_node == None:
+        if type(self.mds_node) == type(None):
             mds_tree = MDSplus.Tree(self.url_processor.tree, self.url_processor.shot)
             if self.url_processor.path == "":
                 self.mds_node = mds_tree.getNode("\\{}::TOP".format(self.url_processor.tree))
@@ -87,10 +96,22 @@ class Node(BaseNode):
         return self.mds_node
     
     def get_parent(self):
-        pass
+        n = self.get_mds_node()
+        print "n ", n
+        p = n.getParent()
+        if type(p) == type(None):
+            return None
+        return Node(mds_node=p)
         
     def get_children(self):
-        pass
+        n = self.get_mds_node()
+        children = [Node(mds_node=d) for d in n.getDescendants()]
+        return children
+            
+    def get_short_name(self):
+        n = self.get_mds_node()
+        return n.getNodeName()
+    
 """
 class DataInterface(BaseDataInterface):
 
