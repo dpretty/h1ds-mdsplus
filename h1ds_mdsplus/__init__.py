@@ -68,10 +68,3 @@ except (DatabaseError, ImproperlyConfigured):
 
 #start latest shot tracker
 track_latest_shot.delay()
-
-
-sql_type_mapping = {
-    numpy.float32:"FLOAT",
-    numpy.float64:"FLOAT",
-    numpy.int32:"INT",
-    }

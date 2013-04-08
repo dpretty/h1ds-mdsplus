@@ -39,7 +39,7 @@ from h1ds_core.base import BaseURLProcessor, BaseNode
 import MDSplus
 from MDSplus._treeshr import TreeException, TreeNoDataException
 
-mds_tree = MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
+mds_tree = MDSplus.Tree(settings.DEFAULT_TREE, 0, 'READONLY')
 
 class URLProcessor(BaseURLProcessor):
 
@@ -97,7 +97,6 @@ class Node(BaseNode):
     
     def get_parent(self):
         n = self.get_mds_node()
-        print "n ", n
         p = n.getParent()
         if type(p) == type(None):
             return None
@@ -111,6 +110,12 @@ class Node(BaseNode):
     def get_short_name(self):
         n = self.get_mds_node()
         return n.getNodeName()
+
+    def get_data_time(self):
+        n = self.get_mds_node()
+        d = n.getTimeInserted()._getDate()
+        return datetime.datetime(str(t._getDate()), "%d-%b-%Y %H:%M:%S.%f")
+
     
 """
 class DataInterface(BaseDataInterface):
@@ -147,7 +152,7 @@ def get_latest_shot(tree_name = None):
     If tree_name is not provided, use the default tree."""
     if tree_name == None:
         # Get default tree.
-        tree_name = settings.DEFAULT_MDS_TREE
+        tree_name = settings.DEFAULT_TREE
     try:
         latest_shot = mds_tree.getCurrent(tree_name)
     except:

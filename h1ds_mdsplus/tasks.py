@@ -22,8 +22,8 @@ def mds_event_listener(server, event_name, h1ds_signal_instance):
 
 
 def do_ping_shot_tracker():
-    t =  MDSplus.Tree(settings.DEFAULT_MDS_TREE, 0, 'READONLY')
-    current_shot = t.getCurrent(settings.DEFAULT_MDS_TREE)
+    t =  MDSplus.Tree(settings.DEFAULT_TREE, 0, 'READONLY')
+    current_shot = t.getCurrent(settings.DEFAULT_TREE)
     #class NewShotEvent(object):
     #    def __init__(self, shot_number):
     #        self.shot_number = shot_number
@@ -32,7 +32,7 @@ def do_ping_shot_tracker():
     #                         h1ds_sig=new_shot_signal, value=self.shot_number)
     while True:
         time.sleep(settings.SHOT_TRACKER_PING_INTERVAL)
-        new_shot_number = t.getCurrent(settings.DEFAULT_MDS_TREE)
+        new_shot_number = t.getCurrent(settings.DEFAULT_TREE)
         if new_shot_number != current_shot:
             new_shot_event = NewShotEvent(new_shot_number)
             new_shot_event.send_event()

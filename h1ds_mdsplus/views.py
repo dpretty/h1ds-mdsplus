@@ -287,5 +287,5 @@ class TreeOverviewView(RedirectView):
 class HomepageView(RedirectView):    
 
     def get_redirect_url(self, **kwargs):
-        return reverse('mds-tree-overview', args=[settings.DEFAULT_MDS_TREE])
+        return reverse('mds-tree-overview', args=[settings.DEFAULT_TREE])
 
