@@ -14,20 +14,22 @@ from os.path import abspath, dirname
 
 
 def git_sha():
+    """Get SHA1 hash of current version."""
     loc = abspath(dirname(__file__))
-    p = Popen(
+    command = Popen(
         "cd \"%s\" && git log -1 --format=format:%%h\ /\ %%cD" % loc,
         shell=True,
         stdout=PIPE,
         stderr=PIPE
     )
-    return p.communicate()[0]
+    return command.communicate()[0]
 
 
 VERSION = (1, 0, 0, 'alpha', 0)
 
 def get_module_urls():
-    return ("https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus", "https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus/issues/new", )
+    return ("https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus",
+            "https://code.h1svr.anu.edu.au/projects/h1ds-mdsplus/issues/new", )
 
 
 def get_version(form='short'):
@@ -61,40 +63,40 @@ def get_version(form='short'):
     versions['branch'] = branch
 
     # Short
-    v = branch
+    ver = branch
     if (tertiary or final):
-        v += "." + str(tertiary)
+        ver += "." + str(tertiary)
     if not final:
-        v += firsts
+        ver += firsts
         if type_num:
-            v += str(type_num)
+            ver += str(type_num)
         else:
-            v += sha1
-    versions['short'] = v
+            ver += sha1
+    versions['short'] = ver
 
     # Normal
-    v = branch
+    ver = branch
     if tertiary:
-        v += "." + str(tertiary)
+        ver += "." + str(tertiary)
     if not final:
         if type_num:
-            v += " " + type_ + " " + str(type_num)
+            ver += " " + type_ + " " + str(type_num)
         else:
-            v += " pre-" + type_ + sha1
-    versions['normal'] = v
+            ver += " pre-" + type_ + sha1
+    versions['normal'] = ver
 
     # Verbose
-    v = branch
+    ver = branch
     if tertiary:
-        v += "." + str(tertiary)
+        ver += "." + str(tertiary)
     if not final:
         if type_num:
-            v += " " + type_ + " " + str(type_num)
+            ver += " " + type_ + " " + str(type_num)
         else:
-            v += " pre-" + type_ + sha1
+            ver += " pre-" + type_ + sha1
     else:
-        v += " final"
-    versions['verbose'] = v
+        ver += " final"
+    versions['verbose'] = ver
 
     try:
         return versions[form]

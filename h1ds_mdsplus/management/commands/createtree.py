@@ -1,8 +1,7 @@
 from django.core.management.base import BaseCommand
-import os, sys
+import os
 import MDSplus
 import numpy
-from h1ds_mdsplus.management.commands._utils import create_test_shot
 
 SIGNAL_LENGTH = 2**16
 
@@ -22,8 +21,10 @@ def create_tree(tree_path):
         node_a.addNode('node_AA')
         node_a.addNode('node_AB')
 
-        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)), 
-                             None, MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH)))
+        mds_arr = MDSplus.makeArray(numpy.random.poisson(lam=10,
+                                                         size=SIGNAL_LENGTH))
+        mds_dim = MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH))
+        sig = MDSplus.Signal(mds_arr, None, mds_dim)
         node_a.putData(sig)
 
         node_aa = t.getNode('\\test::top.node_A.node_AA')

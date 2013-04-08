@@ -1,3 +1,4 @@
+"""Admin interface for MDSplus event listening models."""
 from django.contrib import admin
 from h1ds_mdsplus.models import MDSEventListener, ListenerSignals
 

@@ -1,13 +1,8 @@
-from django.contrib.auth.models import User
+"""Models to store MDSplus events."""
 from django.db import models
-from django.core.urlresolvers import reverse
 from celery.task.control import inspect
 
-import MDSplus
-from MDSplus._treeshr import TreeException
-
 from h1ds_core.models import H1DSSignal
-from h1ds_core.signals import h1ds_signal, NewShotEvent
 from h1ds_mdsplus.tasks import mds_event_listener
 
 class MDSEventListener(models.Model):
@@ -23,19 +18,27 @@ class MDSEventListener(models.Model):
     def start_listener(self):
         task_name = u'h1ds_mdsplus.tasks.mds_event_listener'
         signals = {}
-        for s in self.h1ds_signal.all():
-            signals[s.name] = {'active':False, 'class':s, 'args':u"(u'%s', u'%s', u'%s')" %(self.server, self.event_name, s.name)}
+        for signal in self.h1ds_signal.all():
+            signals[signal.name] = {'active':False,
+                               'class':signal,
+                               'args':u"(u'{}', u'{}', u'{}')".format(
+                                    self.server,
+                                    self.event_name,
+                                    signal.name)}
         active_workers = inspect().active()
         if active_workers != None:
             for worker in active_workers.keys():
                 for active_task in active_workers[worker]:
                     for sig in signals.keys():
-                        if active_task['name'] == task_name and active_task['args'] == signals[sig]['args']:
+                        if (active_task['name'] == task_name and
+                            active_task['args'] == signals[sig]['args']):
                             signals[sig]['active'] = True
 
         for sig in signals.keys():
             if not signals[sig]['active']:
-                self.listener = mds_event_listener.delay(self.server, self.event_name, signals[sig]['class'])
+                self.listener = mds_event_listener.delay(self.server,
+                                                         self.event_name,
+                                                         signals[sig]['class'])
 
     def save(self, *args, **kwargs):
         super(MDSEventListener, self).save(*args, **kwargs)

@@ -14,7 +14,6 @@ for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]
 
 from h1ds_mdsplus.models import MDSEventListener
-from h1ds_mdsplus.tasks import track_latest_shot
 from h1ds_mdsplus.utils import URLProcessor, Node, get_latest_shot
 
 MODULE_DOC_NAME = "MDSPlus"
@@ -25,6 +24,7 @@ else:
 TEST_TREE_NAME = "test"
 
 def get_trees_from_env(use_config_trees_only=True):
+    """Get list of MDSplus trees from environment and configuration file."""
     trees = []
     if use_config_trees_only:
         env_paths = [i[0]+"_path" for i in settings.EXTRA_MDS_TREES]
@@ -33,7 +33,7 @@ def get_trees_from_env(use_config_trees_only=True):
     for path in env_paths:
         tree_name = path[:-5]
         try:
-            tree =  MDSplus.Tree(tree_name, 0, 'READONLY')
+            MDSplus.Tree(tree_name, 0, 'READONLY')
             trees.append(tree_name)
         except TreeException:
             pass
@@ -41,6 +41,7 @@ def get_trees_from_env(use_config_trees_only=True):
 
 # for h1ds API
 def get_trees():
+    """Provide get_trees function for H1DS API."""
     return get_trees_from_env()
 
 
@@ -66,5 +67,3 @@ except (DatabaseError, ImproperlyConfigured):
     # TODO: we have now removed MDSPlusTree - is this still a problem?
     pass
 
-#start latest shot tracker
-track_latest_shot.delay()
