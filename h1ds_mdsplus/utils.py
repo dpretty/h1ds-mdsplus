@@ -102,7 +102,7 @@ class Node(BaseNode):
     def get_children(self):
         node = self.get_mds_node()
         children = [Node(mds_node=desc) for desc in node.getDescendants()]
-        return children
+        return sorted(children, key = lambda n: n.get_short_name())
             
     def get_short_name(self):
         node = self.get_mds_node()
