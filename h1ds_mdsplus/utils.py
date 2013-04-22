@@ -98,10 +98,19 @@ class Node(BaseNode):
         if type(parent) == type(None):
             return None
         return Node(mds_node=parent)
-        
+
     def get_children(self):
         node = self.get_mds_node()
-        children = [Node(mds_node=desc) for desc in node.getDescendants()]
+        # HACK - MDS python library seems to have a bug in getDescendants()
+        # see http://www.mdsplus.org/bugzilla/show_bug.cgi?id=49
+        # for now, do a manual join of children and members.
+        children = []
+        mds_children = node.getChildren()
+        if type(mds_children) != type(None):
+            children.extend([Node(mds_node=desc) for desc in mds_children])
+        mds_members = node.getMembers()
+        if type(mds_members) != type(None):
+            children.extend([Node(mds_node=desc) for desc in mds_members])
         return sorted(children, key = lambda n: n.get_short_name())
             
     def get_short_name(self):
