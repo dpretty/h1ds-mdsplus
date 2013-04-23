@@ -33,7 +33,7 @@ def get_trees_from_env(use_config_trees_only=True):
     for path in env_paths:
         tree_name = path[:-5]
         try:
-            MDSplus.Tree(tree_name, 0, 'READONLY')
+            #MDSplus.Tree(tree_name, 0, 'READONLY')
             trees.append(tree_name)
         except TreeException:
             pass
