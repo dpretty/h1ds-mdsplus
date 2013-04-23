@@ -26,6 +26,7 @@ from django.conf import settings
 
 from h1ds_core.base import BaseURLProcessor, BaseNode
 import MDSplus
+from MDSplus import TdiException
 from MDSplus._treeshr import TreeNoDataException
 
 MDS_TREE = MDSplus.Tree(settings.DEFAULT_TREE, 0, 'READONLY')
@@ -65,7 +66,7 @@ class Node(BaseNode):
         mds_node = self.get_mds_node()
         try:
             raw_data = mds_node.getData().data()
-        except TreeNoDataException:
+        except (TreeNoDataException, TdiException, AttributeError):
             raw_data = None
         return raw_data
 
@@ -73,8 +74,14 @@ class Node(BaseNode):
         """Get dimension of raw data (i.e. no filters)."""
         mds_node = self.get_mds_node()
         try:
-            # TODO - fix for higher dimension
-            raw_dim = mds_node.getDimensionAt().data()
+            shape = mds_node.getShape()
+            if len(shape) == 1:
+                raw_dim = mds_node.getDimensionAt().data()
+            else:
+                dim_list = []
+                for i in range(len(shape)):
+                    dim_list.append(mds_node.getDimensionAt(i).data())
+                raw_dim = np.array(dim_list)
         except MDSplus.TdiException:
             raw_dim = None
         return raw_dim
