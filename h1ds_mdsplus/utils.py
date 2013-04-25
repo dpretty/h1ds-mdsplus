@@ -127,7 +127,7 @@ class Node(BaseNode):
     def get_data_time(self):
         node = self.get_mds_node()
         data_time = node.getTimeInserted()._getDate()
-        return datetime.datetime(str(data_time), "%d-%b-%Y %H:%M:%S.%f")
+        return datetime.datetime.strptime(str(data_time), "%d-%b-%Y %H:%M:%S.%f")
     
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
