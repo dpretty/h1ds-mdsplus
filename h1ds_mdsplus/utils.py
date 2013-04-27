@@ -70,7 +70,7 @@ class Node(BaseNode):
         """Get the corresponding MDSplus node for this H1DS tree node."""
         
         if type(self.mds_node) == type(None):
-            mds_tree = MDSplus.Tree(self.url_processor.tree,
+            mds_tree = MDSplus.Tree(str(self.url_processor.tree), # force str rather than unicode. unicode hits mds bug?
                                     self.url_processor.shot)
             if self.url_processor.path == "":
                 default_node = "\\{}::TOP".format(self.url_processor.tree)
