@@ -125,7 +125,8 @@ class Node(BaseNode):
             if time_inserted > min_time:
                 break
 
-        return time_inserted.strftime("%Y-%m-%d %H:%M:%S")
+        #return time_inserted.strftime("%Y-%m-%d %H:%M:%S")
+        return time_inserted
 
     
     def get_metadata(self):
