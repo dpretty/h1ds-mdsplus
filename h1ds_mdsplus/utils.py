@@ -109,11 +109,34 @@ class Node(BaseNode):
         data_time = node.getTimeInserted()._getDate()
         return datetime.datetime.strptime(str(data_time), "%d-%b-%Y %H:%M:%S.%f")
 
+    def get_shot_time(self):
+        # TODO: H1 specific code - should extract this into separate h1 module.
+        try_these = (
+            "\\h1data::top.operations:h18212sl:input_07",
+            "\\h1data::top.operations:h18212sl:input_01",
+            )
+        min_time = datetime.datetime(1970,1,1,0,0)
+        mds_node = self.get_mds_node()
+        for node in try_these:
+            n = mds_node.getNode(node)
+            mds_time = n.getTimeInserted()
+            # convert MDSplus time into a Python dattime object
+            time_inserted = datetime.datetime.strptime(str(mds_time._getDate()), "%d-%b-%Y %H:%M:%S.%f")
+            if time_inserted > min_time:
+                break
+
+        return time_inserted.strftime("%Y-%m-%d %H:%M:%S")
+
+    
     def get_metadata(self):
         mds_node = self.get_mds_node()
         metadata = {}
         try:
-            metadata['Acquisition time'] = self.get_data_time()
+            metadata['Node modification time'] = self.get_data_time()
+        except:
+            pass
+        try:
+            metadata['Acquisition time'] = self.get_shot_time()
         except:
             pass
         try:
