@@ -108,6 +108,27 @@ class Node(BaseNode):
         node = self.get_mds_node()
         data_time = node.getTimeInserted()._getDate()
         return datetime.datetime.strptime(str(data_time), "%d-%b-%Y %H:%M:%S.%f")
+
+    def get_metadata(self):
+        mds_node = self.get_mds_node()
+        metadata = {}
+        try:
+            metadata['Acquisition time'] = self.get_data_time()
+        except:
+            pass
+        try:
+            metadata['MDSplus path'] = mds_node.getFullPath()
+        except:
+            pass
+        try:
+            metadata['MDSplus dtype'] = mds_node.getDtype()
+        except:
+            pass
+        try:
+            metadata['MDSplus usage'] = mds_node.getUsage()
+        except:
+            pass
+        return metadata
     
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
