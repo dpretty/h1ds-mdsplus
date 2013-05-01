@@ -153,6 +153,19 @@ class Node(BaseNode):
         except:
             pass
         return metadata
+
+    def get_units(self):
+        mds_node = self.get_mds_node()
+        try:
+            units = [mds_node.getUnits()]
+        except:
+            units = ["data units"]
+        for dim in xrange(self.get_ndim()):
+            try:
+                units.append(mds_node.getDimensionAt(dim).getUnits())
+            except:
+                units.append("d%d units"%dim)
+        return units
     
 def get_latest_shot(tree_name = None):
     """Get latest shot from tree.
